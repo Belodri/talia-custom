@@ -1,0 +1,36 @@
+{
+  "id": "talia-custom",
+  "title": "Talia-Custom",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "11"
+  },
+  "esmodules": [
+    "scripts/module.mjs"
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {}
+      }
+    ]
+  },
+  "description": "A module to handle anything custom made for the Talia campaign.",
+  "packs": [
+    {
+      "name": "customItems",
+      "label": "Custom Items",
+      "path": "packs/customItems",
+      "type": "Item",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "dnd5e",
+      "flags": {}
+    }
+  ]
+}
