@@ -1,5 +1,20 @@
 import { MODULE } from "./constants.mjs"
+import { setupSocket } from "./socket.mjs";
 
-Hooks.on("init", () => {
-    console.log(`${MODULE.ID} initialized.`);
+
+import { initCooking, setupCooking } from "../shalkoc/cooking.mjs";
+
+
+
+Hooks.once("socketlib.ready", () => {
+    setupSocket;
+});
+
+Hooks.once("init", () => {
+    initCooking();
+});
+
+Hooks.once("setup", () => {
+    setupCooking();
+    console.log(`${MODULE.ID} set up.`);
 });
