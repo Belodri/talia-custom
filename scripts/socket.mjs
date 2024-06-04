@@ -1,25 +1,10 @@
 import { MODULE } from "./constants.mjs";
+import { _registerEffectFunctionsToSocket } from "./effects.mjs";
 
-/*
-    each function here 
-*/
 
-export let socket;
+
+export let talia_socket;
 export function setupSocket() {
-    socket = socketlib.registerModule(MODULE.ID);
-    Hooks.callAll("talia_registerSockets");
+    talia_socket = socketlib.registerModule(MODULE.ID);
+    _registerEffectFunctionsToSocket(talia_socket);
 }
-
-const socketFunctions = {
-    createEmbeddedDocuments: _createEmbeddedDocuments
-}
-
-
-async function socket_createActiveEffect(actorUuid, effectData) {
-
-}
-
-/*
-    Check for example of how to deal with socket effects
-    https://github.com/DFreds/dfreds-convenient-effects/blob/main/scripts/effect-interface.js
- */

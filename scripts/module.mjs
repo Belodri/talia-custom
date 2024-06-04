@@ -7,7 +7,7 @@ import { initCooking, setupCooking } from "../shalkoc/cooking.mjs";
 
 
 Hooks.once("socketlib.ready", () => {
-    setupSocket;
+    setupSocket();
 });
 
 Hooks.once("init", () => {
