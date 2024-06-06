@@ -9,12 +9,19 @@
   "esmodules": [
     "scripts/module.mjs"
   ],
+  "socket": true,
   "relationships": {
     "systems": [
       {
         "id": "dnd5e",
         "type": "system",
         "compatibility": {}
+      }
+    ],
+    "requires": [
+      {
+        "id": "socketlib",
+        "type": "module"
       }
     ]
   },
