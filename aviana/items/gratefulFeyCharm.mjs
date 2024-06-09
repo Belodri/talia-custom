@@ -4,6 +4,8 @@
     Additionally, taking damage of a type you're vulnerable to from a hostile creature during combat lets you make one additional attack when you use the attack action on your following turn. This effect stacks.
 */
 
+import { _foundryHelpers } from "../../scripts/_foundryHelpers.mjs";
+
 export async function gratefulFeyCharm(item) {
     const damageTypeKeys = Object.keys(CONFIG.DND5E.damageTypes);
     const choice = await userChosenTypes(damageTypeKeys);
@@ -28,9 +30,7 @@ export async function gratefulFeyCharm(item) {
     await itemEffect.update({changes: newChanges, description: newDescription});
 
     ui.notifications.info(`Resistance: ${choice.chosenResist} </br> Vulnerability: ${choice.chosenVuln}`);
-
-    //TODO: display item card without effects; make a helper function for this
-    item.displayCard();
+    _foundryHelpers.displayItemWithoutEffects(item);
 }
 
 /**
