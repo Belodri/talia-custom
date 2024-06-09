@@ -2,6 +2,7 @@ export const _foundryHelpers = {
     getActorByUuid,
     getActiveUserCharacters,
     consumeItem,
+    displayItemWithoutEffects,
     SECONDS: {
         IN_ONE_MINUTE: 60,
         IN_TEN_MINUTES: 600,
@@ -75,4 +76,14 @@ async function consumeItem(item, amountToConsume, consumeCost = 1) {
         }
         return item.update({"system.uses.value": usesValue, "system.quantity": Math.max(quant, 0)});
     }
+}
+
+/**
+ * Displays an item in chat as if it had no active effects.
+ * @param {Item5e} item 
+ */
+function displayItemWithoutEffects(item) {
+    const itemData = item.toObject();
+    itemData.effects.filter(u => u.name = "");  
+    item.displayCard({"flags.dnd5e.itemData": itemData});
 }
