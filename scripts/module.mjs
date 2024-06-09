@@ -1,5 +1,6 @@
 import { MODULE } from "./constants.mjs"
 import { setupSocket } from "./socket.mjs";
+import { createAPI } from "./api.mjs";
 
 
 import { initCooking, setupCooking } from "../shalkoc/cooking.mjs";
@@ -16,6 +17,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("setup", () => {
+    createAPI();
     setupCooking();
     setupChef();
     console.log(`${MODULE.ID} set up.`);
