@@ -15,36 +15,70 @@
             # create spellgem
 */
 
-/*  create spellgem
-
-    create new item of type 'spellGem'      //CONFIG.DND5E.consumableTypes.spellGem = {label: "Spell Gem"};
-
-    spellGem ->
-        - set name ("Gem: Triggered Spell Name" OR "Gem: Cast Spell Name")  //idk
-        - set description to include spell level, 
-
-    selectedSpell.toObject -> 
-        - fix values to scribe's spellcasting modifier
-
-    preUseItem hook -> if type is spellGem -> return false and handle self
-        - see Zhell's example
-        - add excemption to WMS
-*/
-
 /*  DECISIONS
     - How to handle spellGem use?
         a) preUseItem hook
             + Least complicated; just return false if the type is a spell gem
             + Can't interact badly with WMS as that triggers on useItem hook.
+
+    - Rules decisions:
+        - Limit the amount of triggered gems one can have active at the same time?
+            a) Yes
+                + The trigger conditions could be basically whatever.
+
+                Idea:
+                Limit of 1 triggered gem active at any time.
+                Can swap them on your turn via free item interaction.
+                    Maybe increase the limit depending on character level?
+
+        
 */
 
-/*  NOTES
-    - Cantrips can't be upcasted
+/*  ADD RULES
+    - Regular Spell Gems are destroyed upon use or upon trying to write another spell into them
+    - Eternal Spell Gems are not destroyed upon use or upon trying to write another spell into them
+
+    - Triggers: Specify that triggers can only be things 'outside' and can only activate AFTER something has happened
+        example: 
+            "This spell triggers after I get hit in combat." - valid
+            "This spell triggers before I get hit in combat." - invalid
+
+            "This spell triggers when an enemy casts a spell." - valid
+            "This spell triggers when I think an enemy would cast a spell." - invalid
+
+            "Trigger if: I think about the trigger" - technically valid but would go off at a random point because how are you gonna keep yourself from even thinking about the trigger?
+
+            other valid examples:
+            "Trigger if: I squeeze the spell gem "
 */
+
+
+
+/*  --- TODO ---
+
+    - excemption to WMS
+    - workaround for eternal spell gem
+    - cantrips can't be upcasted
+    - ui/ux
+    - macro for creating custom spellgems (choose bonus/save/casterlevel)
+    - consume spell slot
+    - Notification to let user know they crafted something  (maybe via message, not sure)
+*/
+
+//
+
 
 import { MODULE } from "../scripts/constants.mjs";
+import { createSpellGem } from "./SpellGem.mjs";
+
 export function initSpellscribing() {
-    CONFIG.DND5E.consumableTypes.spellGem = {label: "Spell Gem"};
+    CONFIG.DND5E.consumableTypes.spellGem = {
+        label: "Spell Gem",
+        subtypes: {
+            eternal: "Eternal"
+        }
+    };
+    CONFIG.DND5E.abilityActivationTypes.trigger = "Trigger";
 }
 export function setupSpellscribing() {
     globalThis[MODULE.globalThisName] = {
@@ -72,8 +106,8 @@ function generateTestingData(actor) {
     const chosenArgs = {
         chosenSpell: actor.items.find(i => i.type === "spell" && i.name === "Guiding Bolt"),
         chosenGem: actor.items.find(i => i.type === "loot" && i.system.type?.value === "gem"),   //test other gems by giving the actor only one gem at a time
-        selectedSpellSlotLevel: 1,
-        isTrigger: true
+        selectedSpellSlotLevel: 5,
+        isTrigger: false
     }
     if(chosenArgs.isTrigger) {
         chosenArgs.triggerConditions = "Example text for trigger condition.";
@@ -92,16 +126,6 @@ export async function spellscribing(actor) {
     createSpellGem(actor, chosenArgs);
 }
 
-
-
-/**
- * 
- * @param {Actor5e} actor 
- * @param {chosenArgs} chosenArgs 
- */
-function createSpellGem(actor, chosenArgs) {
-    console.log(chosenArgs.triggerConditions);
-}
 
 /**
  * 
