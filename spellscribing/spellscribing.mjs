@@ -42,12 +42,14 @@
     - Cantrips can't be upcasted
 */
 
-
+import { MODULE } from "../scripts/constants.mjs";
 export function initSpellscribing() {
     CONFIG.DND5E.consumableTypes.spellGem = {label: "Spell Gem"};
 }
 export function setupSpellscribing() {
-    
+    globalThis[MODULE.globalThisName] = {
+        spellscribing
+    }
 }
 /*  NOTES
 
@@ -55,13 +57,23 @@ export function setupSpellscribing() {
         setup testing function that pretends the first part has already been done
 
 */
+/**
+ * @typedef {Object} chosenArgs 
+ * @property {Item5e} chosenSpell
+ * @property {Item5e} chosenGem
+ * @property {number} selectedSpellSlotLevel
+ * @property {boolean} isTrigger
+ * @property {string} [triggerConditions]
+ */
+
+
 function generateTestingData(actor) {
     //testingData
     const chosenArgs = {
         chosenSpell: actor.items.find(i => i.type === "spell" && i.name === "Guiding Bolt"),
         chosenGem: actor.items.find(i => i.type === "loot" && i.system.type?.value === "gem"),   //test other gems by giving the actor only one gem at a time
-        selectedSpellSlotLevel: 4,
-        isTrigger: false
+        selectedSpellSlotLevel: 1,
+        isTrigger: true
     }
     if(chosenArgs.isTrigger) {
         chosenArgs.triggerConditions = "Example text for trigger condition.";
@@ -69,19 +81,35 @@ function generateTestingData(actor) {
     return chosenArgs;
 }
 
-async function spellscribing(actor) {
+export async function spellscribing(actor) {
     //get chosenArgs from UI later
     const chosenArgs = generateTestingData(actor);
     const dc = calculateDC(chosenArgs.chosenGem, chosenArgs.selectedSpellSlotLevel);
-    await inscriptionCheckSuccessful(actor, dc) ? createSpellGem() : causeSurges(selectedSpellSlotLevel)
+    if(!await inscriptionCheckSuccessful(actor, dc)) {
+        causeSurges(actor, chosenArgs);
+        return;
+    }
+    createSpellGem(actor, chosenArgs);
 }
 
-function causeSurges(selectedSpellSlotLevel) {
 
-}
 
+/**
+ * 
+ * @param {Actor5e} actor 
+ * @param {chosenArgs} chosenArgs 
+ */
 function createSpellGem(actor, chosenArgs) {
+    console.log(chosenArgs.triggerConditions);
+}
 
+/**
+ * 
+ * @param {Actor5e} actor 
+ * @param {chosenArgs} chosenArgs 
+ */
+function causeSurges(actor, chosenArgs) {   //do this later as it requires reworking the WMS stuff
+    ui.notifications.warn("This causes one or more surges! Don't forget to implement that!");
 }
 
 async function inscriptionCheckSuccessful(actor, dc) {
@@ -95,7 +123,11 @@ async function inscriptionCheckSuccessful(actor, dc) {
         targetValue: dc
     };
     const result = await actor.rollSkill("arc", options);
-    return result.total >= result.targetValue ? true : false;
+    console.log(result);
+    console.log(result.total, result.options.targetValue);
+
+    if((result.total >= result.options.targetValue && !result.isFumble) || result.isCritical) return true;
+    else return false;
 }
 
 function calculateDC(chosenGem, selectedSpellSlotLevel) {
@@ -110,7 +142,7 @@ function calculateDC(chosenGem, selectedSpellSlotLevel) {
         5000: 10    //artifact
     };
     const chosenGemValue = chosenGem.system.price?.value || null;
-    if(!chosenGemValue || !Object.keys(priceToDC).includes(chosenGemValue)) {
+    if(!chosenGemValue || !priceToDC[chosenGemValue]) {
         ui.notifications.warn("This gem does not have a valid price.");
         return null;
     }
@@ -121,6 +153,8 @@ function calculateDC(chosenGem, selectedSpellSlotLevel) {
 //**********************************************************************************
 //      Ideas and other random snippets
 //**********************************************************************************
+
+/*
 
 function getScribeableSpells(actor) {
     const spellItems = actor.items.filter(i => i.type === "spell");
@@ -194,3 +228,4 @@ function handleRender(html) {
     });
 }
 
+*/
