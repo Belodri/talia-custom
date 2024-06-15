@@ -1,6 +1,5 @@
 /*
     TODO
-    - Make cantrips work
     - check if changes can be applied only once, after the scroll has been created
 */
 
@@ -15,9 +14,7 @@
  */
 
 export async function createSpellGem(actor, chosenArgs) {
-    const rollData = actor.getRollData();
-
-    const changes = getChanges(chosenArgs, rollData);
+    const changes = getChanges(actor, chosenArgs);
     
     const createScrollConfig = {dialog: false, explanation: "none", level: chosenArgs.selectedSpellSlotLevel};
     const scroll = await getDocumentClass("Item").createScrollFromSpell(chosenArgs.chosenSpell, changes, createScrollConfig);
@@ -33,7 +30,8 @@ export async function createSpellGem(actor, chosenArgs) {
     return newItem;
 }
 
-function getChanges(chosenArgs, rollData) {
+function getChanges(actor, chosenArgs) {
+    const rollData = actor.getRollData();
     //general changes first
     const name = chosenArgs.isTrigger ? `Triggered: ${chosenArgs.chosenSpell.name}` : `Activated: ${chosenArgs.chosenSpell.name}`;
     const changes = {
@@ -54,7 +52,9 @@ function getChanges(chosenArgs, rollData) {
     }
     //save changes
     if(chosenArgs.chosenSpell.system.save.ability) {
-        changes["system.save.dc"] = rollData.attributes.spelldc;
+        //temporary or other bonuses to spell mod, attack rolls, or proficiency are not included
+        changes["system.save.dc"] = rollData.attributes.spellmod + rollData.attributes.prof + 8;
+        //changes["system.save.dc"] = rollData.attributes.spelldc;  --- this would include temporary or passive bonuses as well
         changes["system.save.scaling"] = "flat";
     }
 

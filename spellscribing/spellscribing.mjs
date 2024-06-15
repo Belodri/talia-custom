@@ -58,14 +58,20 @@
 
     - excemption to WMS
     - workaround for eternal spell gem
-    - cantrips can't be upcasted
     - ui/ux
     - macro for creating custom spellgems (choose bonus/save/casterlevel)
     - consume spell slot
-    - Notification to let user know they crafted something  (maybe via message, not sure)
+    (kinda done) - Notification to let user know they crafted something  (maybe via message, not sure)
+    (done) - wait for 3D roll to finish
 */
 
-//
+/*  UI / UX
+    - When selecting a cantrip, deactivate the section for selecting a spell slot level.
+*/
+
+/*  Data Validation
+    - Cantrips cannot be upcasted
+*/
 
 
 import { MODULE } from "../scripts/constants.mjs";
@@ -99,8 +105,6 @@ export function setupSpellscribing() {
  * @property {boolean} isTrigger
  * @property {string} [triggerConditions]
  */
-
-
 function generateTestingData(actor) {
     //testingData
     const chosenArgs = {
@@ -123,7 +127,8 @@ export async function spellscribing(actor) {
         causeSurges(actor, chosenArgs);
         return;
     }
-    createSpellGem(actor, chosenArgs);
+    const resultingItem = await createSpellGem(actor, chosenArgs);
+    ui.notifications.info(`Successfully crafted ${resultingItem.name}`);
 }
 
 
@@ -144,11 +149,18 @@ async function inscriptionCheckSuccessful(actor, dc) {
         flavor: `<b>Inscription Check - DC ${dc}</b>`,
         title: `Inscription Skill Check: ${actor.name}`,
         parts: ["@tools.jeweler.prof.flat", "@details.level"],
-        targetValue: dc
+        targetValue: dc,
+        chatMessage: false,
     };
     const result = await actor.rollSkill("arc", options);
-    console.log(result);
-    console.log(result.total, result.options.targetValue);
+
+    //print message manually to be able to await the dice so nice animation
+    const messageData = {
+        speaker: options.speaker || ChatMessage.getSpeaker({actor: actor}),
+        "flags.dnd5e.roll": {type: "skill", skillId: "arc"}
+    }
+    const msg = await result.toMessage(messageData);
+    await game.dice3d.waitFor3DAnimationByMessageID(msg.id);
 
     if((result.total >= result.options.targetValue && !result.isFumble) || result.isCritical) return true;
     else return false;
