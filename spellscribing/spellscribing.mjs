@@ -16,11 +16,6 @@
 */
 
 /*  DECISIONS
-    - How to handle spellGem use?
-        a) preUseItem hook
-            + Least complicated; just return false if the type is a spell gem
-            + Can't interact badly with WMS as that triggers on useItem hook.
-
     - Rules decisions:
         - Limit the amount of triggered gems one can have active at the same time?
             a) Yes
@@ -76,6 +71,7 @@
 
 import { MODULE } from "../scripts/constants.mjs";
 import { createSpellGem } from "./SpellGem.mjs";
+import { ScribingUI } from "./scribingUi.mjs";
 
 export function initSpellscribing() {
     CONFIG.DND5E.consumableTypes.spellGem = {
@@ -88,7 +84,8 @@ export function initSpellscribing() {
 }
 export function setupSpellscribing() {
     globalThis[MODULE.globalThisName] = {
-        spellscribing
+        spellscribing,
+        testUi
     }
 }
 /*  NOTES
@@ -118,6 +115,17 @@ function generateTestingData(actor) {
     }
     return chosenArgs;
 }
+
+export async function testUi(actor) {
+    new ScribingUI(actor).render(true);
+}
+
+/*  INTERFACE
+    - test if actor has gemstones
+    
+    call scribing ui and pass actor
+*/
+
 
 export async function spellscribing(actor) {
     //get chosenArgs from UI later

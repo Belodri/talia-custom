@@ -1,0 +1,70 @@
+<form>
+    {{!-- Logging --}}
+    {{log this}}
+
+    {{!-- Spell Drop --}}
+    <div class="form-group">
+        <img class="spellIcon" style="max-width: fit-content; width: 32px; height: 32px; " src="{{spell.img}}">
+        <div class="spellName" style="margin-left: 3%; font-family: var(--dnd5e-font-roboto-slab); font-size: var(--font-size-14); font-weight: bold;">
+            <span class="title dnd5e2 name-stacked title">{{spell.name}}</span>
+        </div>
+        <div class="spellBaseLevel" style="text-align: right; max-width: fit-content">
+            <span class="title">{{spell.labels.level}}</span>
+        </div>
+    </div>
+
+    {{!-- Gemstone Select --}}
+    <div class="form-group">
+        <label>Select a Gemstone</label>
+        <div class="form-fields">
+            <select name="gemstoneItemId">
+                {{selectOptions gemstoneChoices selected=selectedGemstoneId}}
+            </select>
+        </div>
+    </div>
+
+    {{!-- Upcast Select --}}
+    <div class="form-group">
+        <label>Scribe at level</label>
+        <div class="form-fields">
+            <select name="slotLevel">
+                {{#select selectedSlotLevel}}
+                {{#each slotChoices}}
+                <option value="{{key}}">{{label}}</option>
+                {{/each}}
+                {{/select}}
+            </select>
+        </div>
+    </div>
+
+    {{!-- Is Trigger? --}}
+    <div class="form-group">
+        <label class="checkbox">
+            <input type="checkbox" name="isTrigger" {{ checked isTrigger }}>
+            Triggered Spellgem
+        </label>
+    </div>
+
+    {{!-- Textbox input --}}
+    {{#if isTrigger}}
+    <div class="form-group" data-tab="triggerConditions">
+        {{editor triggerConditions target="triggerConditions" button=false engine="prosemirror" collaborate=false}}
+    </div>
+    {{/if}}
+
+    {{!-- 
+        Before the button, add info for:
+        - Materials consumed
+
+        Add DC to button
+    --}}
+
+
+    {{!-- Buttons --}}
+    <div class="dialog-buttons">
+        <button class="dialog-button use default bright" data-button="use">
+            <i class="fas fa-magic"></i>
+            Scribe Spellgem
+        </button>
+    </div>
+</form>
