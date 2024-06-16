@@ -88,12 +88,7 @@ export function setupSpellscribing() {
         testUi
     }
 }
-/*  NOTES
 
-    Begin with setting up the part after the user pressed confirm (so I can do ui last);
-        setup testing function that pretends the first part has already been done
-
-*/
 /**
  * @typedef {Object} chosenArgs 
  * @property {Item5e} chosenSpell
@@ -120,23 +115,86 @@ export async function testUi(actor) {
     new ScribingUI(actor).render(true);
 }
 
-/*  INTERFACE
-    - test if actor has gemstones
-    
-    call scribing ui and pass actor
-*/
 
 
-export async function spellscribing(actor) {
+
+
+/**
+ * 
+ * @param {*} actor 
+ * @param {*} chosenArgs 
+ * @returns {Promise<boolean|string>} resolves to true if the scribing was successful, false if not, "surge" if a surge was caused
+ */
+export async function spellscribing(actor, chosenArgs) {
+
+    //test chosenArgs
+    if(!argsValid(actor, chosenArgs)) return false;
+    //consume spell slot
+    await consumeSpellSlot(chosenArgs);
+
     //get chosenArgs from UI later
-    const chosenArgs = generateTestingData(actor);
+    //const chosenArgs = generateTestingData(actor);
     const dc = calculateDC(chosenArgs.chosenGem, chosenArgs.selectedSpellSlotLevel);
     if(!await inscriptionCheckSuccessful(actor, dc)) {
         causeSurges(actor, chosenArgs);
-        return;
+        return "surge";
     }
     const resultingItem = await createSpellGem(actor, chosenArgs);
     ui.notifications.info(`Successfully crafted ${resultingItem.name}`);
+    return true;
+}
+
+async function consumeSpellSlot(chosenArgs) {
+    if(chosenArgs.selectedSpellSlotLevel === 0) return;
+
+    const config = {consumeSpellSlot: true, slotLevel: `spell${chosenArgs.selectedSpellSlotLevel}`};
+    const options = {configureDialog: false};
+    await chosenArgs.chosenSpell.consume(chosenArgs.chosenSpell, config, options);
+}
+
+
+function argsValid(actor, chosenArgs) {
+    console.log({
+        actor: actor, 
+        chosenArgs: chosenArgs
+    });
+    if(!chosenArgs.chosenSpell) {
+        ui.notifications.warn("You need to choose a spell to scribe.");
+        return false;
+    }
+
+    if(chosenArgs.isTrigger && chosenArgs.triggerConditions === "") {
+        ui.notifications.warn(`You need to define a trigger condition when scribing a triggered gem.`);
+        return false;
+    }
+    if(!isValid_spellSlot(actor, chosenArgs)) {
+        ui.notifications.warn(`You need to choose an unspent spell slot.`);
+        return false;
+    }
+    return true;
+}
+
+
+function isValid_spellSlot(actor, chosenArgs) {
+    const rollData = actor.getRollData();
+    console.log({
+        actor: actor, 
+        chosenArgs: chosenArgs,
+        rolLData: rollData
+    });
+    
+    let actorSpellSlot = null;
+    if(typeof chosenArgs.selectedSpellSlotLevel === "number") {
+        if(chosenArgs.selectedSpellSlotLevel === 0) return true;
+        const spellKey = `spell${chosenArgs.selectedSpellSlotLevel}`;
+        actorSpellSlot = rollData.spells[spellKey].value;
+    } else if (typeof chosenArgs.selectedSpellSlotLevel === "string") {
+        actorSpellSlot =  rollData.spells.pact.value;
+    }
+    
+
+    if(typeof actorSpellSlot === "number" && actorSpellSlot >= 1) return true;
+    else return false;
 }
 
 
@@ -174,7 +232,7 @@ async function inscriptionCheckSuccessful(actor, dc) {
     else return false;
 }
 
-function calculateDC(chosenGem, selectedSpellSlotLevel) {
+export function calculateDC(chosenGem, selectedSpellSlotLevel) {
     //DC = Material DC + (Spell Slot Level * mult)
     const mult = 7;
     const priceToDC = {     //go by price in case I forget to set the correct rarity for one

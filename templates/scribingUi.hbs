@@ -1,6 +1,6 @@
 <form>
     {{!-- Logging --}}
-    {{log this}}
+    {{!-- log this --}}
 
     {{!-- Spell Drop --}}
     <div class="form-group">
@@ -45,12 +45,23 @@
         </label>
     </div>
 
-    {{!-- Textbox input --}}
     {{#if isTrigger}}
     <div class="form-group" data-tab="triggerConditions">
+        <textarea name="triggerConditions" placeholder="Enter your trigger condition here.">{{triggerConditions}}</textarea>
+    </div>
+    {{/if}}
+
+
+
+
+    {{!-- Textbox input --}}
+    {{!-- 
+    {{#if isTrigger}}
+    <div class="form-group" data-tab="triggerConditions" style="min-height: 50%; align-items: flex-start; overflow: scroll;">
         {{editor triggerConditions target="triggerConditions" button=false engine="prosemirror" collaborate=false}}
     </div>
     {{/if}}
+    --}}
 
     {{!-- 
         Before the button, add info for:
@@ -60,11 +71,13 @@
     --}}
 
 
+
     {{!-- Buttons --}}
-    <div class="dialog-buttons">
-        <button class="dialog-button use default bright" data-button="use">
-            <i class="fas fa-magic"></i>
-            Scribe Spellgem
-        </button>
+    <div class="form-group">
+        <div class="dialog-buttons">
+            <button class="dialog-button use default bright" data-button="use">
+                Scribe Spellgem {{addedButtonText}}
+            </button>
+        </div>
     </div>
 </form>
