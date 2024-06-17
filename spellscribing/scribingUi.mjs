@@ -107,6 +107,8 @@ export class ScribingUI extends FormApplication {
         } else if(result === "surge") {
             //closes the window if a surge was caused
             await this.close();
+            //close the character sheet too
+            await this.actor.sheet.close();
         }
     }  
 

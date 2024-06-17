@@ -69,7 +69,9 @@
 */
 
 
+import { _foundryHelpers } from "../scripts/_foundryHelpers.mjs";
 import { MODULE } from "../scripts/constants.mjs";
+import { Surge } from "../wildMagic/wildMagic.mjs";
 import { createSpellGem } from "./SpellGem.mjs";
 import { ScribingUI } from "./scribingUi.mjs";
 
@@ -83,9 +85,8 @@ export function initSpellscribing() {
     CONFIG.DND5E.abilityActivationTypes.trigger = "Trigger";
 }
 export function setupSpellscribing() {
-    globalThis[MODULE.globalThisName] = {
-        spellscribing,
-        testUi
+    globalThis[MODULE.globalThisName].spellscribing = {
+        showUI
     }
 }
 
@@ -97,25 +98,11 @@ export function setupSpellscribing() {
  * @property {boolean} isTrigger
  * @property {string} [triggerConditions]
  */
-function generateTestingData(actor) {
-    //testingData
-    const chosenArgs = {
-        chosenSpell: actor.items.find(i => i.type === "spell" && i.name === "Guiding Bolt"),
-        chosenGem: actor.items.find(i => i.type === "loot" && i.system.type?.value === "gem"),   //test other gems by giving the actor only one gem at a time
-        selectedSpellSlotLevel: 5,
-        isTrigger: false
-    }
-    if(chosenArgs.isTrigger) {
-        chosenArgs.triggerConditions = "Example text for trigger condition.";
-    }
-    return chosenArgs;
-}
 
-export async function testUi(actor) {
+
+export function showUI(actor) {
     new ScribingUI(actor).render(true);
 }
-
-
 
 
 
@@ -131,15 +118,16 @@ export async function spellscribing(actor, chosenArgs) {
     if(!argsValid(actor, chosenArgs)) return false;
     //consume spell slot
     await consumeSpellSlot(chosenArgs);
-
-    //get chosenArgs from UI later
-    //const chosenArgs = generateTestingData(actor);
+    
     const dc = calculateDC(chosenArgs.chosenGem, chosenArgs.selectedSpellSlotLevel);
     if(!await inscriptionCheckSuccessful(actor, dc)) {
         causeSurges(actor, chosenArgs);
         return "surge";
     }
     const resultingItem = await createSpellGem(actor, chosenArgs);
+    //consume gem item
+    await _foundryHelpers.consumeItem(chosenArgs.chosenGem, 1);
+
     ui.notifications.info(`Successfully crafted ${resultingItem.name}`);
     return true;
 }
@@ -203,8 +191,27 @@ function isValid_spellSlot(actor, chosenArgs) {
  * @param {Actor5e} actor 
  * @param {chosenArgs} chosenArgs 
  */
-function causeSurges(actor, chosenArgs) {   //do this later as it requires reworking the WMS stuff
-    ui.notifications.warn("This causes one or more surges! Don't forget to implement that!");
+async function causeSurges(actor, chosenArgs) {   //do this later as it requires reworking the WMS stuff
+    const allowedSeverities = {
+        minor: true,
+        moderate: true,
+        severe: true
+    };
+    let amount = 1;
+
+    if(chosenArgs.selectedSpellSlotLevel >= 7) {
+        allowedSeverities.minor = false;
+        allowedSeverities.moderate = false;
+        amount = 3;
+    } else if (chosenArgs.selectedSpellSlotLevel >= 4) {
+        allowedSeverities.minor = false;
+        amount = 2;
+    }
+
+    for(let i = 0; i < amount; i++) {
+        const surge = await Surge.causeSurge(allowedSeverities);
+        await Surge.createChatMessage(surge, actor);
+    }
 }
 
 async function inscriptionCheckSuccessful(actor, dc) {
@@ -251,83 +258,3 @@ export function calculateDC(chosenGem, selectedSpellSlotLevel) {
     const materialDC = priceToDC[chosenGemValue];
     return materialDC + (selectedSpellSlotLevel * mult);
 }
-
-//**********************************************************************************
-//      Ideas and other random snippets
-//**********************************************************************************
-
-/*
-
-function getScribeableSpells(actor) {
-    const spellItems = actor.items.filter(i => i.type === "spell");
-    if(!spellItems.length) {
-        ui.notifications.warn("This actor does not have any spells.");
-        return null;
-    }
-    return spellItems;
-}
-const spellNames = ["Fireball", "Ray of Frost", "Shield"];
-const spellsData = {
-    "Fireball": {
-        spellLevel: 3
-    },
-    "Ray of Frost": {
-        spellLevel: 1
-    },
-    "Shield": {
-        spellLevel: 1
-    }
-};
-const options = spellNames.reduce((acc, spellName) => acc += `<option value="${spellName}">${spellName}</option>`,"");
-
-const content = `
-<form>
-    <div class="form-group">
-        <label>Choose a spell:</label>
-        <div class="form-fields">
-            <select name="chosenSpell" class="chosenSpell">${options}</select>
-        </div>
-    </div>
-    <div class="form-group">
-        <label>Choose a spell level</label>
-        <div class="form-fields">
-            <select class="chosenSpellLevel"></select>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="spellLevel" name="spellLevel">SpellLevel</label>
-    </div>
-</form>
-`;
-
-new Dialog({
-    title: "Scribing",
-    content: content,
-    buttons: {
-        done: {label: "done"},
-    },    
-    render: handleRender,
-    rejectClose: false
-}).render(true);
-
-function handleRender(html) {
-    html.on('change', 'select.chosenSpell', () => { 
-        const selectedSpell = html.find("select.chosenSpell").val();
-        const spellLevel = spellsData[selectedSpell].spellLevel;
-    
-        //change available options for spell slot level       
-        const spellSlotsArray = [0,1,2,3,4,5,6,7,8,9]; 
-        const validSpellSlots = spellSlotsArray.slice(spellLevel);
-               
-        const slotLevelOptions = validSpellSlots.reduce((acc, slotLevel) => acc += `<option value="${slotLevel}">${slotLevel}</option>`,"");
-
-        
-        const newText = `Spell Level: ${spellLevel}`;
-        console.log(newText);
-        html.find("label.spellLevel").text(newText);
-        console.log(slotLevelOptions);
-        html.find("select.chosenSpellLevel").html(slotLevelOptions);
-    });
-}
-
-*/
