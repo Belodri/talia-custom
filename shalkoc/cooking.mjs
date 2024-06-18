@@ -2,13 +2,15 @@ import { _foundryHelpers } from "../scripts/_foundryHelpers.mjs";
 import { taliaEffectHelpers } from "../scripts/effects.mjs";
 import { talia_socket } from "../scripts/socket.mjs";
 
+const debug = false;
+
 export function initCooking() {
     CONFIG.DND5E.lootTypes.spices = {label: "Spices"};
 }
 export function setupCooking() {
     Hooks.on("dnd5e.restCompleted", async (actor, result) => {
         await cookingMain(actor, result);
-        console.log(actor, result);
+        if(debug) console.log(actor, result);
     });
 }
 
@@ -71,7 +73,7 @@ const spicesBuffsDatabase = {
 
 
 async function cookingMain(actor, result) {
-    if(!result.longRest) return;    //only allow on long rests (for now)
+    //if(!result.longRest) return;    //only allow on long rests
     if(!actor.name.includes("Shalkoc")) return;     //only allow Shalkoc to do that
 
     //get chef's tools (to check if he has them and to use as the origin of the active effect later)
@@ -105,7 +107,7 @@ async function cookingMain(actor, result) {
         icon: chosenSpice.img
     });
 
-    console.log(effect);
+    if(debug) console.log(effect);
     //get active users
     /** @type {User5e[]} */
     const users = game.users.players.filter(user => user.active);

@@ -108,8 +108,8 @@ export function showUI(actor) {
 
 /**
  * 
- * @param {*} actor 
- * @param {*} chosenArgs 
+ * @param {Actor5e} actor 
+ * @param {chosenArgs} chosenArgs 
  * @returns {Promise<boolean|string>} resolves to true if the scribing was successful, false if not, "surge" if a surge was caused
  */
 export async function spellscribing(actor, chosenArgs) {
@@ -150,6 +150,21 @@ function argsValid(actor, chosenArgs) {
         ui.notifications.warn("You need to choose a spell to scribe.");
         return false;
     }
+    if(!chosenArgs.chosenGem) {
+        ui.notifications.warn("You need to choose a gem to scribe.");
+        return false;
+    }
+    if(["atwill", "innate", "pact"].includes(chosenArgs.chosenSpell.system.preparation.mode)) {
+        /*
+            See more info here: https://rpg.stackexchange.com/questions/199266/whats-the-difference-between-innate-and-at-will-spell-casting-in-dd-5e
+
+            //add support for pact later if needed
+            disallow:
+            - "atwill", "innate", "pact"
+        */
+        ui.notifications.warn(`Spells of type: "${chosenSpell.system.preparation.mode}" are not supported.`);
+        return false;
+    }
 
     if(chosenArgs.isTrigger && chosenArgs.triggerConditions === "") {
         ui.notifications.warn(`You need to define a trigger condition when scribing a triggered gem.`);
@@ -179,7 +194,6 @@ function isValid_spellSlot(actor, chosenArgs) {
     } else if (typeof chosenArgs.selectedSpellSlotLevel === "string") {
         actorSpellSlot =  rollData.spells.pact.value;
     }
-    
 
     if(typeof actorSpellSlot === "number" && actorSpellSlot >= 1) return true;
     else return false;

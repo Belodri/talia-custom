@@ -16,17 +16,6 @@ export const _foundryHelpers = {
     },
 };
 
-function debugLog(src, ...args) {
-    if(!MODULE.debug) return;
-    const otherArgs = {};
-
-    args.forEach((arg, index) => {
-        otherArgs[`arg${index + 1}`] = arg;
-    });
-
-    console.log({ src, ...otherArgs });
-}
-
 /**
  * Gets the actor object by the actor UUID
  * @param {string} uuid - the actor UUID

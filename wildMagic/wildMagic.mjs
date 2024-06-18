@@ -108,8 +108,8 @@ export class Surge {
         //check npc
         if(item.actor.type === "npc") return this._doesNpcTrigger();
 
-        //all other filters are passed so return true
-        return true;
+        //if it didn't return true by now, it should be false
+        return false;
     }
 
     static _doesNpcTrigger(item) {
