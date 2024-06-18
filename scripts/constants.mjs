@@ -1,3 +1,5 @@
 export const MODULE = {
-    ID: "talia-custom"
+    ID: "talia-custom",
+    globalThisName: "TaliaCustom",
+    debug: true,
 }

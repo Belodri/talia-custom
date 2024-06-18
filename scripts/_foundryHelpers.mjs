@@ -1,3 +1,5 @@
+import { MODULE } from "./constants.mjs";
+
 export const _foundryHelpers = {
     getActorByUuid,
     getActiveUserCharacters,
@@ -13,6 +15,17 @@ export const _foundryHelpers = {
         IN_ONE_WEEK: 604800
     },
 };
+
+function debugLog(src, ...args) {
+    if(!MODULE.debug) return;
+    const otherArgs = {};
+
+    args.forEach((arg, index) => {
+        otherArgs[`arg${index + 1}`] = arg;
+    });
+
+    console.log({ src, ...otherArgs });
+}
 
 /**
  * Gets the actor object by the actor UUID
