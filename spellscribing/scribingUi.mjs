@@ -33,12 +33,11 @@ export class ScribingUI extends FormApplication {
         });
     }
 
+    _canDragDrop(selector) {
+        return true;
+    }
+
     async _updateObject(event, formData) {
-        console.log({
-            this: this, 
-            event: event, 
-            formData:formData
-        });
         this.chosenData.selectedGemstoneId = formData.gemstoneItemId;
         this.chosenData.isTrigger = formData.isTrigger;
         this.chosenData.selectedSlotLevel = formData.slotLevel;
