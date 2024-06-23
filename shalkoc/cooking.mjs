@@ -70,7 +70,7 @@ const spicesBuffsDatabase = {
     },
 }
 
-
+//TODO add to api so it can be called without having to take a rest
 
 async function cookingMain(actor, forced = true) {
     if(forced && !actor.name.includes("Shalkoc")) return;     //only allow Shalkoc to do that
