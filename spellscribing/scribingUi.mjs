@@ -14,8 +14,9 @@ export class ScribingUI extends FormApplication {
         this.gemstonesSorted = this.getGemstonesSorted();
         this.chosenData = {};
         this.chosenData.gemstoneChoices = this.getGemstoneChoices();
-        this.chosenData.selectedGemstoneId = this.gemstonesSorted[0]._id;
+        this.chosenData.selectedGemstoneId = this.gemstonesSorted[0]?._id || "";
     }
+
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             //overrides
@@ -32,12 +33,11 @@ export class ScribingUI extends FormApplication {
         });
     }
 
+    _canDragDrop(selector) {
+        return true;
+    }
+
     async _updateObject(event, formData) {
-        console.log({
-            this: this, 
-            event: event, 
-            formData:formData
-        });
         this.chosenData.selectedGemstoneId = formData.gemstoneItemId;
         this.chosenData.isTrigger = formData.isTrigger;
         this.chosenData.selectedSlotLevel = formData.slotLevel;
@@ -50,6 +50,15 @@ export class ScribingUI extends FormApplication {
     }
 
     render(force=false, options = {}) {
+        /*
+        //add clause for when the user doesn't have any gemstones
+        //I don't need this if the user can't scribe at all without gems
+        if(!this.gemstonesSorted.length) {
+            ui.notifications.warn("You don't have any gemstones to scribe.");
+            if(!this.rendered) return;
+            setTimeout(() => this.close(), 0);
+        }
+        */
         this._updateButtonText();
         console.log(this);
         return super.render(force, options);
@@ -68,12 +77,24 @@ export class ScribingUI extends FormApplication {
 
     async _onDrop(event) {
         const data = TextEditor.getDragEventData(event);
+
+        //prevents dropping if there is no gemstone available
+        if(this.chosenData.selectedGemstoneId === "") {
+            ui.notifications.info("You don't have any gemstones to scribe.")
+            return;
+        }
         //only allow Items that are embedded on actor
         if(data.type !== "Item" || !data.uuid.startsWith(this.actor.uuid)) return;
 
         //get the dropped item, check if it's a spell, and if so, bind it to this
         const droppedItem = await fromUuid(data.uuid);
         if(droppedItem.type !== "spell") return;
+
+        //check preparation mode
+        if (["atwill", "innate", "pact"].includes(droppedItem.system?.preparation?.mode)) {
+            ui.notifications.warn(`Spells of type: "${droppedItem.system.preparation.mode}" are not supported.`);
+            return;
+        }
 
         this.chosenData.spell = droppedItem;
         this.chosenData.slotChoices = this.getSpellSlotChoices();
@@ -108,12 +129,14 @@ export class ScribingUI extends FormApplication {
             //closes the window if a surge was caused
             await this.close();
             //close the character sheet too
+            //maybe minimise instead?
             await this.actor.sheet.close();
         }
     }  
 
     async getData() {
-        
+
+
         const data = {
             spell: {
                 name: "Drop your spell here",
@@ -131,21 +154,29 @@ export class ScribingUI extends FormApplication {
 
             addedButtonText: ""
         };
+        if(this.chosenData.selectedGemstoneId === null) {
+            this.close({submitOnClose: false});
+        }
+
         return foundry.utils.mergeObject(data, this.chosenData);
     }
 
     getSpellSlotChoices() {
+        const rollData = this.actor.getRollData();
         const chosenSpell = this.chosenData.spell;
         if(!chosenSpell) {
-            return {noSpell: "No Spell Chosen"};
-        } else if (chosenSpell.system.level === 0) {
+            return {noSpell: {label: "No Spell Chosen", key: null}}
+        }
+        if(chosenSpell.system.level === 0) {
             return {0: {
                 label: "Cantrip",
                 key: 0
             }}
         }
+        if(!this._getHighestSpellSlotLevel()) {
+            return {noSlots: {label: "No Spell Slots", key: null}}
+        }
 
-        const rollData = this.actor.getRollData();
         const choices = Object.entries(rollData.spells).reduce((acc, [key, value]) => {
             if (key === "spell0" 
                 || value.max === 0 
@@ -168,6 +199,25 @@ export class ScribingUI extends FormApplication {
         }
     }
     /**
+     * @returns {number} the highest spell slot the actor has access to overall, or 0 if access to no spell slots
+     */
+    _getHighestSpellSlotLevel() {
+        const rollData = this.actor.getRollData();
+        const spells = rollData.spells;
+        let highestLevel = 0; // Initialize to 0 to handle the case where no valid level is found
+    
+        for (const spell in spells) {
+            if (spells.hasOwnProperty(spell)) {
+                const { level, max } = spells[spell];
+                if (max >= 1 && level > highestLevel) {
+                    highestLevel = level;
+                }
+            }
+        }
+        return highestLevel;
+    }
+
+    /**
      * Call this method when an item is scribed so it can recalculate what items & spellslots the actor has
      */
     onScribing_recheckData() {
@@ -183,6 +233,11 @@ export class ScribingUI extends FormApplication {
     }
 
     getGemstoneChoices() {
+        if(!this.gemstonesSorted.length) {
+            return {
+                "noGemstone" : "No gemstones available."
+            }
+        }
         return this.gemstonesSorted.reduce((acc, item) => {
             acc[item.id] = item.name;
             return acc;

@@ -5,6 +5,7 @@ export const _foundryHelpers = {
     getActiveUserCharacters,
     consumeItem,
     displayItemWithoutEffects,
+    getUserIdsArray,
     SECONDS: {
         IN_ONE_MINUTE: 60,
         IN_TEN_MINUTES: 600,
@@ -16,15 +17,16 @@ export const _foundryHelpers = {
     },
 };
 
-function debugLog(src, ...args) {
-    if(!MODULE.debug) return;
-    const otherArgs = {};
-
-    args.forEach((arg, index) => {
-        otherArgs[`arg${index + 1}`] = arg;
+/**
+ * Retrieves an array of user IDs for all active players.
+ * 
+ * @returns {string[]} An array of user IDs of all active players.
+ */
+function getUserIdsArray() {
+    //get user _id from all active users
+    return game.users.players.map((user) => {
+        if(user.active) return user._id
     });
-
-    console.log({ src, ...otherArgs });
 }
 
 /**
@@ -53,7 +55,7 @@ function getActiveUserCharacters() {
 }
 
 /**
- * Consumes a specified amount of an item, updating its quantity or uses accordingly.
+ * Consumes a specified amount of an item, updating its quantity or uses accordingly. Optionally also deletes the item upon reaching 0 quantity.
  * If the item doesn't have uses, only consumes quantity.
  * If the item has uses, it will decrement the uses first and decrease the quantity only when the uses are exhausted.
  * The consumeCost parameter determines how much is consumed with each step.
@@ -61,16 +63,21 @@ function getActiveUserCharacters() {
  * @param {Item5e} item - The item to be consumed.
  * @param {number} amountToConsume - The amount of the item to consume.
  * @param {number} [consumeCost=1] - The cost per step for consuming the item.
+ * @param {boolean} deleteOnEmpty - Should the item be deleted if it's quantity reaches 0?
  * @returns {Promise|null} A promise that resolves when the item's quantity or uses have been updated, or null if not enough uses & quantity are available to be consumed.
  */
-async function consumeItem(item, amountToConsume, consumeCost = 1) {
+async function consumeItem(item, amountToConsume, consumeCost = 1, deleteOnEmpty = false) {
     const actualConsume = amountToConsume * consumeCost;
     const quantity = item.system.quantity;
 
     if(!item.hasLimitedUses) {  //item does not have uses, only quantity
         if(quantity < actualConsume) return null;
         const quant = Math.max(quantity - actualConsume, 0);
-        return item.update({"system.quantity": quant});
+        if(quant === 0 && deleteOnEmpty === true) {
+            return item.delete();
+        } else {
+            return item.update({"system.quantity": quant});
+        }
 
     } else {    //item has uses
         const usesMax = item.system.uses.max;
@@ -87,7 +94,12 @@ async function consumeItem(item, amountToConsume, consumeCost = 1) {
                 quant--;
             }
         }
-        return item.update({"system.uses.value": usesValue, "system.quantity": Math.max(quant, 0)});
+        const quantNew = Math.max(quant, 0);
+        if(quantNew === 0 && deleteOnEmpty === true) {
+            return item.delete();
+        } else {
+            return item.update({"system.uses.value": usesValue, "system.quantity": quantNew});
+        }
     }
 }
 

@@ -108,23 +108,29 @@ export function showUI(actor) {
 
 /**
  * 
- * @param {*} actor 
- * @param {*} chosenArgs 
+ * @param {Actor5e} actor 
+ * @param {chosenArgs} chosenArgs 
  * @returns {Promise<boolean|string>} resolves to true if the scribing was successful, false if not, "surge" if a surge was caused
  */
 export async function spellscribing(actor, chosenArgs) {
 
     //test chosenArgs
     if(!argsValid(actor, chosenArgs)) return false;
-    //consume spell slot
-    await consumeSpellSlot(chosenArgs);
+    
     
     const dc = calculateDC(chosenArgs.chosenGem, chosenArgs.selectedSpellSlotLevel);
+
+
+
+
     if(!await inscriptionCheckSuccessful(actor, dc)) {
         causeSurges(actor, chosenArgs);
         return "surge";
     }
     const resultingItem = await createSpellGem(actor, chosenArgs);
+
+    //consume spell slot
+    await consumeSpellSlot(chosenArgs);
     //consume gem item
     await _foundryHelpers.consumeItem(chosenArgs.chosenGem, 1);
 
@@ -148,6 +154,21 @@ function argsValid(actor, chosenArgs) {
     });
     if(!chosenArgs.chosenSpell) {
         ui.notifications.warn("You need to choose a spell to scribe.");
+        return false;
+    }
+    if(!chosenArgs.chosenGem) {
+        ui.notifications.warn("You need to choose a gem to scribe.");
+        return false;
+    }
+    if(["atwill", "innate", "pact"].includes(chosenArgs.chosenSpell.system.preparation.mode)) {
+        /*
+            See more info here: https://rpg.stackexchange.com/questions/199266/whats-the-difference-between-innate-and-at-will-spell-casting-in-dd-5e
+
+            //add support for pact later if needed
+            disallow:
+            - "atwill", "innate", "pact"
+        */
+        ui.notifications.warn(`Spells of type: "${chosenSpell.system.preparation.mode}" are not supported.`);
         return false;
     }
 
@@ -179,7 +200,6 @@ function isValid_spellSlot(actor, chosenArgs) {
     } else if (typeof chosenArgs.selectedSpellSlotLevel === "string") {
         actorSpellSlot =  rollData.spells.pact.value;
     }
-    
 
     if(typeof actorSpellSlot === "number" && actorSpellSlot >= 1) return true;
     else return false;
@@ -235,8 +255,55 @@ async function inscriptionCheckSuccessful(actor, dc) {
     const msg = await result.toMessage(messageData);
     await game.dice3d.waitFor3DAnimationByMessageID(msg.id);
 
-    if((result.total >= result.options.targetValue && !result.isFumble) || result.isCritical) return true;
-    else return false;
+    //check for success
+    if((result.total >= result.options.targetValue && !result.isFumble) || result.isCritical) {
+        return true;
+    } else {
+        //this will eventually resolve to either true or false so it's safe to return to the UI
+        return await handleInspirations(actor, dc);
+    }
+}
+
+/**
+ * If the actor's owner has inspirations it asks if they wish to spend them.
+ * Should they choose so, it subtracts an inspiration and requests another roll.
+ * @param {Actor5e} actor 
+ * @param {number} dc 
+ * @returns {Promise<false|inscriptionCheckSuccessful} 
+ */
+async function handleInspirations(actor, dc) {
+    const soInspired = {
+        scope: "so-inspired",
+        flagKey: "inspirationCount"
+    };
+
+    const actorOwner = game.users.find(u => u.character?.uuid === actor.uuid);
+    if(!actorOwner) return false;
+
+    const currentInspirationCount =  actorOwner.getFlag(soInspired.scope, soInspired.flagKey);
+    console.log({currentInspirationCount});
+    if(!currentInspirationCount) return false;   //returns early if it's 0 or undefined
+    
+    const spendInspiration = await Dialog.confirm({
+        title: "Inscription check",
+        content: `Do you want to spend one inspiration to reroll this check?`,
+        yes: () => true,
+        no: () => false,
+        defaultYes: false,
+    });
+
+    if(!spendInspiration) return false;
+    else {
+        actorOwner.setFlag(soInspired.scope, soInspired.flagKey, currentInspirationCount - 1);
+        ChatMessage.create({
+            user: actorOwner,
+            flavor: actor.name + " has used a point of inspiration!",
+        });
+        if(actor.sheet.rendered) {
+            actor.sheet.render();
+        }
+        return await inscriptionCheckSuccessful(actor, dc);
+    }
 }
 
 export function calculateDC(chosenGem, selectedSpellSlotLevel) {

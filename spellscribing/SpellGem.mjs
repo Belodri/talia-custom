@@ -1,9 +1,3 @@
-/*
-    TODO
-    - check if changes can be applied only once, after the scroll has been created
-*/
-
-
 /**
  * @typedef {Object} chosenArgs 
  * @property {Item5e} chosenSpell
