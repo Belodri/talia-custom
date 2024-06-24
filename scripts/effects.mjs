@@ -60,6 +60,7 @@ function createActiveEffect({
     atlChanges = []
 }) {
     changes.push(...atlChanges);
+    // TODO isEmpty is not defined
     let effectDuration = isEmpty(duration)
       ? {
           rounds,
