@@ -2,6 +2,13 @@
 ## Added
 - Transferred the playerChangelog from TaliaCampaign repo to this repo. TaliaCampaign repo is slowly getting deprecated in favor of this one.
 
+## Fixed
+- Spells granted by spellbooks no longer duplicate when accessed by client and GM at the same time.
+- Mantle of the Arcane Trickster again applies it's active effect when Mage Armor is being cast on the wearer if he's attuned to the mantle.
+
+## Notes
+- Rod of Hellish Flames is working as intended. When used it consumes it's use and applies an active effect to the user that maximises the damage of the next spell that deals fire or necrotic damage.
+
 # 24/06/2024
 
 ## Added
