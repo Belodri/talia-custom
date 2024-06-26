@@ -46,6 +46,9 @@ export class Spellbooks {
 
     static _setup() {
         Hooks.on("updateItem", (item, data, options, userId) => {
+            //to prevent the code from executing on other clients, check for userId
+            if(game.user.id !== userId) return; 
+
             if(item.type !== "equipment" || item.system?.type?.value !== "spellbook") return;
         
             if(data.system?.equipped === true) {
