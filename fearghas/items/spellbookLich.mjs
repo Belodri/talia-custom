@@ -1,7 +1,10 @@
 import { Spellbooks } from "./spellbooks.mjs";
 
-export function setup_spellbookLich() {
-    Hooks.on("dnd5e.useItem", spellbookLichMain);
+export default {
+    _onInit() {},
+    _onSetup() {
+        Hooks.on("dnd5e.useItem", spellbookLichMain);
+    }
 }
 
 async function spellbookLichMain(item, config, options) {

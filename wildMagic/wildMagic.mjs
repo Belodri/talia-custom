@@ -5,7 +5,36 @@
 
 
 import { surgesTable } from "./surgesTable.mjs";
-import { MODULE } from "../scripts/constants.mjs";
+import { TaliaCustomAPI } from "../scripts/api.mjs";
+
+export default {
+    _onInit() {
+        //add "Wild" item property
+        CONFIG.DND5E.itemProperties.wild = {
+            abbreviation: "w",
+            label: "Wild"
+        };
+        //add item property "wild" to all item types
+        CONFIG.DND5E.validProperties.consumable.add("wild");
+        CONFIG.DND5E.validProperties.container.add("wild");
+        CONFIG.DND5E.validProperties.equipment.add("wild");
+        CONFIG.DND5E.validProperties.feat.add("wild");
+        CONFIG.DND5E.validProperties.loot.add("wild");
+        CONFIG.DND5E.validProperties.weapon.add("wild");
+        CONFIG.DND5E.validProperties.spell.add("wild");
+        CONFIG.DND5E.validProperties.tool.add("wild");
+    },
+    _onSetup() {
+        TaliaCustomAPI.add({wildMagic: {Surge}});
+
+        Hooks.on("dnd5e.useItem", async (item, config, options) => {
+            if(!Surge.canTrigger(item) || !Surge.surgeCheck()) return;
+            const surge = await Surge.causeSurge();
+            const actor = item.actor || canvas.tokens.controlled[0]?.actor;
+            await Surge.createChatMessage(surge, actor);
+        });
+    }
+}
 
 export class Surge {
     /**
@@ -134,32 +163,3 @@ export class Surge {
 
 }
 
-export function initWildMagic() {
-    //add "Wild" item property
-    CONFIG.DND5E.itemProperties.wild = {
-        abbreviation: "w",
-        label: "Wild"
-    };
-    //add item property "wild" to all item types
-    CONFIG.DND5E.validProperties.consumable.add("wild");
-    CONFIG.DND5E.validProperties.container.add("wild");
-    CONFIG.DND5E.validProperties.equipment.add("wild");
-    CONFIG.DND5E.validProperties.feat.add("wild");
-    CONFIG.DND5E.validProperties.loot.add("wild");
-    CONFIG.DND5E.validProperties.weapon.add("wild");
-    CONFIG.DND5E.validProperties.spell.add("wild");
-    CONFIG.DND5E.validProperties.tool.add("wild");
-}
-
-export function setupWildMagic() {
-    globalThis[MODULE.globalThisName].wildMagic = {
-        Surge
-    }
-
-    Hooks.on("dnd5e.useItem", async (item, config, options) => {
-        if(!Surge.canTrigger(item) || !Surge.surgeCheck()) return;
-        const surge = await Surge.causeSurge();
-        const actor = item.actor || canvas.tokens.controlled[0]?.actor;
-        await Surge.createChatMessage(surge, actor);
-    });
-}

@@ -2,14 +2,16 @@ import { _foundryHelpers } from "../scripts/_foundryHelpers.mjs";
 
 const debug = false;
 
-export function initCooking() {
-    CONFIG.DND5E.lootTypes.spices = {label: "Spices"};
-}
-export function setupCooking() {
-    Hooks.on("dnd5e.restCompleted", async (actor, result) => {
-        await cookingMain(actor);
-        if(debug) console.log(actor, result);
-    });
+export default {
+    _onInit() {
+        CONFIG.DND5E.lootTypes.spices = {label: "Spices"};
+    },
+    _onSetup() {
+        Hooks.on("dnd5e.restCompleted", async (actor, result) => {
+            await cookingMain(actor);
+            if(debug) console.log({actor, result});
+        });
+    }
 }
 
 const spicesBuffsDatabase = {

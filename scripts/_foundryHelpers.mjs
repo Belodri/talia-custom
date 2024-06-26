@@ -1,5 +1,3 @@
-import { MODULE } from "./constants.mjs";
-
 export const _foundryHelpers = {
     getActorByUuid,
     getActiveUserCharacters,

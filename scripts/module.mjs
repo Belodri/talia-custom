@@ -1,14 +1,20 @@
 import { MODULE } from "./constants.mjs"
 import { setupSocket } from "./socket.mjs";
-import { createAPI } from "./api.mjs";
+import { TaliaCustomAPI } from "./api.mjs";
 
 
-import { initWildMagic, setupWildMagic } from "../wildMagic/wildMagic.mjs";
-import { initCooking, setupCooking } from "../shalkoc/cooking.mjs";
-import { setupChef } from "../shalkoc/Feats/chef.mjs";
-import { initSpellscribing, setupSpellscribing } from "../spellscribing/spellscribing.mjs";
-import { setup_spellbookLich } from "../fearghas/items/spellbookLich.mjs";
-import { Spellbooks } from "../fearghas/items/spellbooks.mjs";
+
+//import { setup_spellbookLich } from "../fearghas/items/spellbookLich.mjs";
+//import { Spellbooks } from "../fearghas/items/spellbooks.mjs";
+
+
+import beastSpirits from "../aviana/items/beastSpirits.mjs";
+import wildMagic from "../wildMagic/wildMagic.mjs";
+import cooking from "../shalkoc/cooking.mjs";
+import chef from "../shalkoc/Feats/chef.mjs";
+import spellscribing from "../spellscribing/spellscribing.mjs";
+import spellbooks from "../fearghas/items/spellbooks.mjs";
+import spellbookLich from "../fearghas/items/spellbookLich.mjs";
 
 
 Hooks.once("socketlib.ready", () => {
@@ -16,19 +22,22 @@ Hooks.once("socketlib.ready", () => {
 });
 
 Hooks.once("init", () => {
-    initWildMagic();
-    initCooking();
-    initSpellscribing();
-    Spellbooks._init();
+    wildMagic._onInit();
+    cooking._onInit();
+    beastSpirits._onInit();
+    spellscribing._onInit();
+    spellbooks._onInit();
 });
 
 Hooks.once("setup", () => {
-    createAPI();
-    setupCooking();
-    setupChef();
-    setupSpellscribing();
-    setupWildMagic();
-    Spellbooks._setup();
-    setup_spellbookLich();
+    TaliaCustomAPI._setup();
+    cooking._onSetup();
+    wildMagic._onSetup();
+    beastSpirits._onSetup();
+    chef._onSetup();
+    spellscribing._onSetup();
+    spellbooks._onSetup();
+    spellbookLich._onSetup();
+
     console.log(`${MODULE.ID} set up.`);
 });
