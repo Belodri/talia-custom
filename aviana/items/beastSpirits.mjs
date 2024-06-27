@@ -59,10 +59,6 @@ export default {
     }
 }
 
-/*
-    line of sight
-    https://discord.com/channels/170995199584108546/699750150674972743/1153243185653497856
-*/
 
 
 async function trainingDialog(actor) {
