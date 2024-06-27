@@ -51,7 +51,8 @@ const blessingsDatabase = {
 
 export default {
     _onInit() {
-        CONFIG.DND5E.featureTypes.class.subtypes.beastBlessing = "Beast Spirit's Blessing";
+        CONFIG.DND5E.featureTypes.class.subtypes.beastBlessing = "Spirit Beast's Blessing";
+        CONFIG.DND5E.featureTypes.class.subtypes.beastPower = "Spirit Beast Power";
     },
     _onSetup() {
         TaliaCustomAPI.add({trainingDialog});
