@@ -70,10 +70,26 @@
 
 
 import { _foundryHelpers } from "../scripts/_foundryHelpers.mjs";
+import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
 import { Surge } from "../wildMagic/wildMagic.mjs";
 import { createSpellGem } from "./SpellGem.mjs";
 import { ScribingUI } from "./scribingUi.mjs";
+
+export default {
+    _onInit() {
+        CONFIG.DND5E.consumableTypes.spellGem = {
+            label: "Spell Gem",
+            subtypes: {
+                eternal: "Eternal"
+            }
+        };
+        CONFIG.DND5E.abilityActivationTypes.trigger = "Trigger";
+    },
+    _onSetup() {
+        TaliaCustomAPI.add({spellscribing: {showUI}});
+    }
+}
 
 export function initSpellscribing() {
     CONFIG.DND5E.consumableTypes.spellGem = {

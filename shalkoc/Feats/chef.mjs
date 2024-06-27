@@ -1,4 +1,5 @@
 import { _foundryHelpers } from "../../scripts/_foundryHelpers.mjs";
+import { TaliaCustomAPI } from "../../scripts/api.mjs";
 
 /*
     As part of a short rest, you can cook a quick meal for your party, provided you have ingredients and cook's utensils on hand. 
@@ -19,55 +20,62 @@ import { _foundryHelpers } from "../../scripts/_foundryHelpers.mjs";
             - minPlayerPermission: 3    //owner
 */
 
-export function setupChef() {
-    Hooks.on("dnd5e.restCompleted", async (actor, result) => {
-        if(!actor.name.includes("Shalkoc")) return;
+export default {
+    _onInit() {},
+    _onSetup() {
+        TaliaCustomAPI.add({chefFeat: chefFeatCustomCall});
 
-        if(result.longRest) {
-            if(!await confirmDialog("long")) return;
-            longRest(actor);
-        } else {
-            if(!await confirmDialog("short")) return;
-            shortRest(actor);
-        }
-    });
-
-    Hooks.on("taliaCustom.chefFeat", async (actor) => {
-        //dialog with choice between short rest, long rest, or item card only
-        const choice = await Dialog.wait({
-            title: "Chef",
-            content: "",
-            buttons: {
-                shortRest: {
-                    label: "Short Rest",
-                    callback: () => 'shortRest'
-                },
-                longRest: {
-                    label: "Long Rest",
-                    callback: () => "longRest"
-                },
-                itemCard: {
-                    label: "Chat Only",
-                    callback: () => "itemCard"
-                }
-            },
-            close: () => false,
-            default: "shortRest"
+        Hooks.on("dnd5e.restCompleted", async (actor, result) => {
+            if(!actor.name.includes("Shalkoc")) return;
+    
+            if(result.longRest) {
+                if(!await confirmDialog("long")) return;
+                longRest(actor);
+            } else {
+                if(!await confirmDialog("short")) return;
+                shortRest(actor);
+            }
         });
 
-        switch(choice) {
-            case 'shortRest': 
-                shortRest(actor); 
-                break;
-            case 'longRest': 
-                longRest(actor); 
-                break;
-            case "itemCard": 
-                const chefItem = actor.items.find(i => i.name === "Chef");
-                chefItem.displayCard();
-                break;
-        }
+
+    }
+}
+
+async function chefFeatCustomCall(actor) {
+    //dialog with choice between short rest, long rest, or item card only
+    const choice = await Dialog.wait({
+        title: "Chef",
+        content: "",
+        buttons: {
+            shortRest: {
+                label: "Short Rest",
+                callback: () => 'shortRest'
+            },
+            longRest: {
+                label: "Long Rest",
+                callback: () => "longRest"
+            },
+            itemCard: {
+                label: "Chat Only",
+                callback: () => "itemCard"
+            }
+        },
+        close: () => false,
+        default: "shortRest"
     });
+
+    switch(choice) {
+        case 'shortRest': 
+            shortRest(actor); 
+            break;
+        case 'longRest': 
+            longRest(actor); 
+            break;
+        case "itemCard": 
+            const chefItem = actor.items.find(i => i.name === "Chef");
+            chefItem.displayCard();
+            break;
+    }
 }
 
 async function confirmDialog(restType) {

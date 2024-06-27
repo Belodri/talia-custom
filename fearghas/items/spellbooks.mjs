@@ -6,6 +6,25 @@ import { MODULE } from "../../scripts/constants.mjs";
     - same as here but store a reference to the granted items inside a flag on the actor
     - 
 */
+export default {
+    _onInit() {
+        CONFIG.DND5E.equipmentTypes.spellbook = CONFIG.DND5E.miscEquipmentTypes.spellbook = "Spellbook";
+    },
+    _onSetup() {
+        Hooks.on("updateItem", (item, data, options, userId) => {
+            //to prevent the code from executing on other clients, check for userId
+            if(game.user.id !== userId) return; 
+
+            if(item.type !== "equipment" || item.system?.type?.value !== "spellbook") return;
+        
+            if(data.system?.equipped === true) {
+                Spellbooks.onEquip(item)
+            } else if (data.system?.equipped === false) {
+                Spellbooks.onUnequip(item);
+            }
+        });
+    }
+}
 
 export class Spellbooks {
     /**
@@ -37,27 +56,8 @@ export class Spellbooks {
         }
         
     };
-    static customItemsPackKey = "talia-custom.customItems";
     static spellItemFlag = `grantedByUuid`;    //the flag to be added to each spell that's being added by a spellbook
 
-    static _init() {
-        CONFIG.DND5E.equipmentTypes.spellbook = CONFIG.DND5E.miscEquipmentTypes.spellbook = "Spellbook";
-    }
-
-    static _setup() {
-        Hooks.on("updateItem", (item, data, options, userId) => {
-            //to prevent the code from executing on other clients, check for userId
-            if(game.user.id !== userId) return; 
-
-            if(item.type !== "equipment" || item.system?.type?.value !== "spellbook") return;
-        
-            if(data.system?.equipped === true) {
-                this.onEquip(item)
-            } else if (data.system?.equipped === false) {
-                this.onUnequip(item);
-            }
-        });
-    }
 
     /**
      * 
@@ -70,7 +70,7 @@ export class Spellbooks {
         const spellList = this.bookDatabase[item.name].spellList;
 
         //create an array of spells that the current spellbook should contain from the compendium
-        const spells = await game.packs.get(this.customItemsPackKey).getDocuments({name__in: spellList});
+        const spells = await game.packs.get(this[MODULE.customItemsPackKey]).getDocuments({name__in: spellList});
 
         //warn which spells have not been found in the compendium (if any)
         if(!spells || spellList.length !== spells.length) {
