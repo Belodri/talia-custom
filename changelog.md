@@ -1,3 +1,14 @@
+# 27/06/2024
+## Added
+- Beast Spirit: Tiger
+    - Spirit of the Tiger
+    - Ambush Predator
+    - Pouncing Strikes
+    - Scent of Blood
+    - Solitary Hunter
+    - Rip and Tear
+
+
 # 26/06/2024
 ## Added
 - Transferred the playerChangelog from TaliaCampaign repo to this repo. TaliaCampaign repo is slowly getting deprecated in favor of this one.
@@ -10,7 +21,6 @@
 - Rod of Hellish Flames is working as intended. When used it consumes it's use and applies an active effect to the user that maximises the damage of the next spell that deals fire or necrotic damage.
 
 # 24/06/2024
-
 ## Added
 ### Magic Items
 - Charlatan's Die for Plex
