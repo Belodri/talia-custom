@@ -1,9 +1,19 @@
+# 27/06/2024
+## Added
+- Beast Spirit: Tiger
+    - Spirit of the Tiger
+    - Ambush Predator
+    - Pouncing Strikes
+    - Scent of Blood
+    - Solitary Hunter
+    - Rip and Tear
+
+
 # 26/06/2024
 ## Added
 - Transferred the playerChangelog from TaliaCampaign repo to this repo. TaliaCampaign repo is slowly getting deprecated in favor of this one.
 
 # 24/06/2024
-
 ## Added
 ### Magic Items
 - Charlatan's Die for Plex
