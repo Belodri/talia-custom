@@ -31,8 +31,8 @@ const blessingsDatabase = {
     "Spirit of the Tiger": {
         "Ambush Predator": 6,
         "Pouncing Strikes": 6,
-        "Thrash": 6,
-        "Solitary Hunter": 10,
+        "Scent of Blood": 6,
+        "Solitary Hunter": 10,      //isolated check is inside BaB on the item
         "Rip and Tear": 14,
     },     
     "Spirit of the Wolf": {
@@ -59,6 +59,10 @@ export default {
     }
 }
 
+/*
+    line of sight
+    https://discord.com/channels/170995199584108546/699750150674972743/1153243185653497856
+*/
 
 
 async function trainingDialog(actor) {
