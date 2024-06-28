@@ -1,3 +1,14 @@
+# 28/06/2024
+## Added
+- Beast Spirit: Bear
+    - Spirit of the Bear
+    - Intimidating Presence
+    - Savage Taunt
+    - Compelled Duel
+    - Ironfur
+    - Survival of the Fittest
+
+
 # 27/06/2024
 ## Added
 - Beast Spirit: Tiger
