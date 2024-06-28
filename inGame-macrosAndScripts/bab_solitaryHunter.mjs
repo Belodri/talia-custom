@@ -9,6 +9,7 @@ if(targets.size !== 1) return false;    //require exactly 1 target
 
 const target = targets.first();
 
+if(target.id === token.id) return false;
 
 if(!isIsolated(target) || !isIsolated(token)) return false;
 else return true;  
