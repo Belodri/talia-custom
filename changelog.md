@@ -1,3 +1,15 @@
+# 29/06/2024
+## Added
+- Jump distance in feet is now accessible within each actor's rollData under `actor.getRollData().talia.jumpDistance`. The number will always be a multiple of 5 (or 0).
+- Three new Active Effects flags have been added:
+    - `"flags.talia-custom.jumpDist.bonus"` | ADD | NUMBER  
+        A number of ft to be added to the actor's maximum jump distance, can be negative.
+    - `"flags.talia-custom.jumpDist.countDoubled"` | ADD | NUMBER  
+        A number of times the sum of base distance + bonus should be doubled
+    - `"flags.talia-custom.jumpDist.countHalved"` | ADD | NUMBER  
+        A number of times the sum of base distance + bonus should be halved
+
+
 # 28/06/2024
 ## Added
 - Beast Spirit: Bear
