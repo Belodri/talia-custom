@@ -10,6 +10,9 @@
     - Unstoppable
 - Active Beast Spirit can now be changed by activating the chosen spirit's feature item.
 
+## Fixed
+- All characters now correctly show and use the OneDnD exhaustion system.
+
 # 29/06/2024
 ## Added
 - Jump distance in feet is now accessible within each actor's rollData under `actor.getRollData().talia.jumpDistance`. The number will always be a multiple of 5 (or 0).
