@@ -55,7 +55,50 @@ export default {
         CONFIG.DND5E.featureTypes.class.subtypes.beastPower = "Spirit Beast Power";
     },
     _onSetup() {
-        TaliaCustomAPI.add({trainingDialog});
+        TaliaCustomAPI.add({
+            trainingDialog,
+            activateSpirit
+        });
+    }
+}
+
+/*  ItemMacro for items of type "Spirit Beast's Blessing"
+    
+    await TaliaCustom.activateSpirit(actor, item.name);
+    return true;
+*/
+
+async function activateSpirit(actor, chosenSpirit) {
+    const rollData = actor.getRollData();
+    const barbLevel = rollData.classes?.barbarian?.levels || null;
+    if(!barbLevel) return;
+    
+    const blessingItemsToAdd = Object.entries(blessingsDatabase[chosenSpirit])
+        .filter(([key, value]) => value <= barbLevel && !actor.items.getName(key))
+        .map(([key, value]) => key);
+    if(!blessingItemsToAdd.length) return;
+
+    /* Remove old items */
+
+    const allBlessingItems = Object.values(blessingsDatabase).flatMap(spirit => Object.keys(spirit));
+    const blessingItemIDsOnActor = actor.items
+        .filter(i => allBlessingItems.includes(i.name))
+        .map(i => i.id);
+    if(blessingItemIDsOnActor.length > 0) {
+        const deleted = await Item.deleteDocuments(blessingItemIDsOnActor, {parent: actor});
+        if(debug) console.log({deleted});
+    }
+
+    
+    /*  Add new items  */
+
+    //create an array of documents from the compendium
+    const itemsToBeAdded = await game.packs.get(MODULE.customItemsPackKey).getDocuments({name__in: blessingItemsToAdd});
+    if(debug) console.log({itemsToBeAdded});
+    if(itemsToBeAdded.length > 0) {
+        const itemObjects = itemsToBeAdded.map(i => i.toObject());
+        const created = await Item.createDocuments(itemObjects, {parent: actor});
+        if(debug) console.log({created});
     }
 }
 
@@ -88,36 +131,6 @@ async function trainingDialog(actor) {
     });
     if(!choice) return;
 
-    const rollData = actor.getRollData();
-    const barbLevel = rollData.classes?.barbarian?.levels || null;
-    if(!barbLevel) return;
-    
-    const blessingItemsToAdd = Object.entries(blessingsDatabase[choice.blessing])
-        .filter(([key, value]) => value <= barbLevel && !actor.items.getName(key))
-        .map(([key, value]) => key);
-    if(!blessingItemsToAdd.length) return;
-
-    /* Remove old items */
-
-    const allBlessingItems = Object.values(blessingsDatabase).flatMap(spirit => Object.keys(spirit));
-    const blessingItemIDsOnActor = actor.items
-        .filter(i => allBlessingItems.includes(i.name))
-        .map(i => i.id);
-    if(blessingItemIDsOnActor.length > 0) {
-        const deleted = await Item.deleteDocuments(blessingItemIDsOnActor, {parent: actor});
-        if(debug) console.log({deleted});
-    }
-
-    
-    /*  Add new items  */
-
-    //create an array of documents from the compendium
-    const itemsToBeAdded = await game.packs.get(MODULE.customItemsPackKey).getDocuments({name__in: blessingItemsToAdd});
-    if(debug) console.log({itemsToBeAdded});
-    if(itemsToBeAdded.length > 0) {
-        const itemObjects = itemsToBeAdded.map(i => i.toObject());
-        const created = await Item.createDocuments(itemObjects, {parent: actor});
-        if(debug) console.log({created});
-    }
+    return await activateSpirit(actor, choice.blessing);
 }
 
