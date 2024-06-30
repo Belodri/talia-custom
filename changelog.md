@@ -9,6 +9,7 @@
         Until fixed, this skill needs to be used manually to grant temp hp.
     - Unstoppable
 - Active Beast Spirit can now be changed by activating the chosen spirit's feature item.
+- Added one 1st level spell slot to Fearghas and removed the Mind Sliver cantrip from his known cantrips.
 
 ## Fixed
 - All characters now correctly show and use the OneDnD exhaustion system.
