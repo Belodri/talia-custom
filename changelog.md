@@ -8,6 +8,7 @@
     - Survival Instincts (unfinished, blocked by #33)  
         Until fixed, this skill needs to be used manually to grant temp hp.
     - Unstoppable
+- Active Beast Spirit can now be changed by activating the chosen spirit's feature item.
 
 # 29/06/2024
 ## Added
