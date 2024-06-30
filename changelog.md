@@ -1,3 +1,14 @@
+# 30/06/2024
+## Added
+- Beast Spirit: Elk
+    - Spirit of the Elk
+    - Adept Forager
+    - Stampede (unfinished, blocked by #33)  
+        Until fixed, everything about this skill has to be done manually
+    - Survival Instincts (unfinished, blocked by #33)  
+        Until fixed, this skill needs to be used manually to grant temp hp.
+    - Unstoppable
+
 # 29/06/2024
 ## Added
 - Jump distance in feet is now accessible within each actor's rollData under `actor.getRollData().talia.jumpDistance`. The number will always be a multiple of 5 (or 0).
