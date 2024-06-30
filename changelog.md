@@ -10,6 +10,9 @@
     - Unstoppable
 - Active Beast Spirit can now be changed by activating the chosen spirit's feature item.
 - Added one 1st level spell slot to Fearghas and removed the Mind Sliver cantrip from his known cantrips.
+- Jump distance flag to:
+    - Adjust Density - Halved
+    - Athletic Feat
 
 ## Fixed
 - All characters now correctly show and use the OneDnD exhaustion system.
