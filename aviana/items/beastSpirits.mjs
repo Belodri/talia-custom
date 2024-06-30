@@ -25,7 +25,7 @@ const blessingsDatabase = {
     "Spirit of the Elk": {
         "Adept Forager": 6,
         "Stampede": 6,
-        "Bristling Fur": 10,
+        "Survival Instincts": 10,
         "Unstoppable": 14,
     },
     "Spirit of the Tiger": {
