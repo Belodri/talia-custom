@@ -1,3 +1,7 @@
+# 01/07/2024
+## Added
+- Flexing Icon
+
 # 30/06/2024
 ## Added
 - Beast Spirit: Elk
