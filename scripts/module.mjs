@@ -11,6 +11,8 @@ import spellscribing from "../spellscribing/spellscribing.mjs";
 import spellbooks from "../fearghas/items/spellbooks.mjs";
 import spellbookLich from "../fearghas/items/spellbookLich.mjs";
 import jump from "../allActors/jump.mjs";
+import gratefulFeyCharm from "../aviana/items/gratefulFeyCharm.mjs";
+
 
 
 Hooks.once("socketlib.ready", () => {
@@ -38,7 +40,7 @@ Hooks.once("setup", () => {
     spellscribing._onSetup();
     spellbooks._onSetup();
     spellbookLich._onSetup();
-    
+    gratefulFeyCharm._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });
