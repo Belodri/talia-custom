@@ -1,7 +1,7 @@
 # 03/07/2024
 ## Added
 - Feature Type: Common Action (to be used for the likes of Jump, Dash, Hide, Disengage, Dodge, etc)
-- Loot Type: Unusual Material
+- Consumable Type: Unusual Material
 - Consumable Type: Contraption
 
 - Compendia: Rules & Rollable Tables
