@@ -1,6 +1,14 @@
 # 03/07/2024
 ## Added
 - Feature Type: Common Action (to be used for the likes of Jump, Dash, Hide, Disengage, Dodge, etc)
+- Common Action: Shove (not yet automated)
+    - The following Active Effect flags related to shoving have been added:
+        - `flags.talia-custom.shove.sizeBonus` || ADD || NUMBER  
+            for effects that make the actor count as a size larger or smaller for shoving
+        - `flags.talia-custom.shove.distBonus` || ADD || NUMBER (in feet)  
+            for effects that add or reduce the distance a creature can shove another creature. 
+        - `flags.talia-custom.shove.isImmune` || ADD || NUMBER  
+            for effects that grant or remove immunity to being shoved
 
 # 02/07/2024
 ## Fixed

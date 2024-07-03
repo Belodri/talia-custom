@@ -13,6 +13,7 @@ import spellbookLich from "../fearghas/items/spellbookLich.mjs";
 import jump from "../allActors/jump.mjs";
 import gratefulFeyCharm from "../aviana/items/gratefulFeyCharm.mjs";
 import commonActions from "../allActors/commonActions.mjs";
+import shove from "../allActors/shove.mjs";
 
 
 
@@ -50,4 +51,5 @@ Hooks.once("setup", () => {
 //add flags to DAE
 Hooks.once("DAE.setupComplete", () => {
     jump._onDAESetup();
+    shove._onDAESetup();
 });
