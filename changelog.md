@@ -1,6 +1,12 @@
 # 03/07/2024
 ## Added
 - Feature Type: Common Action (to be used for the likes of Jump, Dash, Hide, Disengage, Dodge, etc)
+- Loot Type: Unusual Material
+- Consumable Type: Contraption
+
+- Compendia: Rules & Rollable Tables
+- Rule: Crafting Contraptions
+
 - Common Action: Shove (not yet automated)
     - The following Active Effect flags related to shoving have been added:
         - `flags.talia-custom.shove.sizeBonus` || ADD || NUMBER  

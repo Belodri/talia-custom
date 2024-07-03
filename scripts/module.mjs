@@ -14,7 +14,7 @@ import jump from "../allActors/jump.mjs";
 import gratefulFeyCharm from "../aviana/items/gratefulFeyCharm.mjs";
 import commonActions from "../allActors/commonActions.mjs";
 import shove from "../allActors/shove.mjs";
-
+import contraptionsCrafting from "../plex/contraptionsCrafting/contraptionsCrafting.mjs";
 
 
 Hooks.once("socketlib.ready", () => {
@@ -32,6 +32,7 @@ Hooks.once("init", () => {
     spellscribing._onInit();
     spellbooks._onInit();
     commonActions._onInit();
+    contraptionsCrafting._onInit();
 });
 
 Hooks.once("setup", () => {
