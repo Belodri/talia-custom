@@ -9,6 +9,15 @@
             for effects that add or reduce the distance a creature can shove another creature. 
         - `flags.talia-custom.shove.isImmune` || ADD || NUMBER  
             for effects that grant or remove immunity to being shoved
+- Items from Plex's notes
+    - Goblin's Disguise (Without Top-Hat)
+    - Sea Urchin
+    - Coconut Shells x3
+    - Jungle Vine (Rope) 50ft
+    - Coral Fragment
+    - Sea Shell x2
+    - Wine Glass x2
+
 ## Fixed
 - Bear Spirit's Compelled Duel no longer gives Aviana a -100 to all Wisdom saving throws she makes
 
