@@ -44,17 +44,28 @@
       "label": "Rules",
       "path": "packs/rules",
       "type": "JournalEntry",
+      "system": "dnd5e",
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
-      },
-      "system": "dnd5e"
+      }
     },
     {
       "name": "rollable-tables",
       "label": "Rollable Tables",
       "path": "packs/rollable-tables",
       "type": "RollTable",
+      "system": "dnd5e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "taliaMacros",
+      "label": "Talia Macros",
+      "path": "packs/taliaMacros",
+      "type": "Macro",
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
