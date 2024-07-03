@@ -4,8 +4,17 @@
 - Consumable Type: Unusual Material
 - Consumable Type: Contraption
 
-- Compendia: Rules & Rollable Tables
+- Compendium: 
+    - Rules
+    - Rollable Tables
+    - Talia Macros
+
 - Rule: Crafting Contraptions
+
+
+- VFX & Animations
+    - Darkness
+    - Fog Cloud
 
 - Common Action: Shove (not yet automated)
     - The following Active Effect flags related to shoving have been added:
