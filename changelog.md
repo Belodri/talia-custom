@@ -9,6 +9,8 @@
             for effects that add or reduce the distance a creature can shove another creature. 
         - `flags.talia-custom.shove.isImmune` || ADD || NUMBER  
             for effects that grant or remove immunity to being shoved
+## Fixed
+- Bear Spirit's Compelled Duel no longer gives Aviana a -100 to all Wisdom saving throws she makes
 
 # 02/07/2024
 ## Fixed
