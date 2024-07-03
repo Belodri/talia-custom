@@ -12,6 +12,7 @@ import spellbooks from "../fearghas/items/spellbooks.mjs";
 import spellbookLich from "../fearghas/items/spellbookLich.mjs";
 import jump from "../allActors/jump.mjs";
 import gratefulFeyCharm from "../aviana/items/gratefulFeyCharm.mjs";
+import commonActions from "../allActors/commonActions.mjs";
 
 
 
@@ -29,6 +30,7 @@ Hooks.once("init", () => {
     beastSpirits._onInit();
     spellscribing._onInit();
     spellbooks._onInit();
+    commonActions._onInit();
 });
 
 Hooks.once("setup", () => {
