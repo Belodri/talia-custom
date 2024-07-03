@@ -1,3 +1,7 @@
+# 02/07/2024
+## Fixed
+- Grateful Fey Charm
+
 # 01/07/2024
 ## Added
 - Flexing Icon

@@ -5,8 +5,17 @@
 */
 
 import { _foundryHelpers } from "../../scripts/_foundryHelpers.mjs";
+import { TaliaCustomAPI } from "../../scripts/api.mjs";
 
-export async function gratefulFeyCharm(item) {
+export default {
+    _onSetup() {
+        TaliaCustomAPI.add({
+            gratefulFeyCharm
+        });
+    }
+}
+
+async function gratefulFeyCharm(item) {
     const damageTypeKeys = Object.keys(CONFIG.DND5E.damageTypes);
     const choice = await userChosenTypes(damageTypeKeys);
 
