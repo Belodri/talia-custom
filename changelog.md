@@ -4,6 +4,18 @@
 - Consumable Type: Unusual Material
 - Consumable Type: Contraption
 
+- Unusual Materials:
+    - Light-Shy Mushroom
+    - Troll Musk
+    - Echoing Crystalbloom
+    - Hurting Stone
+    - Sneezing Powder
+    - Breezeblossom
+    - Straightstep Briar
+    - Wandering Wart (teleportation effect not implemented)
+    - Vanishing Velvet
+    - Prismatic Thistle
+
 - Compendium: 
     - Rules
     - Rollable Tables
