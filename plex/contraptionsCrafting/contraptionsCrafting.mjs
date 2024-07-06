@@ -1,6 +1,10 @@
 import { MODULE } from "../../scripts/constants.mjs";
 import { TaliaCustomAPI } from "../../scripts/api.mjs";
 
+const localConfig = {
+    allowedMaterialsTypes: ["loot", "consumable", "weapon", "equipment", "container"]
+}
+
 const debug = true;
 //  if(debug && game.user.isGM) console.log({});
 
@@ -30,7 +34,7 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
 
     /**
      * @typedef {Object} WorkingData
-     * @property {Array<{item: Item5e, chosenAmount: number}>} chosenMaterials - The materials chosen by the user.
+     * @property {Collection<string, {item: Item5e, chosenAmount: number, name: string}>} chosenMaterials - The materials chosen by the user.
      * @property {string} contraptionName           - The name given to the resulting contraption.
      * @property {string} contraptionDescription    - The description given to the resulting contraption.
      * @property {string} contraptionImg            - The image given to the resulting contraption.
@@ -48,13 +52,13 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
         /** 
          * The object that stores the user's choices.
          * @type {WorkingData} 
-         * @property {Array<{item: Item5e, chosenAmount: number}>} chosenMaterials - The materials chosen by the user.
+         * @property {Collection<string, {item: Item5e, chosenAmount: number, name: string}>} chosenMaterials - The materials chosen by the user.
          * @property {string} contraptionName           - The name given to the resulting contraption.
          * @property {string} contraptionDescription    - The description given to the resulting contraption.
          * @property {string} contraptionImg            - The image given to the resulting contraption.
          */
         this.object = object;
-        this.object.chosenMaterials = [];
+        this.object.chosenMaterials = new foundry.utils.Collection();
         this.object.contraptionName = "";
         this.object.contraptionDescription = "This is an example description.";
         this.object.contraptionImg = "systems/dnd5e/icons/svg/items/spell.svg";
@@ -63,11 +67,11 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
     /** @override */
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            width: 700,
+            width: 400,
             height: 500,
             title: "Crafting Contraptions",
             template: `modules/${MODULE.ID}/templates/contraptionsCraftingUi.hbs`,
-            classes: ["form", "dnd5e2"],
+            classes: [MODULE.ID, "contraptionsCraftingUi", "form", "dnd5e2"],
             dragDrop: [{dropSelector: "form"}],
             closeOnSubmit: false,
             resizable: true
@@ -97,6 +101,7 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
         data.contraptionDescription = await TextEditor.enrichHTML(this.object.contraptionDescription, {
             rollData: rollData, async: true, relativeTo: this.actor
         });
+        
 
         return data;
     }
@@ -106,17 +111,32 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
         return true;
     }
 
-    //TODO
     /** @override */
     async _onDrop(event) {
+        //TODO: Limit the maximum number of different materials 
+
         const data = TextEditor.getDragEventData(event);
-        if(debug && game.user.isGM) console.log({data});
+        if(debug && game.user.isGM) console.log({event, data});
 
         //only allow Items that are embedded on actor
         if(data.type !== "Item" || !data.uuid.startsWith(this.actor.uuid)) return;
 
+        //get the dropped item
+        const droppedItem = await fromUuid(data.uuid);
+
         //prevents dropping if the dropped item is not a valid type
-        
+        if(!localConfig.allowedMaterialsTypes.includes(droppedItem.type)) return;
+
+        //add an object to the chosenMaterials collection
+        this.object.chosenMaterials.set(
+            droppedItem.id,
+            {
+                name: droppedItem.name,     //just so getName() can be used if needed
+                item: droppedItem,
+                chosenAmount: 1,
+            }
+        );
+        return this.render();
     }
 
     /** @override */
@@ -131,6 +151,66 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
         this.object.contraptionName = formData.name;
         this.object.contraptionDescription = formData.contraptionDescription;
 
+        return this.render();
+    }
+
+    /** @override */
+    activateListeners(html) {
+        const content = html[0].parentElement;
+        content.querySelectorAll("[data-action]").forEach(n => {
+            const action = n.dataset.action;
+            switch (action) {
+                case "plusButton": 
+                    n.addEventListener("click", this._onPlusButton.bind(this));
+                    break;
+                case "minusButton":
+                    n.addEventListener("click", this._onMinusButton.bind(this));
+                    break;
+                case "craftButton":
+                    n.addEventListener("click", this._onCraftButton.bind(this));
+                    break;
+            }
+        })
+        super.activateListeners(html);
+    }
+
+    /* ------------------------------- */
+    /*              BUTTONS            */
+    /* ------------------------------- */
+
+    _onCraftButton(event) {
+        /* 
+            TODO: block craft button until all data is valid
+                - contraption has a name?
+                - has a mechanism?
+                - has at least 1 material?
+            
+            
+        */
+
+
+        console.log({event});
+    }
+
+    _onPlusButton(event) {
+        const id = event.currentTarget.closest(".material").dataset.id;
+        const material = this.object.chosenMaterials.get(id);
+        if(material.chosenAmount < material.item.system.quantity) {
+            material.chosenAmount ++;
+        } else {
+            return;
+        }
+        console.log(this);
+        return this.render();
+    }
+
+    _onMinusButton(event) {
+        const id = event.currentTarget.closest(".material").dataset.id;
+        const material = this.object.chosenMaterials.get(id);
+        material.chosenAmount --;
+        if(material.chosenAmount <= 0) {
+            this.object.chosenMaterials.delete(id);
+        }
         return this.render();
     }
 }
