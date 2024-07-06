@@ -45,6 +45,7 @@ Hooks.once("setup", () => {
     spellbooks._onSetup();
     spellbookLich._onSetup();
     gratefulFeyCharm._onSetup();
+    contraptionsCrafting._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });

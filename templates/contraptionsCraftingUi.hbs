@@ -1,0 +1,27 @@
+<form style="display: flex; flex-direction:column; flex-grow: 1;">  
+    {{!-- Contraption Name --}}
+    <div class="header name-stacked" style="display:flex; padding: 0 5px; flex-direction:row;">
+        <img src="{{contraptionImg}}" data-edit="img" style="flex:none; width: 60px; height: 60px;">
+        <input class="title" type="text" name="name" value="{{contraptionName}}" placeholder="Insert Contraption Name" style="flex: 1; height: 40px; margin: 10px 5px; font-family: Modesto Condensed; font-size: 32px;">
+    </div>
+
+    {{!-- Materials Drops --}}
+
+    <div class="materials" style="min-height: 10vh; display: flex; flex-direction: column;">
+        <span>Materials</span>
+        {{#each currentMaterials}}
+        <div class="material" data-id="{{material.id}}">
+            <img class="materialImg" src="{{material.img}}">
+            <span>{{material.name}}</span>
+            <input type="number" class="amount" value="{{material.amount}}" min="0" max="{{material.quantity}}">
+        </div>
+        {{/each}}
+    </div>
+
+    {{!-- Mechanism Description --}}
+    <div class="description" style="display:flex; flex-direction:column">
+        {{editor contraptionDescription target="contraptionDescription" button=false engine="prosemirror" collaborate=false}}
+    </div>
+    
+
+</form>

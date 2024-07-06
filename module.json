@@ -26,6 +26,9 @@
       }
     ]
   },
+  "styles": [
+    "styles/contraptionsCraftingUi.css"
+  ],
   "description": "A module to handle anything custom made for the Talia campaign.",
   "packs": [
     {
@@ -72,5 +75,10 @@
       },
       "system": "dnd5e"
     }
-  ]
+  ],
+  "flags": {
+    "hotReload": {
+      "extensions": ["css", "hbs"]
+    }
+  }
 }
