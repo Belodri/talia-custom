@@ -1,4 +1,5 @@
 export const _foundryHelpers = {
+    promptItemUse,
     getActorByUuid,
     getActiveUserCharacters,
     consumeItem,
@@ -102,11 +103,32 @@ async function consumeItem(item, amountToConsume, consumeCost = 1, deleteOnEmpty
 }
 
 /**
- * Displays an item in chat as if it had no active effects.
+ * NOT WORKING Displays an item in chat as if it had no active effects. 
  * @param {Item5e} item 
  */
 function displayItemWithoutEffects(item) {
     const itemData = item.toObject();
     itemData.effects.filter(u => u.name = "");  
     item.displayCard({"flags.dnd5e.itemData": itemData});
+}
+
+/**
+ * Prompts the user to choose whether to use an item or just display it in chat.
+ * If the user chooses to display the item, it will be displayed in chat.
+ * @param {Item5e} item - The item to be used or displayed.
+ * @returns {Promise<boolean>} - Returns true if the user chooses to use the item, false otherwise.
+ */
+async function promptItemUse(item) {
+    const result = await Dialog.wait({
+        content: `Use the item or only display it to chat?`,
+        buttons: {
+            use: {label: "Use", callback: () => ( "use")},
+            display: {label: "Display", callback: () => ( "display")},
+        },
+        close: () => ( null)
+    });
+
+    if(result === "use") return true;
+    else if(result === "display") await item.displayCard();
+    return false;
 }

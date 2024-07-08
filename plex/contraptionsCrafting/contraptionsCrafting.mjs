@@ -1,15 +1,6 @@
 import { MODULE } from "../../scripts/constants.mjs";
 import { TaliaCustomAPI } from "../../scripts/api.mjs";
-
-
-//TODO: remove contraption item type
-
-const localConfig = {
-    allowedMaterialsTypes: ["loot", "consumable", "weapon", "equipment"]
-}
-
-const debug = true;
-//  if(debug && game.user.isGM) console.log({});
+import { _foundryHelpers } from "../../scripts/_foundryHelpers.mjs";
 
 /**
  * Renders the Contraption Crafting UI for an actor
@@ -25,7 +16,6 @@ function openContraptionCrafting(actor) {
 export default {
     _onInit() {
         CONFIG.DND5E.consumableTypes.unusualMaterial = {label: "Unusual Material"};
-        CONFIG.DND5E.consumableTypes.contraption = {label: "Contraption"};
         CONFIG.DND5E.abilityActivationTypes.trigger = "Trigger";
     },
     _onSetup() {
@@ -37,15 +27,6 @@ export default {
 }
 
 class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplication) {
-
-    /**
-     * @typedef {Object} WorkingData
-     * @property {Collection<string, {item: Item5e, chosenAmount: number, name: string}>} chosenMaterials - The materials chosen by the user.
-     * @property {string} contraptionName           - The name given to the resulting contraption.
-     * @property {string} contraptionDescription    - The description given to the resulting contraption.
-     * @property {string} contraptionImg            - The image given to the resulting contraption.
-     */
-
     /**
      * Constructs a dialog window for crafting contraptions.
      * @param {Object} actor - The actor whose inventory will be used.
@@ -74,7 +55,7 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             width: 400,
-            height: 500,
+            height: null,
             title: "Crafting Contraptions",
             template: `modules/${MODULE.ID}/templates/contraptionsCraftingUi.hbs`,
             classes: [MODULE.ID, "contraptionsCraftingUi", "form", "dnd5e2"],
@@ -88,7 +69,6 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
     /** @override */
     async getData() {
         const data = {};
-
         //get the currently chosen materials
         data.currentMaterials = [];
         for(const material of this.object.chosenMaterials) {
@@ -100,10 +80,8 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
                 amount: material.chosenAmount
             });
         }
-
         data.contraptionName = this.object.contraptionName;
         data.contraptionImg = this.object.contraptionImg;
-
         const rollData = this.actor.getRollData();
         data.contraptionDescription = await TextEditor.enrichHTML(this.object.contraptionDescription, {
             rollData: rollData, async: true, relativeTo: this.actor
@@ -122,19 +100,19 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
             ui.notifications.info("You cannot use more than 7 different materials for your contraption.");
             return;
         }
-
         const data = TextEditor.getDragEventData(event);
-        if(debug && game.user.isGM) console.log({event, data});
-
         //only allow Items that are embedded on actor
         if(data.type !== "Item" || !data.uuid.startsWith(this.actor.uuid)) return;
-
         //get the dropped item
         const droppedItem = await fromUuid(data.uuid);
-
         //prevents dropping if the dropped item is not a valid type
-        if(!localConfig.allowedMaterialsTypes.includes(droppedItem.type)) return;
-
+        if(!["loot", "consumable", "weapon"].includes(droppedItem.type)) return;
+        //prevents dropping if the dropped item consume a resource
+        const cons = foundry.utils.getProperty(droppedItem, "system.consume.type")
+        if(typeof cons !== "undefined" && cons !== "") {
+            ui.notifications.info("Items which consume a resource cannot be used.");
+            return;
+        }
         //add an object to the chosenMaterials collection
         this.object.chosenMaterials.set(
             droppedItem.id,
@@ -153,12 +131,22 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
     }
 
     /** @override */
-    async _updateObject(event, formData) {
-        if(debug && game.user.isGM) console.log({formData});
+    async _render(...args) {
+        const result = await super._render(...args);
+        try {
+            this.setPosition({height: "auto"});
+            const el = this.element[0];
+            el.style.minHeight = el.style.height;   //this keeps the size drag selector in the corner
+        } catch (err) {
+        //
+        }
+        return result;
+    }
 
+    /** @override */
+    async _updateObject(event, formData) {
         this.object.contraptionName = formData.name;
         this.object.contraptionDescription = formData.contraptionDescription ?? this.object.contraptionDescription;
-
         return this.render();
     }
 
@@ -208,10 +196,7 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
         const material = this.object.chosenMaterials.get(id);
         if(material.chosenAmount < material.item.system.quantity) {
             material.chosenAmount ++;
-        } else {
-            return;
-        }
-        console.log(this);
+        } else return;
         return this.render();
     }
 
@@ -230,10 +215,10 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
     /* ------------------------------- */
 
     async craftContraption() {
-        const totalMatsNum = this.object.chosenMaterials.reduce((acc, curr) => acc += curr.chosenAmount, 0);
         //roll the check to determine bonuses
         const result = await this.actor.rollToolCheck("weaver", {chooseModifier: false,});
-        //calcualate save dc and attack bonus from that
+        //calcualate save dc and attack bonus from the total number of materials used
+        const totalMatsNum = this.object.chosenMaterials.reduce((acc, curr) => acc += curr.chosenAmount, 0);
         const saveDC = Math.max(1, result.total - totalMatsNum + 3);
         const attackBonus = Math.max(1, result.total - totalMatsNum - 4);
 
@@ -275,9 +260,11 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
                 //change the mat's quantity in the update
                 updates["system.quantity"] = mat.chosenAmount;
             }
-
+            //change the scaling to not scale with any attribute
+            if(typeof foundry.utils.getProperty(mat.item, "system.ability") !== "undefined") {
+                updates["system.ability"] = "none";
+            }
             //add save dc and attack bonus to updates if necessary
-
             //check if the property is undefined or not
             if(typeof foundry.utils.getProperty(mat.item, "system.attack.bonus") !== "undefined") {
                 updates["system.attack.bonus"] = attackBonus;
@@ -292,7 +279,6 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
             //Add material to container & adjust it's quantity if needed
             await mat.item.update(updates);
         }
-
         //and add the item macro
         const command = `await TaliaCustom.triggerContraption(item, actor, token);`;
         const macro = new Macro({
@@ -301,7 +287,6 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
             author: `${game.userId}`,
             command: command
         });
-        console.log({createdContr});
         await createdContr.setMacro(macro);
 
         //clear the chosenMaterials
@@ -330,35 +315,77 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
 /* ------------------------------- */
 
 /**
- * 
+ * The function which the contraption's itemMacro calls when used.
  * @param {Item5e} item         The triggering contraption item
  * @param {Actor5e} actor       The actor who's USING the item
  * @param {Token} token         The token of the actor who's USING the contraption
  */
 async function triggerContraption(item, actor, token) {
+    //asks the user if they want to use the item or just display it to chat
+    if(!await _foundryHelpers.promptItemUse(item)) return;
 
-    /*TODO
-        IMPOSSIBLE - Find a way to 'use' the items in the flags without having to create an embedded document for them on the actor.
+    /**
+     * The collection of Item5e items inside the container
+     * @type {Collection}
+     * @extends {Map}
+     */
+    const contents = item.system.contents;
 
-        WORKS! - see if I can store the items in a container on the actor instead, so they're not immediately accessible
+    //make a requestor button for each
+    //pass the items's id to the macro
+    const buttonDataArray = [];
+    for(const mat of contents) {
+        const buttonData = {
+            label: `${mat.system.quantity}x ${mat.name}`,
+            scope: {
+                actorId: actor.id,
+                tokenId: token.id,
+                itemId: mat.id,
+            },
+            command: async function(){
+                const item = actor.items.get(itemId);
+                //item use options here
 
-        a contraption has to be a container
-        - inside all the items to be used are stored
-        - it's itemMacro can be the same
-        - no need to store the material objects in the flags
-        - no need to list the materials 
 
-        - store DC and attackBonus of the contraption inside a flag on the item
-
-
-        The container and all it's contents can be deleted via "await container.delete({deleteContents: true});"
-        That said, I can't do that upon use since all the individual items have to be used frist.
-
-        Maybe just ask Plex to delete the contraption after he's done using it?
-        Or add a button to the chat card to delete it.
-    */
+                await item.use(
+                    {
+                        consumeResource: false, 
+                        consumeUsage: false
+                    },
+                    {
+                        //store item in itemData flag so it can still be used after the item is destroyed
+                        flags: {
+                            "dnd5e.itemData": item.toObject(),
+                            "dnd5e.use.consumedUsage": true,
+                        }
+                    });
+            },
+        };
+        buttonDataArray.push(buttonData);
+    }
     
-    
-
-    console.log(item);
+    //add a final button to 'consume' the contraption and destroy all materials inside
+    buttonDataArray.push({
+        label: `Consume Trap`,
+        scope: {
+            actorId: actor.id,
+            tokenId: token.id,
+            itemId: item.id,        //this time passing the container item instead of a material
+        },
+        command: async function(){
+            const item = actor.items.get(itemId);
+            await item.delete({deleteContents: true});
+        }
+    });
+    await item.displayCard();
+    await Requestor.request({
+        img: item.img,
+        title: `${item.name}`,
+        buttonData: buttonDataArray,
+        messageOptions: {
+            speaker: ChatMessage.implementation.getSpeaker({actor: actor}),
+            whisper: game.userId,
+            blind: true,
+        }
+    });
 }
