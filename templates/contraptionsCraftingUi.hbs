@@ -1,0 +1,46 @@
+<form style="display: flex; flex-direction:column; flex-grow: 1;">  
+    {{!-- Contraption Name --}}
+    <div class="header name-stacked">
+        <img src="{{contraptionImg}}" data-edit="img">
+        <input class="title" type="text" name="name" value="{{contraptionName}}" placeholder="Name your Contraption">
+    </div>
+
+
+    {{!-- Materials Drops --}}
+    <header class="sectionHeader">Materials</header>
+    {{#if currentMaterials.length}}
+    <div class="materials">
+        {{#each currentMaterials}}
+        {{#unless @first}}
+            <hr class="materialsBreak">
+        {{/unless}}
+        <div class="material" data-id="{{id}}">
+            <img class="materialImg" src="{{img}}">
+            <span>{{name}}</span>
+            <div class="amountInputs">
+                <button name="plus" type="button" class="plusButton" data-action="plusButton">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <span class="amountDisplay">{{amount}}/{{maxQuant}}</span>
+                <button name="minus" type="button" class="minusButton" data-action="minusButton">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+    {{else}}
+    {{!-- If no materials yet, render replacement here --}}
+    <div class="materialsPlaceholder">
+        <span>Drag and drop your materials here.</span>
+    </div>
+    {{/if}}
+    
+    {{!-- Mechanism Description --}}
+    <header class="sectionHeader">Mechanism</header>
+    <div class="description">    
+        {{editor contraptionDescription target="contraptionDescription" button=true engine="prosemirror" collaborate=false}}
+    </div>
+
+    <button class="dialog-button use default bright" data-button="use" data-action="craftButton">Craft Contraption</button>
+</form>

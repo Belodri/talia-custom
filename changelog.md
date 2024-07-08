@@ -1,3 +1,146 @@
+# 08/07/2024
+## Added
+- Contraption crafting system
+
+## Changed
+- Rules: Crafting Contraptions
+- Unusual Materials (changes compared to the draft)
+    - Light-Shy Mushroom
+        - from:
+        > Bursts open when exposed to bright light, releasing a
+cloud of pitch-black spores that heavily obscure vision in
+a 10ft cube. The cloud dissipades after one minute.
+
+        - to:
+        > Bursts open when exposed to bright light, releasing a cloud of pitch-black spores that heavily obscure vision in a 10ft sphere. The cloud dissipates after one minute.
+
+    - Troll Musk Concentrate
+        - from:
+        > Upon coming into contact with a living creature, this fatty substance creates a 10ft radius aura of foul odor around it.
+        > 
+        > When a creature enters the effect’s area for the first time on a turn or starts its turn there, that creature must make a Constitution saving throw against the contraption’s Save DC or become poisoned until the start of their next turn.
+        >
+        > Trolls always succeed the saving throw
+
+        - to:
+        > When this flask hits a creature or object, it bursts open and covers the target in a green liquid, a potent aphrodisiac for trolls.
+        > 
+        > Upon coming into contact with a living creature, this fatty substance creates a 10ft sphere of foul odour around that creature which persists for 10 minutes.
+        > 
+        > When a creature enters the effect’s area for the first time on a turn or starts its turn there, that creature must make a Constitution saving throw against the contraption’s Save DC or become poisoned until the start of their next turn.
+        > 
+        > When a troll fails a saving throw against this effect, it becomes charmed instead of poisoned.
+    
+    - Echoing Crystalbloom
+        - from:
+        > When this crystalline flower shatters, creatures in a 10ft radius can make a Dexterity Saving Throw to avoid being covered in it’s fine dust.
+        >
+        > Any creature covered by the dust involunarily echoes
+it’s own speech for 10 minutes, making it much more
+difficult to form the verbal components of spells.
+        >
+        > Spells with verbal components cast by affected
+creatures have a minimum casting time of two rounds.
+
+        - to:
+        > When this crystalline flower shatters, it covers creatures in a 10ft sphere in it's fine dust unless they succeed on a Dexterity saving throw against the contraption's save DC.
+        >
+        > Any creature covered by the dust involuntarily echoes it’s own speech for 10 minutes, making it much more difficult to form the verbal components of spells.
+        >
+        > While under this effect, casting a spell with verbal components requires a bonus action and the caster's full movement in addition to the spells normal requirements.
+
+    - Hurting Stone
+        - no changes:
+        > When this stone hits a creature or object after being
+dropped or thrown, it deals an additional 2d6 magical
+bludgeoning damage and loudly shouts “Ow!”.
+    
+    - Sneezing Powder
+        - from:
+        > This light powder hangs in the air for up to one minute,
+filling the volume of a 5ft cube. A creature entering or starting it’s turn in this cloud
+immediately uses it’s reaction to sneeze.
+
+        - to: 
+        > This light powder hangs in the air for up to one minute, filling the volume of a 10ft sphere. A creature entering or starting it’s turn in this cloud immediately uses it’s reaction to sneeze.
+
+    - Breezeblossom
+        - from:
+        > It’s petals will always be carried away by a gentle
+breeze, going as far to create one themselves if needed.
+
+        - to:
+        > It’s petals will always be carried away by a gentle breeze, going as far to create one themselves if needed. This breeze disperses any magical cloud or fog effects.
+
+    - Straightstep Briar
+        - from:
+        > Creatures touching it’s oils need to make a Strength
+Saving Throw against the contraption’s Save DC or they
+need to start each of their turns by moving their entire
+movement in a straight line.
+
+        - to:
+        > One fruit of this plant contains enough oil to cover a 10ft square for 10 turns.
+        >
+        > A creature touching this oil needs to succeed on a Strength saving throw against the contraption's save DC. On a fail, the creature needs to begin it's next 3 turns by moving it's full movement in a straight line in a direction of it's choice.
+
+    - Wandering Wart
+        - from:
+        > Every six seconds, the spores of this mushroom teleport
+5ft laterally in a random direction, taking any creature
+they’re covering with them.
+        >
+        > A single creature can be affected by multiple
+instances of this effect, each one adding 5ft to the
+teleportation distance.
+
+
+        - to:
+        > When this mushroom bursts open, it covers any creature in a 5ft radius in it's spores for one minute.
+        >
+        > A creature covered in these spores teleports 5ft laterally in a random direction at the beginning of it's turn. A single creature can be affected by multiple instances of this effect, each adding 5ft to the teleportation distance.
+    - Vanishing Velvet
+        - from:
+        > Upon coming into contact with water, this moss turns
+mostly invisible for 10 minutes. This also affects any
+creature or object fully covered by the moss.
+        >
+        > During combat, an affected creature or object rolls a
+1d10 at the start of every combatant’s turn, loosing their
+invisibility on a 1 and regaining or maintaining it on a
+roll of 2 or higher.
+        >
+        > Outside of combat, a creature or object covered by the
+moss is considered to be visible for 6 seconds out of
+every minute instead.
+
+        - to:
+        > Upon coming into contact with water, this moss turns itself and any creature it's covering mostly invisible for 10 minutes.
+        >
+        > During combat, an affected creature rolls a 1d10 at the start of every combatant's turn, loosing it's invisibility on a 1 and regaining or maintaining it on a roll of 2 or higher.
+
+    - Prismatic Thistle
+        - from:
+        > Sticks stubbornly to a creature, making their outline
+glow vibrantly, shedding bright light in a radius of 5ft
+until the end of their next turn.
+        >
+        >Any attack roll against the affected creature has
+advantage if the attacker can see it, and the affected
+creature can’t benefit from being invisible.
+        >
+        >Each additional thistle sticking to the same creature
+increases the effect’s duration by one round.
+
+        - to:
+        > Sticks stubbornly to a creature, making it's outline glow vibrantly, shedding bright light in a radius of 5ft.
+        >
+        >Any attack roll against the affected creature has advantage if the attacker can see it, and the affected creature can’t benefit from being invisible.
+        >
+        >The effect ends if the creature removes the thistle using an action, or after 10 minutes.
+## Removed
+- Consumable Type: Contraption (The final implementation of the crafting system cannot use a custom type so this is removed)
+
 # 03/07/2024
 ## Added
 - Feature Type: Common Action (to be used for the likes of Jump, Dash, Hide, Disengage, Dodge, etc)
@@ -178,3 +321,4 @@ Spellbooks now correctly grant and remove spells from actors upon equip/unequip.
 ## Added
 ## Changed
 ## Fixed
+## Removed
