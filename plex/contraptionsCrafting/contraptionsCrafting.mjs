@@ -4,17 +4,22 @@ import { _foundryHelpers } from "../../scripts/_foundryHelpers.mjs";
 
 /**
  * Renders the Contraption Crafting UI for an actor
- * @param {Actor5e} actor 
+ * @param {Actor5e} actor               The triggering actor
+ * @param {Item5e} item                 The triggering item
  * @returns {ContraptionCraftingUI}     The rendered Crafting UI
  */
-function openContraptionCrafting(actor) {
+function openContraptionCrafting(actor, item = {}) {
     const validDocumentType = ["Actor"].includes(actor.documentName);
     if(!validDocumentType) throw new Error("The document provided is not a valid Actor.");
+    if(!foundry.utils.isEmpty(item)) {
+        item.displayCard();
+    }
     return new ContraptionCraftingUI(actor).render(true);
 }
 
 export default {
     _onInit() {
+        CONFIG.DND5E.rules.craftingcontraptions = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.0pmGvF3yS5xoUoEU";
         CONFIG.DND5E.consumableTypes.unusualMaterial = {label: "Unusual Material"};
         CONFIG.DND5E.abilityActivationTypes.trigger = "Trigger";
     },
