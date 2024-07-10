@@ -15,6 +15,7 @@ import gratefulFeyCharm from "../aviana/items/gratefulFeyCharm.mjs";
 import commonActions from "../allActors/commonActions.mjs";
 import shove from "../allActors/shove.mjs";
 import contraptionsCrafting from "../plex/contraptionsCrafting/contraptionsCrafting.mjs";
+import { helpersToApi } from "./_foundryHelpers.mjs";
 
 
 Hooks.once("socketlib.ready", () => {
@@ -46,6 +47,7 @@ Hooks.once("setup", () => {
     spellbookLich._onSetup();
     gratefulFeyCharm._onSetup();
     contraptionsCrafting._onSetup();
+    helpersToApi._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });

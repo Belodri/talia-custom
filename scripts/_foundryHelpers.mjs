@@ -1,3 +1,5 @@
+import { TaliaCustomAPI } from "./api.mjs";
+
 export const _foundryHelpers = {
     promptItemUse,
     getActorByUuid,
@@ -15,6 +17,13 @@ export const _foundryHelpers = {
         IN_ONE_WEEK: 604800
     },
 };
+export const helpersToApi = {
+    _onSetup() {
+        TaliaCustomAPI.add({
+            rollTableGrantItems
+        });
+    }
+}
 
 /**
  * Retrieves an array of user IDs for all active players.
@@ -131,4 +140,61 @@ async function promptItemUse(item) {
     if(result === "use") return true;
     else if(result === "display") await item.displayCard();
     return false;
+}
+
+/**
+ * Draws a number of items from a table and grants them to an actor.
+ *
+ * @param {Actor5e} actor - The actor to which the items will be granted.
+ * @param {string} tableUuid - The UUID of the table to draw items from.
+ * @param {Object} [options] - Optional parameters.
+ * @param {number} [options.drawsNum=1] - The number of draws to make. Will be overwritten if fractionOfTableSize is provided.
+ * @param {number} [options.fractionOfTableSize] - A fraction (0 to 1) or a percentage (1 to 100) representing the portion of the table to draw from.
+ * @returns {Promise<Array<Item5e>>} - A promise that resolves to the array of created items, or null if the table or actor is missing, or fractionOfTableSize is invalid.
+ */
+async function rollTableGrantItems(actor, tableUuid, {drawsNum = 1, fractionOfTableSize = undefined} = {}) {
+    const table = await fromUuid(tableUuid);
+    if (!table || !actor) {
+        ui.notifications.warn("Missing table or actor.");
+        return null;
+    }
+
+    if(typeof fractionOfTableSize === "number") {
+        if(fractionOfTableSize >= 0 && fractionOfTableSize <= 1) {
+            // If it's a number between 0 and 1, treat it as a fraction
+            const totalItemsNum = table.results.size;
+            drawsNum = Math.ceil(totalItemsNum * fractionOfTableSize);
+        } else if(fractionOfTableSize > 1 && fractionOfTableSize <= 100) {
+            // If it's a number between 1 and 100, treat it as a percentage
+            const totalItemsNum = table.results.size;
+            drawsNum = Math.ceil(totalItemsNum * (fractionOfTableSize / 100));
+        } else {
+            ui.notifications.warn("fractionOfTableSize is not a valid fraction.");
+            return null;
+        }
+    }
+    
+    const draw = await table.drawMany(drawsNum);
+    const promises = draw.results.map(i => {
+        const key = i.documentCollection;
+        const id = i.documentId;
+        const uuid = `Compendium.${key}.Item.${id}`;
+        return key === "Item" ? game.items.get(id) : fromUuid(uuid);
+    });
+    const items = await Promise.all(promises);
+    const itemData = items.map(item => game.items.fromCompendium(item));
+
+    //'stack' items of the same name
+    const combinedItemsArray = Object.values(itemData.reduce((acc, item) => {
+    if (acc[item.name]) {
+        // If item with same name already exists, add the quantities
+        acc[item.name].system.quantity += item.system.quantity;
+    } else {
+        // Otherwise, add new item to the accumulator
+        acc[item.name] = { ...item };
+    }
+    return acc;
+    }, {}));
+
+    return actor.createEmbeddedDocuments("Item", combinedItemsArray);
 }
