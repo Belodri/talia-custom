@@ -16,6 +16,7 @@ import commonActions from "../allActors/commonActions.mjs";
 import shove from "../allActors/shove.mjs";
 import contraptionsCrafting from "../plex/contraptionsCrafting/contraptionsCrafting.mjs";
 import { helpersToApi } from "./_foundryHelpers.mjs";
+import templateOpenCharSheet from "../systemChanges/templateOpenCharSheet.mjs";
 
 
 Hooks.once("socketlib.ready", () => {
@@ -24,6 +25,7 @@ Hooks.once("socketlib.ready", () => {
 
 Hooks.once("libWrapper.Ready", () => {
     jump._onLibWrapperReady();
+    templateOpenCharSheet._onLibWrapperReady();
 });
 
 Hooks.once("init", () => {

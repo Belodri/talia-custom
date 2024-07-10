@@ -125,12 +125,6 @@ export class ScribingUI extends FormApplication {
             //reload all data since this returned true;
             this.onScribing_recheckData();
             return this.render();
-        } else if(result === "surge") {
-            //closes the window if a surge was caused
-            await this.close();
-            //close the character sheet too
-            //maybe minimise instead?
-            await this.actor.sheet.close();
         }
     }  
 
