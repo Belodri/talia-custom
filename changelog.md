@@ -1,3 +1,22 @@
+# 13/07/2024
+## Added
+- Alchemy gathering system (crafting system is still work in progress)
+- Rules: Alchemy
+- Feature: Alchemical Extraction (added to Fearghas) 
+    > Allows the user to target slain creatures and extract alchemical ingredients from them.
+- GM Macro: Prompt Harvest Herbs
+    > Lets the user gather herbs depending on the environment.
+
+## Changes
+- Compound Eye (body part ingredient) replaced with:  
+    > Core Crystal - Gathered from any construct creature  
+- Gills (body part ingredient) had it's source changed 
+    > from: Medium or larger creatures with water breathing or amphibious traits.
+
+    > to: Medium or larger beast-type creatures that have a swim speed.
+
+- Recipes that used Compound Eye before, now use Core Crystal instead.
+
 # 08/07/2024
 ## Added
 - Contraption crafting system
