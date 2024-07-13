@@ -17,6 +17,19 @@
 
 - Recipes that used Compound Eye before, now use Core Crystal instead.
 
+# 10/07/2024
+## Added
+- API function rollTableGrantItems() to make it easier for items from rolltables to be added to actors
+
+## Fixed
+- Character sheet closing when a wild magic surge is caused while scribing spell gems.
+- Character sheet maximising when a template is placed.
+
+# 09/07/2024
+## Fixed
+- Contraption crafting rules are now referenceable via enricher
+- Cunning Contraption now displays the item card
+
 # 08/07/2024
 ## Added
 - Contraption crafting system
