@@ -17,7 +17,7 @@ import shove from "../allActors/shove.mjs";
 import contraptionsCrafting from "../plex/contraptionsCrafting/contraptionsCrafting.mjs";
 import { helpersToApi } from "./_foundryHelpers.mjs";
 import templateOpenCharSheet from "../systemChanges/templateOpenCharSheet.mjs";
-
+import alchemy from "../alchemy/alchemy.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -36,6 +36,7 @@ Hooks.once("init", () => {
     spellbooks._onInit();
     commonActions._onInit();
     contraptionsCrafting._onInit();
+    alchemy._onInit();
 });
 
 Hooks.once("setup", () => {
@@ -50,6 +51,7 @@ Hooks.once("setup", () => {
     gratefulFeyCharm._onSetup();
     contraptionsCrafting._onSetup();
     helpersToApi._onSetup();
+    alchemy._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });
