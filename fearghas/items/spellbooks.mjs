@@ -1,11 +1,5 @@
 import { MODULE } from "../../scripts/constants.mjs";
 
-/*
-    TODO
-    - make a Manager class for granting items
-    - same as here but store a reference to the granted items inside a flag on the actor
-    - 
-*/
 export default {
     _onInit() {
         CONFIG.DND5E.equipmentTypes.spellbook = CONFIG.DND5E.miscEquipmentTypes.spellbook = "Spellbook";
@@ -58,7 +52,6 @@ export class Spellbooks {
     };
     static spellItemFlag = `grantedByUuid`;    //the flag to be added to each spell that's being added by a spellbook
 
-
     /**
      * 
      * @param {Item5e} item 
@@ -70,7 +63,7 @@ export class Spellbooks {
         const spellList = this.bookDatabase[item.name].spellList;
 
         //create an array of spells that the current spellbook should contain from the compendium
-        const spells = await game.packs.get(this[MODULE.customItemsPackKey]).getDocuments({name__in: spellList});
+        const spells = await game.packs.get(MODULE.customItemsPackKey).getDocuments({name__in: spellList});
 
         //warn which spells have not been found in the compendium (if any)
         if(!spells || spellList.length !== spells.length) {
@@ -90,8 +83,6 @@ export class Spellbooks {
         //merge the default changes with the changes that are specific to each spellbook
         const changes = foundry.utils.mergeObject(defaultChanges, this.bookDatabase[item.name].changes ?? {});
 
-
-
         const spellObjects = spells.map(spell => {
             //convert spells to objects and apply changes to each
             const spellObj = spell.toObject();
@@ -99,13 +90,11 @@ export class Spellbooks {
 
             return spellObj;
         });
-        console.log(spellObjects);
 
         //check if the actor already has spells with that flag and if so, remove those from spellObjects
 
         //add spells to actor
         const created = await Item.createDocuments(spellObjects, {parent: item.actor});
-        console.log(created);
     }
 
     static async onUnequip(item) {
@@ -117,6 +106,5 @@ export class Spellbooks {
         const foundSpellsIds = foundSpells.map(spell => spell.id);
 
         const deleted = await Item.deleteDocuments(foundSpellsIds, {parent: item.actor});
-        console.log(deleted);
     }
 }
