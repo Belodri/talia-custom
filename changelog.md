@@ -26,6 +26,9 @@
     - Circlet of Wisdom
     - Glasses of True Seeing
 
+## Fixed
+- Fearghas' Spellbook now correctly grants spells when equipped again.
+
 <details><summary><h2>Dev Details</h2></summary>  
 
 - API function `tokensAdjacent(token1, token2)`  
