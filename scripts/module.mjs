@@ -18,6 +18,7 @@ import contraptionsCrafting from "../plex/contraptionsCrafting/contraptionsCraft
 import { helpersToApi } from "./_foundryHelpers.mjs";
 import templateOpenCharSheet from "../systemChanges/templateOpenCharSheet.mjs";
 import alchemy from "../alchemy/alchemy.mjs";
+import tokenAdjacencyCheck from "../inGame-macrosAndScripts/tokenAdjacencyCheck.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -52,6 +53,7 @@ Hooks.once("setup", () => {
     contraptionsCrafting._onSetup();
     helpersToApi._onSetup();
     alchemy._onSetup();
+    tokenAdjacencyCheck._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });
