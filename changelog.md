@@ -1,3 +1,39 @@
+# 0.3.0 - 2024/07/23
+## Added
+- Features
+    - Spirit of the Wolf
+    - Keen Senses
+    - <details><summary>Pack Tactics (changed)</summary>  
+
+        from
+        > Your allies have advantage on attack rolls against hostile creatures within 5ft of you.
+
+        to
+        > All attacks rolls made against hostile creatures within 5ft of you have advantage.
+    </details>
+    
+    - Hamstringing
+    - Coordinated Hunt
+
+- Spells
+    - Teleport
+    - Wind Walk
+    - Fog
+    - Web
+
+- Items
+    - Ring of Protection +2
+    - Circlet of Wisdom
+    - Glasses of True Seeing
+
+<details><summary><h2>Dev Details</h2></summary>  
+
+- API function `tokensAdjacent(token1, token2)`  
+    Determines if two tokens are adjacent or overlapping on a canvas divided into 100x100 pixel cells.
+    Tokens are considered adjacent if they are in neighboring cells (including diagonally) or if they overlap in any way.
+    Returns true if the tokens are adjacent or overlapping, false otherwise.
+</details>
+
 # 0.2.0 - 2024/07/16
 ## Added
 - Automation systems for gathering and harvesting alchemical ingredients.
