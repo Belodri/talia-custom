@@ -19,6 +19,7 @@ import { helpersToApi } from "./_foundryHelpers.mjs";
 import templateOpenCharSheet from "../systemChanges/templateOpenCharSheet.mjs";
 import alchemy from "../alchemy/alchemy.mjs";
 import tokenAdjacencyCheck from "../inGame-macrosAndScripts/tokenAdjacencyCheck.mjs";
+import skillEmpowerment from "../spells/skillEmpowerment.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -54,6 +55,7 @@ Hooks.once("setup", () => {
     helpersToApi._onSetup();
     alchemy._onSetup();
     tokenAdjacencyCheck._onSetup();
+    skillEmpowerment._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });
