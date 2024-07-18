@@ -2,6 +2,7 @@
 ## Added
 - Levels
     - Fearghas -> level 10
+    - Aviana -> level 10
 
 - Features
     - Spirit of the Wolf
