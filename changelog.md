@@ -1,5 +1,8 @@
 # 0.3.0 - 2024/07/23
 ## Added
+- Levels
+    - Fearghas -> level 10
+
 - Features
     - Spirit of the Wolf
     - Keen Senses
@@ -14,12 +17,35 @@
     
     - Hamstringing
     - Coordinated Hunt
+    - <details><summary>Empowered Evocation (changed)</summary>  
+
+        from
+        > Beginning at 10th level, you can add your Intelligence modifier to one damage roll of any wizard evocation spell you cast.
+
+        to
+        > Beginning at 10th level, you can add your Intelligence modifier to the damage roll of any evocation spell you cast.
+    </details>
 
 - Spells
     - Teleport
     - Wind Walk
     - Fog
     - Web
+    - <details><summary>Skill Empowerment (changed)</summary>  
+
+        from
+        > Your magic deepens a creature's understanding of its own talent. You touch one willing creature and give it expertise in one skill of your choice; until the spell ends, the creature doubles its proficiency bonus for ability checks it makes that use the chosen skill.
+        >
+        > You must choose a skill in which the target is proficient and that isn't already benefiting from an effect, such as Expertise, that doubles its proficiency bonus.
+
+        to
+        > Your magic deepens a creature's understanding of its own talent. You touch one willing creature and give it expertise in one skill or tool of your choice; until the spell ends, the creature doubles its proficiency bonus for ability checks it makes that use the chosen skill.
+        >
+        > You must choose a skill or tool in which the target is proficient and that isn't already benefiting from an effect, such as Expertise, that doubles its proficiency bonus.
+    </details>
+
+    - Hold Monster
+    - Ray of Frost
 
 - Items
     - Ring of Protection +2
