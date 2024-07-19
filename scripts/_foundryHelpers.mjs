@@ -1,6 +1,7 @@
 import { TaliaCustomAPI } from "./api.mjs";
 
 export const _foundryHelpers = {
+    displayItemInfoOnly,
     promptItemUse,
     getActorByUuid,
     getActiveUserCharacters,
@@ -119,6 +120,39 @@ function displayItemWithoutEffects(item) {
     const itemData = item.toObject();
     itemData.effects.filter(u => u.name = "");  
     item.displayCard({"flags.dnd5e.itemData": itemData});
+}
+
+/**
+ * Displays only the most basic item info in a chat message.
+ * @param {Item5e} item 
+ * @returns {ChatMessage}
+ */
+async function displayItemInfoOnly(item) {
+    const token = item.actor.token;
+    const templateData = {
+        hasButtons: false,
+        actor: item.actor,
+        config: CONFIG.DND5E,
+        tokenId: token?.uuid || null,
+        item: item,
+        data: await item.system.getCardData(),
+        labels: item.lables,
+        consumeUsage: false,
+        consumeResource: false
+    };
+    const html = await renderTemplate("systems/dnd5e/templates/chat/item-card.hbs", templateData);
+    // Create the ChatMessage data object
+    const chatData = {
+        user: game.user.id,
+        content: html,
+        speaker: ChatMessage.getSpeaker({actor: item.actor, token}),
+        flags: {"core.canPopout": true}
+    };
+    
+    // Remove when v11 support is dropped.
+    if ( game.release.generation < 12 ) chatData.type = CONST.CHAT_MESSAGE_TYPES.OTHER;
+    
+    return await ChatMessage.create(chatData);
 }
 
 /**
