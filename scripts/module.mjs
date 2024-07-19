@@ -20,6 +20,7 @@ import templateOpenCharSheet from "../systemChanges/templateOpenCharSheet.mjs";
 import alchemy from "../alchemy/alchemy.mjs";
 import tokenAdjacencyCheck from "../inGame-macrosAndScripts/tokenAdjacencyCheck.mjs";
 import skillEmpowerment from "../spells/skillEmpowerment.mjs";
+import martialStyleStances from "../shalkoc/Feats/martialStyleStances.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -39,6 +40,7 @@ Hooks.once("init", () => {
     commonActions._onInit();
     contraptionsCrafting._onInit();
     alchemy._onInit();
+    martialStyleStances._onInit();
 });
 
 Hooks.once("setup", () => {
@@ -56,6 +58,7 @@ Hooks.once("setup", () => {
     alchemy._onSetup();
     tokenAdjacencyCheck._onSetup();
     skillEmpowerment._onSetup();
+    martialStyleStances._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });
