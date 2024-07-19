@@ -3,6 +3,7 @@
 - Levels
     - Fearghas -> level 10
     - Aviana -> level 10
+    - Shalkoc -> level 10
 
 - Features
     - Spirit of the Wolf
@@ -25,6 +26,29 @@
 
         to
         > Beginning at 10th level, you can add your Intelligence modifier to the damage roll of any evocation spell you cast.
+    </details>
+
+    - <details><summary>Shifting Stances (new Monk level 10)</summary>  
+
+
+        > You can spend 1 Ki to enter a stance or shift from one to another, imitating the movements of the creature that inspired the stance's style. This stance lasts until you choose to end it, until you enter a different stance, or until combat ends.
+        >
+        > You can enter a stance, change to a different stance, or end a stance only once per turn as a free action.
+    </details>
+
+    - <details><summary>Mantis Style</summary>  
+
+        > Embodying the style of the mantis, lets you add your proficiency bonus to your regular Ki save DC when you use Stunning Strike but the style also reduces your AC by an amount equal to your proficiency bonus.
+    </details>
+
+    - <details><summary>Turtle Style</summary>  
+
+        > The turtle style grants you a bonus to your AC equal to your proficiency bonus but the maximum distance you can move during each of your turns is limited to a number of feet equal to 5 times your proficiency bonus.
+    </details>
+
+    - <details><summary>Tiger Style</summary>  
+
+        > The tiger style adds an amount of damage equal to your proficiency bonus to all natural weapon attacks you make but reduces your Ki save DC by the same amount.
     </details>
 
 - Spells
@@ -57,6 +81,12 @@
 - Fearghas' Spellbook now correctly grants spells when equipped again.
 
 <details><summary><h2>Dev Details</h2></summary>  
+
+- `_foundryHelpers.displayItemInfoOnly(item)`
+    Displays only the most basic item info in a chat message.
+
+- API function `activateMartialStyleStance(item)`
+    Is called by Monk's Shifting Stances
 
 - API function `tokensAdjacent(token1, token2)`  
     Determines if two tokens are adjacent or overlapping on a canvas divided into 100x100 pixel cells.
