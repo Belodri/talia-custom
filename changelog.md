@@ -99,6 +99,11 @@
 
 <details><summary><h2>Dev Details</h2></summary>  
 
+- Added custom active effect `flags.talia-custom.sizeIndex | CUSTOM | "string"`.
+    Value string needs to begin with a "+" or a "-" character. The rest of the string needs to be convertible into a non-zero number.
+    Any faulty inputs are simply ignored and no change is made.
+    The effect is stackable, meaning multiple different active effects with this key can be active on the same actor and they all work.
+
 - `_foundryHelpers.displayItemInfoOnly(item)`
     Displays only the most basic item info in a chat message.
 
