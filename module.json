@@ -69,6 +69,17 @@
       "label": "Talia Macros",
       "path": "packs/taliaMacros",
       "type": "Macro",
+      "system": "dnd5e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "talia-actors",
+      "label": "Talia Actors",
+      "path": "packs/talia-actors",
+      "type": "Actor",
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -78,8 +89,14 @@
   ],
   "flags": {
     "hotReload": {
-      "extensions": ["css", "hbs"],
-      "paths": ["templates", "styles"]
+      "extensions": [
+        "css",
+        "hbs"
+      ],
+      "paths": [
+        "templates",
+        "styles"
+      ]
     }
   }
 }

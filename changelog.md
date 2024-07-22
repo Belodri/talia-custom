@@ -4,6 +4,7 @@
     - Fearghas -> level 10
     - Aviana -> level 10
     - Shalkoc -> level 10
+    - Plex -> level 10
 
 - Features
     - Spirit of the Wolf
@@ -88,11 +89,24 @@
 
     - Hold Monster
     - Ray of Frost
+    - Shape Water
+    - Telekinesis
+    - Animate Objects
+
+- Summonable creatures
+    - Animated Object (Tiny)
+    - Animated Object (Small)
+    - Animated Object (Medium)
+    - Animated Object (Large)
+    - Animated Object (Huge)
 
 - Items
     - Ring of Protection +2
     - Circlet of Wisdom
     - Glasses of True Seeing
+
+- Compendium "Talia Actors" (key="talia-actors")
+    Used to store custom creature templates for summoning and polymorphing.
 
 ## Fixed
 - Fearghas' Spellbook now correctly grants spells when equipped again.
