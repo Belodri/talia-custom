@@ -22,13 +22,15 @@ import tokenAdjacencyCheck from "../inGame-macrosAndScripts/tokenAdjacencyCheck.
 import skillEmpowerment from "../spells/skillEmpowerment.mjs";
 import martialStyleStances from "../shalkoc/Feats/martialStyleStances.mjs";
 import customActiveEffects from "./customActiveEffects.mjs";
+import actorWrappers from "../allActors/actorWrappers.mjs";
+import sizeIndex from "../allActors/sizeIndex.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
 });
 
 Hooks.once("libWrapper.Ready", () => {
-    jump._onLibWrapperReady();
+    actorWrappers._onLibWrapperReady();
     templateOpenCharSheet._onLibWrapperReady();
 });
 
@@ -43,6 +45,8 @@ Hooks.once("init", () => {
     alchemy._onInit();
     martialStyleStances._onInit();
     customActiveEffects._onInit();
+    sizeIndex._onInit();
+
 });
 
 Hooks.once("setup", () => {
@@ -61,6 +65,10 @@ Hooks.once("setup", () => {
     tokenAdjacencyCheck._onSetup();
     skillEmpowerment._onSetup();
     martialStyleStances._onSetup();
+
+    sizeIndex._onSetup();
+
+    customActiveEffects._onSetup();
     
 
     console.log(`${MODULE.ID} set up.`);
