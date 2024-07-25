@@ -36,6 +36,7 @@
 - Spellbooks now check for attunement as well when adding/removing spells.
 - Created spell gems now show their spell level in the title.
 - Fixed console log spam during spellscribing.
+- Added missing spells to Plex (Animate Objects and Telekinesis)
 
 # 0.3.0 - 2024/07/23
 ## Added
