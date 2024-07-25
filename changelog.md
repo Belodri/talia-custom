@@ -1,3 +1,43 @@
+# 0.4.0 - 2024/07/30
+## Added
+- Spells
+    - Bloody Rites
+    - Blood Barrier
+    - Inflict Wounds
+    - Gentle Repose
+    - Nondetection
+    - Circle of Death
+
+- Items
+    - Strionic Resonator
+    - Drunken Brawler's Dancing Shoes
+    - Sneaky Spellshite's Amulet
+    - Unholy Grimoire of Blood
+
+    - <details><summary>Spell Gems and Scrolls from Vrazzak's Lair (added to the storage chest in the cabin)</summary>  
+
+        - 2x Activated: Circle of Death - 6th
+        - 4x Activated: Circle of Death - 9th
+        - 4x Activated: Inflict Wounds - 4th
+        - 9x Activated: Nondetection - 3rd
+        - 7x Triggered: Greater Restoration - 9th
+        - 3x Spell Scroll: Gentle Repose
+    </details>
+
+- Learned spells from scrolls (Fearghas)
+    - Teleport
+    - Wind Walk
+    - Greater Invisibility
+
+- Rules for triggered abilities
+
+## Fixed
+- Spells that are granted by items while those items are equipped and/or attuned can no longer be scribed.
+- Spellbooks now check for attunement as well when adding/removing spells.
+- Created spell gems now show their spell level in the title.
+- Fixed console log spam during spellscribing.
+- Added missing spells to Plex (Animate Objects and Telekinesis)
+
 # 0.3.0 - 2024/07/23
 ## Added
 - Levels

@@ -9,12 +9,30 @@ export default {
             //to prevent the code from executing on other clients, check for userId
             if(game.user.id !== userId) return; 
 
+            if(!item.actor) return;
+
             if(item.type !== "equipment" || item.system?.type?.value !== "spellbook") return;
         
-            if(data.system?.equipped === true) {
-                Spellbooks.onEquip(item)
-            } else if (data.system?.equipped === false) {
-                Spellbooks.onUnequip(item);
+            if (
+                // The item is equipped after the update
+                item.system.equipped &&
+                // And either attunement is not required, or it is required and the item is attuned
+                (item.system.attunement !== "required" || item.system.attuned) &&
+                // And either the equipped status changed, or the attuned status changed
+                (data.system.equipped !== undefined || data.system.attuned !== undefined)
+            ) {
+                // Add spells to the actor
+                Spellbooks.addSpells(item)
+            } else if (
+                // The item is now unequipped
+                !item.system.equipped ||
+                // Or attunement is required and the item is no longer attuned
+                (item.system.attunement === "required" && !item.system.attuned) &&
+                // And either the equipped status changed, or the attuned status changed
+                (data.system.equipped !== undefined || data.system.attuned !== undefined)
+            ) {
+                // Remove spells from the actor
+                Spellbooks.removeSpells(item)
             }
         });
     }
@@ -47,6 +65,16 @@ export class Spellbooks {
                 "system.preparation.mode": "always", 
                 "system.preparation.prepared": false,
             }
+        },
+        "Unholy Grimoire of Blood": {
+            spellList: [
+                "Bloody Rites",
+                "Blood Barrier"
+            ],
+            changes: {
+                "system.preparation.mode": "always",
+                "system.preparation.prepared": false
+            }
         }
         
     };
@@ -57,7 +85,7 @@ export class Spellbooks {
      * @param {Item5e} item 
      * @returns 
      */
-    static async onEquip(item) {
+    static async addSpells(item) {
         if(!(item.name in this.bookDatabase)) return;
 
         const spellList = this.bookDatabase[item.name].spellList;
@@ -97,7 +125,7 @@ export class Spellbooks {
         const created = await Item.createDocuments(spellObjects, {parent: item.actor});
     }
 
-    static async onUnequip(item) {
+    static async removeSpells(item) {
         if(!(item.name in this.bookDatabase)) return;
         const actor = item.actor;
 

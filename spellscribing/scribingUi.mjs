@@ -50,17 +50,7 @@ export class ScribingUI extends FormApplication {
     }
 
     render(force=false, options = {}) {
-        /*
-        //add clause for when the user doesn't have any gemstones
-        //I don't need this if the user can't scribe at all without gems
-        if(!this.gemstonesSorted.length) {
-            ui.notifications.warn("You don't have any gemstones to scribe.");
-            if(!this.rendered) return;
-            setTimeout(() => this.close(), 0);
-        }
-        */
         this._updateButtonText();
-        console.log(this);
         return super.render(force, options);
     }
 
@@ -73,7 +63,6 @@ export class ScribingUI extends FormApplication {
             this.chosenData.addedButtonText = "";
         }
     }
-
 
     async _onDrop(event) {
         const data = TextEditor.getDragEventData(event);
@@ -93,6 +82,12 @@ export class ScribingUI extends FormApplication {
         //check preparation mode
         if (["atwill", "innate", "pact"].includes(droppedItem.system?.preparation?.mode)) {
             ui.notifications.warn(`Spells of type: "${droppedItem.system.preparation.mode}" are not supported.`);
+            return;
+        }
+
+        //disallow spells that have been granted by other items
+        if(droppedItem.flags?.["talia-custom"]?.grantedByUuid) {
+            ui.notifications.warn("You cannot scribe spells that have been granted by items.");
             return;
         }
 
@@ -116,10 +111,7 @@ export class ScribingUI extends FormApplication {
             isTrigger: this.chosenData.isTrigger,
             triggerConditions: this.chosenData.triggerConditions || ""
         }
-        console.log("_handleScribing: chosenArgs ", chosenArgs);
-
         const result = await spellscribing(this.actor, chosenArgs);
-        console.log({result: result});
 
         if(result === true) {
             //reload all data since this returned true;
@@ -129,8 +121,6 @@ export class ScribingUI extends FormApplication {
     }  
 
     async getData() {
-
-
         const data = {
             spell: {
                 name: "Drop your spell here",
