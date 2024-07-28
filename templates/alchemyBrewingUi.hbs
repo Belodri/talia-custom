@@ -1,0 +1,43 @@
+<form style="display: flex; flex-direction:column; flex-grow: 1;">
+    {{!-- log  this --}}
+
+    <nav class="tabs" data-group="main">
+        <a class="item" data-tab="common">Common</a>
+        <a class="item" data-tab="uncommon">Uncommon</a>
+        <a class="item" data-tab="rare">Rare</a>
+        <a class="item" data-tab="veryRare">Very Rare</a>
+        <a class="item" data-tab="legendary">Legendary</a>
+    </nav>
+
+    <div class="rarityTabs">
+        {{#each tabsData}}
+            <div class="tab" data-tab="{{@key}}">
+                <h2>{{tabName}} Brews - DC {{dc}}</h2>
+                <hr class="break">
+                <div class="itemList">
+                    {{#each items}}
+                        <div class="brewItem">
+                            <img class="brewImg" src="{{img}}" alt="{{name}}">
+                            <span class="brewName">{{name}}</span>
+                            <span class="brewAmount">Craftable: {{amount}}</span>
+                            <button 
+                                class="brewCraft" 
+                                type="button" 
+                                data-action="craftBrewButton" 
+                                data-recipe-key="{{recipeKey}}"
+                                {{#unless amount}}disabled{{/unless}}
+                            >Craft</button>
+                        </div>
+                    {{/each}}
+                </div>
+            </div>
+        {{/each}}
+    </div>
+
+    {{#if isGM}}
+    <div class="gmCheckbox">
+        <input type="checkbox" class="gmCheckbox" name="gmMode" {{ checked gmMode }}>
+        <span>GM Mode</span>
+    </div>
+    {{/if}}
+</form>
