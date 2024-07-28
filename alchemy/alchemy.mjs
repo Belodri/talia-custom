@@ -1,55 +1,6 @@
 import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
-
-/*  HOW IT WORKS    Harvesting Herbs:
-        I press a macro which lets me select one type of environment (and with that the herb that grows there).
-        This rolls the itemYield and then whispers a requestor message to Fearghas letting him know which herb he can see and what's it's itemYield is.
-        
-        On that message there is one button for each harvestable ingredient. (label is something like: "3x Salt Vine" with the 3x being the itemYield of that patch)
-        When he clicks the button he's prompted to roll an Alchemy check.
-            If he succeeds, that many of that item are created in his inventory (stacking with items of the same name)
-            If he fails, he can first choose to spend inspiration to reroll.
-            If he can't or he chooses not to spend inspiration, a d4 is rolled which determines how much (if anything he can salvage)
-        After all of that, a message appears in chat letting everyone know how much he managed to gather. (change message text if it's a salvage)
-*/
-
-/*  HOW IT WORKS    Harvesting Body Parts:
-        Fearghas uses his feature "Harvest Body Parts" while targeting a creature.
-        If the creature can be harvested (flag "beenHarvested"?, creature is dead?, creature has harvestable parts?), 
-        the itemYield is rolled and a requestor message pops up in his chat.
-
-        On that message there is one button for each harvestable ingredient. (label is something like: "3x Gills" with the 3x being the itemYield of that creature)
-        When he clicks the button he's prompted to roll an Alchemy check.
-            If he succeeds, that many of that item are created in his inventory (stacking with items of the same name)
-            If he fails, he can first choose to spend inspiration to reroll.
-            If he can't or he chooses not to spend inspiration, a d4 is rolled which determines how much (if anything he can salvage)
-        After all of that, a message appears in chat letting everyone know how much he managed to gather. (change message text if it's a salvage)
-*/
-
-/*  Regarding the code
-        Both herbs and body parts share the same code for the requestor message button.
-        Only how that message is created is different.
-
-
-        The following functions will be added to the module api inside an object called AlchemyAPI:
-            createHarvestHerbs()
-            createHarvestBodyParts()
-            createBrewingUI()
-        These functions create the relevant subclasses of Alchemy.
-
-        In the end this means that the individual aspects of Alchemy can be accessed like this:
-            - Harvesting Herbs: 
-                Macro executed by GM with code:
-                    await TaliaCustom.AlchemyAPI.createHarvestHerbs(actor)
-            - Harvesting Body Parts:
-                ItemMacro executed by Fearghas with code:
-                    await TaliaCustom.AlchemyAPI.createHarvestBodyParts(actor)
-            - Brewing:
-                ItemMacro executed by Fearghas with code:
-                    await TaliaCustom.AlchemyAPI.createBrewingUI(actor)
-*/
-
-
+import { AlchemyBrewingUI } from "./brewingUi.mjs";
 
 const INGREDIENTS = {  
     HERBS: {
@@ -130,40 +81,126 @@ const INGREDIENTS = {
  */
 
 const RECIPES = {
-    potionOfHealing: {name: "Potion of Healing", ingredients: [{name: "Fever Grass", quantity: 1}, {name: "Salt Vine", quantity: 1}, {name: "Plant Muscle Fibres", quantity: 1}]},
-    potionOfWaterBreathing: {name: "Potion of Water Breathing", ingredients: [{name: "Salt Vine", quantity: 1}, {name: "Gills", quantity: 2}]},
-    potionOfMaximumPower: {name: "Potion of Maximum Power", ingredients: [{name: "Fever Grass", quantity: 1}, {name: "Plant Muscle Fibres", quantity: 1}, {name: "Gills", quantity: 1}]},
-    potionOfPoison: {name: "Potion of Poison", ingredients: [{name: "Fever Grass", quantity: 3}]},
-    potionOfHeroism: {name: "Potion of Heroism", ingredients: [{name: "Plant Muscle Fibres", quantity: 2}, {name: "Salt Vine", quantity: 1}]},
-    potionOfAdvantage: {name: "Potion of Advantage", ingredients: [{name: "Salt Vine", quantity: 3}]},
-    potionOfGreaterHealing: {name: "Potion of Greater Healing", ingredients: [{name: "Wineberry Bark", quantity: 1}, {name: "Black Nerium", quantity: 1}, {name: "Core Crystal", quantity: 1}]},
-    potionOfResistance: {name: "Potion of Resistance", ingredients: [{name: "Black Nerium", quantity: 2}, {name: "Monstrous Blood", quantity: 1}]},
-    oilOfSlipperiness: {name: "Oil of Slipperiness", ingredients: [{name: "Wineberry Bark", quantity: 2}, {name: "Core Crystal", quantity: 1}]},
-    potionOfGrowth: {name: "Potion of Growth", ingredients: [{name: "Wineberry Bark", quantity: 1}, {name: "Monstrous Blood", quantity: 2}]},
-    potionOfDiminution: {name: "Potion of Diminution", ingredients: [{name: "Black Nerium", quantity: 1}, {name: "Core Crystal", quantity: 2}]},
-    potionOfSuperiorHealing: {name: "Potion of Superior Healing", ingredients: [{name: "Shatterstone", quantity: 1}, {name: "Water Flower", quantity: 1}, {name: "Ooze Drops", quantity: 1}]},
-    potionOfFireBreath: {name: "Potion of Fire Breath", ingredients: [{name: "Water Flower", quantity: 3}]},
-    potionOfGaseousForm: {name: "Potion of Gaseous Form", ingredients: [{name: "Ooze Drops", quantity: 2}, {name: "Shatterstone", quantity: 1}]},
-    potionOfInvisibility: {name: "Potion of Invisibility", ingredients: [{name: "Ooze Drops", quantity: 2}, {name: "Giant's Nail", quantity: 1}]},
-    potionOfVitality: {name: "Potion of Vitality", ingredients: [{name: "Giant's Nail", quantity: 2}, {name: "Shatterstone", quantity: 1}]},
-    murgaxorsElixirOfLife: {name: "Murgaxor's Elixir of Life", ingredients: [{name: "Giant's Nail", quantity: 2}, {name: "Water Flower", quantity: 1}]},
-    potionOfSupremeHealing: {name: "Potion of Supreme Healing", ingredients: [{name: "Bloodroot", quantity: 1}, {name: "Shimmerleaf", quantity: 1}, {name: "Pure Wrong", quantity: 1}]},
-    potionOfFlying: {name: "Potion of Flying", ingredients: [{name: "Shimmerleaf", quantity: 2}, {name: "Pure Wrong", quantity: 1}]},
-    potionOfSpeed: {name: "Potion of Speed", ingredients: [{name: "Bloodroot", quantity: 2}, {name: "Necromantic Binding", quantity: 1}]},
-    oilOfSharpness: {name: "Oil of Sharpness", ingredients: [{name: "Bloodroot", quantity: 1}, {name: "Shimmerleaf", quantity: 2}]},
-    willowshadeOil: {name: "Willowshade Oil", ingredients: [{name: "Shimmerleaf", quantity: 2}, {name: "Necromantic Binding", quantity: 1}]},
-    potionOfDragonsMajesty: {name: "Potion of Dragon's Majesty", ingredients: [{name: "Volcano Poppy", quantity: 2}, {name: "Dragon Scale", quantity: 1}]},
-    potionOfGiantSize: {name: "Potion of Giant Size", ingredients: [{name: "Snow Moss", quantity: 2}, {name: "Essence of Legend", quantity: 1}]},
-    immediateRest: {name: "Immediate Rest", ingredients: [{name: "Dragon Scale", quantity: 2}, {name: "Volcano Poppy", quantity: 1}]},
-    potionOfLegendaryResistance: {name: "Potion of Legendary Resistance", ingredients: [{name: "Essence of Legend", quantity: 3}]},
-    potionOfTimeStop: {name: "Potion of Time Stop", ingredients: [{name: "Snow Moss", quantity: 2}, {name: "Volcano Poppy", quantity: 1}]},
-    basicPoison: {name: "Basic Poison", ingredients: [{name: "Plant Muscle Fibres", quantity: 2}, {name: "Gills", quantity: 1}]},
-    drowPoison: {name: "Drow Poison", ingredients: [{name: "Core Crystal", quantity: 3}]},
-    serpentVenom: {name: "Serpent Venom", ingredients: [{name: "Monstrous Blood", quantity: 3}]},
-    malice: {name: "Malice", ingredients: [{name: "Ooze Drops", quantity: 3}]},
-    wyvernPoison: {name: "Wyvern Poison", ingredients: [{name: "Giant's Nail", quantity: 3}]},
-    torpor: {name: "Torpor", ingredients: [{name: "Necromantic Binding", quantity: 3}]},
-    purpleWormPoison: {name: "Purple Worm Poison", ingredients: [{name: "Pure Wrong", quantity: 3}]}
+    potionOfHealing: {name: "Potion of Healing", rarity: "common", ingredients: [
+        {name: "Fever Grass", quantity: 1}, 
+        {name: "Salt Vine", quantity: 1}, 
+        {name: "Plant Muscle Fibres", quantity: 1}
+    ]},
+    potionOfWaterBreathing: {name: "Potion of Water Breathing", rarity: "common", ingredients: [
+        {name: "Salt Vine", quantity: 1}, 
+        {name: "Gills", quantity: 2}]
+    },
+    potionOfMaximumPower: {name: "Potion of Maximum Power", rarity: "common", ingredients: [
+        {name: "Fever Grass", quantity: 1}, 
+        {name: "Plant Muscle Fibres", quantity: 1}, 
+        {name: "Gills", quantity: 1}
+    ]},
+    potionOfPoison: {name: "Potion of Poison", rarity: "common", ingredients: [
+        {name: "Fever Grass", quantity: 3}
+    ]},
+    potionOfHeroism: {name: "Potion of Heroism", rarity: "common", ingredients: [
+        {name: "Plant Muscle Fibres", quantity: 2}, 
+        {name: "Salt Vine", quantity: 1}
+    ]},
+    potionOfAdvantage: {name: "Potion of Advantage", rarity: "common", ingredients: [
+        {name: "Salt Vine", quantity: 3}
+    ]},
+    basicPoison: {name: "Basic Poison", rarity: "common", ingredients: [
+        {name: "Plant Muscle Fibres", quantity: 2}, 
+        {name: "Gills", quantity: 1}
+    ]},
+    potionOfGreaterHealing: {name: "Potion of Greater Healing", rarity: "uncommon", ingredients: [
+        {name: "Wineberry Bark", quantity: 1}, 
+        {name: "Black Nerium", quantity: 1}, 
+        {name: "Core Crystal", quantity: 1}
+    ]},
+    potionOfResistance: {name: "Potion of Resistance", rarity: "uncommon", ingredients: [
+        {name: "Black Nerium", quantity: 2}, 
+        {name: "Monstrous Blood", quantity: 1}
+    ]},
+    oilOfSlipperiness: {name: "Oil of Slipperiness", rarity: "uncommon", ingredients: [
+        {name: "Wineberry Bark", quantity: 2}, 
+        {name: "Core Crystal", quantity: 1}
+    ]},
+    potionOfGrowth: {name: "Potion of Growth", rarity: "uncommon", ingredients: [
+        {name: "Wineberry Bark", quantity: 1}, 
+        {name: "Monstrous Blood", quantity: 2}
+    ]},
+    potionOfDiminution: {name: "Potion of Diminution", rarity: "uncommon", ingredients: [
+        {name: "Black Nerium", quantity: 1}, 
+        {name: "Core Crystal", quantity: 2}
+    ]},
+    drowPoison: {name: "Drow Poison", rarity: "uncommon", ingredients: [
+        {name: "Core Crystal", quantity: 3}
+    ]},
+    serpentVenom: {name: "Serpent Venom", rarity: "uncommon", ingredients: [
+        {name: "Monstrous Blood", quantity: 3}
+    ]},
+    potionOfSuperiorHealing: {name: "Potion of Superior Healing", rarity: "rare", ingredients: [
+        {name: "Shatterstone", quantity: 1}, 
+        {name: "Water Flower", quantity: 1}, 
+        {name: "Ooze Drops", quantity: 1}
+    ]},
+    potionOfGaseousForm: {name: "Potion of Gaseous Form", rarity: "rare", ingredients: [
+        {name: "Ooze Drops", quantity: 2}, 
+        {name: "Shatterstone", quantity: 1}
+    ]},
+    potionOfInvisibility: {name: "Potion of Invisibility", rarity: "rare", ingredients: [
+        {name: "Ooze Drops", quantity: 2}, 
+        {name: "Giant's Nail", quantity: 1}
+    ]},
+    murgaxorsElixirOfLife: {name: "Murgaxor's Elixir of Life", rarity: "rare", ingredients: [
+        {name: "Giant's Nail", quantity: 2}, 
+        {name: "Water Flower", quantity: 1}
+    ]},
+    malice: {name: "Malice", rarity: "rare", ingredients: [
+        {name: "Ooze Drops", quantity: 3}
+    ]},
+    wyvernPoison: {name: "Wyvern Poison", rarity: "rare", ingredients: [
+        {name: "Giant's Nail", quantity: 3}
+    ]},
+    potionOfSupremeHealing: {name: "Potion of Supreme Healing", rarity: "veryRare", ingredients: [
+        {name: "Bloodroot", quantity: 1}, 
+        {name: "Shimmerleaf", quantity: 1}, 
+        {name: "Pure Wrong", quantity: 1}
+    ]},
+    potionOfFlying: {name: "Potion of Flying", rarity: "veryRare", ingredients: [
+        {name: "Shimmerleaf", quantity: 2}, 
+        {name: "Pure Wrong", quantity: 1}
+    ]},
+    potionOfSpeed: {name: "Potion of Speed", rarity: "veryRare", ingredients: [
+        {name: "Bloodroot", quantity: 2}, 
+        {name: "Necromantic Binding", quantity: 1}
+    ]},
+    oilOfSharpness: {name: "Oil of Sharpness", rarity: "veryRare", ingredients: [
+        {name: "Bloodroot", quantity: 1}, 
+        {name: "Shimmerleaf", quantity: 2}
+    ]},
+    willowshadeOil: {name: "Willowshade Oil", rarity: "veryRare", ingredients: [
+        {name: "Shimmerleaf", quantity: 2}, 
+        {name: "Necromantic Binding", quantity: 1}
+    ]},
+    torpor: {name: "Torpor", rarity: "veryRare", ingredients: [
+        {name: "Necromantic Binding", quantity: 3}
+    ]},
+    purpleWormPoison: {name: "Purple Worm Poison", rarity: "veryRare", ingredients: [
+        {name: "Pure Wrong", quantity: 3}
+    ]},
+    potionOfGiantSize: {name: "Potion of Giant Size", rarity: "legendary", ingredients: [
+        {name: "Snow Moss", quantity: 2}, 
+        {name: "Essence of Legend", quantity: 1}
+    ]},
+    potionOfImmediateRest: {name: "Potion of Immediate Rest", rarity: "legendary", ingredients: [
+        {name: "Dragon Scale", quantity: 2}, 
+        {name: "Volcano Poppy", quantity: 1}
+    ]},
+    potionOfLegendaryResistance: {name: "Potion of Legendary Resistance", rarity: "legendary", ingredients: [
+        {name: "Essence of Legend", quantity: 3}
+    ]},
+    potionOfTimeStop: {name: "Potion of Time Stop", rarity: "legendary", ingredients: [
+        {name: "Snow Moss", quantity: 2}, 
+        {name: "Volcano Poppy", quantity: 1}
+    ]},
 };
 
 export default {
@@ -176,15 +213,20 @@ export default {
         };
     },
     _onSetup() {
-        const AlchemyAPI = {
+        TaliaCustomAPI.add({AlchemyAPI: {
             INGREDIENTS,
             RECIPES,
             createHarvestHerbs,
             createHarvestBodyParts,
             Harvest,
-        }
-        TaliaCustomAPI.add({AlchemyAPI});
+            createBrewUI,
+            Brewing,
+        }});
     }
+}
+
+async function createBrewUI(actor) {
+    return new AlchemyBrewingUI(actor).render(true);
 }
 
 /**
@@ -313,7 +355,7 @@ class Alchemy {
         return Alchemy.rarityToDC[rarity];
     }
 
-    async rollAlchemyCheck({rarity = "common", name = "", itemYield = null}) {
+    async rollAlchemyCheck({rarity = "common", name = "", itemYield = null, fastForward = false, skipAnim = false}) {
         if(!this.tool) {
             ui.notifications.error("You need to have Alchemist's Tools on you to practice Alchemy.");
             return null;
@@ -323,20 +365,29 @@ class Alchemy {
         const options = {
             flavor: `<b>${itemYield ? `${itemYield}x ` : ""}${name ? `${name} - ` : ""}DC ${DC} Alchemy Check</b>`,
             chooseModifier: false,
-            targetValue: DC
+            targetValue: DC,
+            fastForward: fastForward
         };
-        const result = await this.tool.rollToolCheck(options);
         
+        const result = await this.tool.rollToolCheck(options);
+        if(!result) return null;    //if the dialog was just closed
+
+        if(!skipAnim) {
+            //wait for the roll animation to finish before continuing
+            const id = game.messages.contents.at(-1)._id;
+            await game.dice3d.waitFor3DAnimationByMessageID(id);
+        }
+
         if((result.total >= result.options.targetValue && !result.isFumble) || result.isCritical) {
             result.isSuccess = true;
             return result;
         } else {
-            if(!await this.queryInspiration()) 
+            if(fastForward || !await this.queryInspiration()) 
             {
                 result.isSuccess = false;
                 return result;
             }
-            else return await this.rollAlchemyCheck({rarity, name});
+            else return await this.rollAlchemyCheck({rarity, name, itemYield, skipAnim});
         }
     }
     //TODO Refactor this to a helper function accessible by the rest of the module
@@ -531,8 +582,36 @@ class Harvest extends Alchemy {
 class Brewing extends Alchemy {
     constructor(actor) {
         super(actor);
+        this.recipes = Brewing.getWorkingRecipes();
     }
-    
+
+
+    /**
+     * Retrieves and combines working recipes from the brews found in the pack pack with the recipes in AlchemyAPI.
+     * @static
+     * @returns {Object} An object containing the working recipes, where each recipe includes:
+     *                   - All properties from the original RECIPES object
+     *                   - uuid and img properties from matching entries inside the Brews folder of the pack
+    */
+    static getWorkingRecipes() {
+        const availableRecipes = game.packs.get("talia-custom.customItems")
+            .folders.getName("Brews")
+            .contents;
+        
+        const availableMap = Object.fromEntries(
+            availableRecipes.map(({ name, uuid, img }) => [name, { uuid, img }])
+            );
+
+        return Object.fromEntries(
+            Object.entries(TaliaCustom.AlchemyAPI.RECIPES)
+                .filter(([_, {name}]) => name in availableMap)
+                .map(([key, recipe]) => [
+                    key,
+                    { ...recipe, ...availableMap[recipe.name]}
+                ])
+        );
+    }
+
     /**
      * Gets the available ingredients for brewing.
      * @returns {Array} An array of loot items that are of type "ingredient".
@@ -542,23 +621,133 @@ class Brewing extends Alchemy {
     }
 
     /**
-     * Calculates the craftable potions based on available ingredients.
-     * @returns {Object} An object where keys are potion names and values are the maximum quantity that can be crafted.
+     * Calculates the craftable brews based on available ingredients.
+     * @returns {Object<string, number>} An object where keys are brew keys (shortened names) and values are the maximum quantity that can be crafted.
      */
-    get craftablePotions() {
-        const craftablePotions = {};
-        const ingreds = this.availableIngredients;
+    get craftableBrewsAmount() {
+        const craftableBrewsAmount = {};
+        //creates an object with ingredient names as the keys and their quantity as the value
+        const ingreds = this.availableIngredients
+            .reduce((acc, cur) => {
+                return {...acc, [cur.name]: cur.system.quantity}
+            }, {});
 
-        Object.entries(TaliaCustom.AlchemyAPI.RECIPES).forEach(([potionKey, recipe]) => {
+        Object.entries(this.recipes).forEach(([key, recipe]) => {
             const maxQuantity = Math.min(...recipe.ingredients.map(ingredient => 
-                Math.floor((inventory[ingredient.name] || 0) / ingredient.quantity)
+                //iterating over each ingredient in the recipe for the current brew
+                Math.floor((ingreds[ingredient.name] || 0) / ingredient.quantity)
             ));
-
-            if (maxQuantity > 0) {
-                craftablePotions[potionKey] = maxQuantity;
-            }
+            craftableBrewsAmount[key] = maxQuantity;
         });
+        return craftableBrewsAmount;
+    }
 
-        return craftablePotions;
+    async brewRecipe(recipeKey, options = {}) {
+        this.item.quantity = 0;
+        this.item.name = "";
+
+        const recipe = this.recipes[recipeKey];
+        console.log(recipe);
+
+        if(options.gmMode) {
+            this.item.quantity = 1;
+            this.item.name = recipe.name;
+            await this.grantItem();
+            return true;
+        }
+
+        //clone so I can alter the quantity consumed in case of a failed alchemy check
+        const ingrArrayClone =  foundry.utils.deepClone(recipe.ingredients);
+
+        const alchCheck = await this.rollAlchemyCheck(recipe);
+        if(!alchCheck) return null;  //if the alchemy check is cancelled, just return null
+
+        if(alchCheck.isSuccess) {
+            this.item.quantity = 1 + Math.floor((alchCheck.total - alchCheck.options.targetValue) / 5);
+            this.item.name = recipe.name;
+
+            for(const ingr of ingrArrayClone) {
+                ingr.consumeQuant = ingr.quantity;
+            }
+        } else {
+            for(const ingr of ingrArrayClone) {
+                //run one check for each ingredient (run twice if the quantity is 2, etc)
+                let subtract = 0; 
+                for(let i = 0; i < ingr.quantity; i++) {
+                    ingr.rarity = recipe.rarity;    //ingredients will always have the same rarity as the brews they're used in
+                    const result = await this.rollAlchemyCheck({...ingr, skipAnim: true});
+                    if(result?.isSuccess) { //if no roll is made, treat is as a failed roll
+                        subtract++;     //each successful roll is a 'recovered' ingredient
+                    }
+                }
+                ingr.consumeQuant = ingr.quantity - subtract;
+            }
+        }
+
+        //get the ingredient items to consume
+        const ingredientItemsToConsume = ingrArrayClone.reduce((acc, curr) => {
+            acc.push({
+                item: this.availableIngredients.find(i => i.name === curr.name),
+                consumeQuant: curr.consumeQuant
+            });
+            return acc;
+        }, []);
+
+        //calcuate consumption
+        const updates = [];
+        const toDelete = [];
+        for(const cons of ingredientItemsToConsume) {
+            const newQuant = Math.max(0, cons.item.system.quantity - cons.consumeQuant);
+            if(!newQuant) {
+                toDelete.push(cons.item._id);
+            } else {
+                updates.push({
+                    _id: cons.item._id,
+                    "system.quantity": newQuant
+                });
+            }
+        }
+
+        //consume ingredients
+        if(toDelete.length) {
+            await this.actor.deleteEmbeddedDocuments("Item", toDelete);
+        }
+        if(updates.length) {
+            await this.actor.updateEmbeddedDocuments("Item", updates);
+        }
+        //grant item
+        if(this.item?.name && this.item?.quantity) {
+            await this.grantItem();
+        }
+
+
+
+        //create message
+        const msgData = {}
+        msgData.content = `
+            <h2>Crafted</h2>
+            <table style="border: unset;"><tbody>
+                <tr>
+                    <td style="width: 15%;">${this.item?.quantity}</td>
+                    <td>${recipe.name}</td>
+                </tr>
+            </tbody></table>
+            <h2>Consumed</h2>
+            <table style="border: unset;"><tbody>
+                ${ingrArrayClone.reduce((acc, curr) => acc += 
+                    `<tr>
+                        <td style="width: 15%;">${curr.consumeQuant}/${curr.quantity}</td>
+                        <td>${curr.name}</td>
+                    </tr>`
+                ,"")}
+            </tbody></table>
+        `;
+        msgData.speaker = ChatMessage.implementation.getSpeaker({actor: this.actor});
+        await ChatMessage.create(msgData);
+
+        //reset 
+        this.item.name = "";
+        this.item.quantity = 0;
+        return true;
     }
 }

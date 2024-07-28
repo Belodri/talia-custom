@@ -1,0 +1,105 @@
+.talia-custom.alchemyBrewingUi {
+    height: auto;
+    width: auto;
+    min-width: 450px;
+
+    & form {
+        display: flex;
+        flex-direction: column;
+        margin: 5px 0;
+        overflow: hidden;
+    }
+
+    & nav {
+        margin-top: 0.5em;
+        display: flex;
+        justify-content: space-evenly;
+        flex-shrink: 0;
+        flex-basis: content;
+
+        .item {
+            flex: none;
+            font-size: 18px;
+            border-bottom: 3px solid #b5b3a4;
+
+            &.active {
+                border-bottom: 3px solid #44191A;
+            }
+        }
+    }
+
+    .gmCheckbox {
+        display: flex;
+        flex-direction: row;
+        align-content: center;
+
+        & span {
+            align-content: center;
+        }
+    }
+
+    .rarityTabs {
+        flex: 1;
+        overflow: hidden;
+
+        .tab {
+            padding: 5px;
+            height: 100%;
+            gap: 1em;
+
+            & h2 {
+                margin-top: 0.5em;
+                text-align: center;
+            }
+
+            .itemList {
+                flex-wrap: nowrap;
+
+                .brewItem {
+                    display: flex;
+                    flex-direction: row;
+                    flex-grow: 1;
+                    align-items: center;
+                    padding: 2px;
+                    justify-content: space-between;
+                    flex-wrap: nowrap;
+
+                    & img {
+                        flex: none;
+                        width: 30px;
+                        height: 30px;
+                    }
+
+                    & span {
+                        display: inline-flex;
+                        font-size: 16px;
+                    }
+
+                    .brewName {
+                        flex: 1;
+                        font-weight: bold;
+                        padding-left: 5px;
+                    }
+
+                    .brewAmount {
+                        flex-grow: 0;
+                        flex-shrink: 0;
+                        flex-basis: 25%;
+                    }
+
+                    & button {
+                        flex-grow: 0;
+                        flex-shrink: 0;
+                        flex-basis: content;
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+}

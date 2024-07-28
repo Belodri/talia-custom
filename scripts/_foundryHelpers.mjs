@@ -21,7 +21,8 @@ export const _foundryHelpers = {
 export const helpersToApi = {
     _onSetup() {
         TaliaCustomAPI.add({
-            rollTableGrantItems
+            rollTableGrantItems,
+            displayItemInfoOnly
         });
     }
 }
@@ -127,7 +128,7 @@ function displayItemWithoutEffects(item) {
  * @param {Item5e} item 
  * @returns {ChatMessage}
  */
-async function displayItemInfoOnly(item) {
+async function displayItemInfoOnly(item, options = {}) {
     const token = item.actor.token;
     const templateData = {
         hasButtons: false,
@@ -136,7 +137,7 @@ async function displayItemInfoOnly(item) {
         tokenId: token?.uuid || null,
         item: item,
         data: await item.system.getCardData(),
-        labels: item.lables,
+        labels: item.labels,
         consumeUsage: false,
         consumeResource: false
     };
@@ -151,7 +152,10 @@ async function displayItemInfoOnly(item) {
     
     // Remove when v11 support is dropped.
     if ( game.release.generation < 12 ) chatData.type = CONST.CHAT_MESSAGE_TYPES.OTHER;
-    
+
+    if(options.chatDataOnly) {
+        return chatData;
+    }
     return await ChatMessage.create(chatData);
 }
 

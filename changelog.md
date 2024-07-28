@@ -1,5 +1,8 @@
 # 0.4.0 - 2024/07/30
 ## Added
+- Features
+    - Alchemical Synthesis
+
 - Spells
     - Bloody Rites
     - Blood Barrier
@@ -37,6 +40,18 @@
 - Created spell gems now show their spell level in the title.
 - Fixed console log spam during spellscribing.
 - Added missing spells to Plex (Animate Objects and Telekinesis)
+
+<details><summary><h2>Dev Details</h2></summary>  
+
+- API function `displayItemInfoOnly(item, options = {})`
+    Displays only the most basic item info in a chat message.
+    If `options.chatDataOnly === true`, a the chat message data will be returned and no chat message will be displayed.
+
+- API function `createBrewUI(actor)`
+    Is called by "Alchemical Synthesis" feature
+    
+</details>
+
 
 # 0.3.0 - 2024/07/23
 ## Added
