@@ -2,11 +2,16 @@
 import { MODULE } from "../scripts/constants.mjs";
 
 export default {
-    _onLibWrapperReady,
-    _onDAESetup
+    //_onLibWrapperReady,
+    _onDAESetup,
+    _addJumpDistToRollData,
 }
 
-function _onLibWrapperReady() {
+function _addJumpDistToRollData(data) {
+    return calculateJumpDistance(data);     //this is being exported to actorWrappers
+}
+
+function OLD_onLibWrapperReady() {
     libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", function (wrapped, ...args) {
         const data = wrapped(...args);
 
