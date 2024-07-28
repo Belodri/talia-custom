@@ -602,14 +602,31 @@ class Brewing extends Alchemy {
             availableRecipes.map(({ name, uuid, img }) => [name, { uuid, img }])
             );
 
-        return Object.fromEntries(
+        const ret = Object.fromEntries(
             Object.entries(TaliaCustom.AlchemyAPI.RECIPES)
-                .filter(([_, {name}]) => name in availableMap)
+                .filter(([_, {name}]) => name in availableMap || name === "Potion of Resistance" )
                 .map(([key, recipe]) => [
                     key,
                     { ...recipe, ...availableMap[recipe.name]}
                 ])
         );
+
+        ret.potionOfResistance.img = "icons/consumables/potions/bottle-bulb-corked-labeled-blue.webp";
+        ret.potionOfResistance.uuid = null;
+
+        return ret;
+    }
+
+    static get availableMap() {
+        return Object.fromEntries(
+            Brewing.availableRecipes.map(({ name, uuid, img }) => [name, { uuid, img }])
+        );
+    }
+
+    static get availableRecipes() {
+        return game.packs.get("talia-custom.customItems")
+            .folders.getName("Brews")
+            .contents;
     }
 
     /**
@@ -646,8 +663,14 @@ class Brewing extends Alchemy {
         this.item.quantity = 0;
         this.item.name = "";
 
-        const recipe = this.recipes[recipeKey];
-        console.log(recipe);
+        const recipe = foundry.utils.deepClone(this.recipes[recipeKey]);
+
+        if(recipeKey === "potionOfResistance") {
+            const chosenResist = await this.chooseResistPotion();
+            if(!chosenResist) return null;
+            recipe.name = `Potion of ${CONFIG.DND5E.damageTypes[chosenResist].label} Resistance`;
+            recipe.uuid = Brewing.availableMap[recipe.name].uuid;
+        }
 
         if(options.gmMode) {
             this.item.quantity = 1;
@@ -656,9 +679,6 @@ class Brewing extends Alchemy {
             return true;
         }
 
-        //clone so I can alter the quantity consumed in case of a failed alchemy check
-        const ingrArrayClone =  foundry.utils.deepClone(recipe.ingredients);
-
         const alchCheck = await this.rollAlchemyCheck(recipe);
         if(!alchCheck) return null;  //if the alchemy check is cancelled, just return null
 
@@ -666,11 +686,11 @@ class Brewing extends Alchemy {
             this.item.quantity = 1 + Math.floor((alchCheck.total - alchCheck.options.targetValue) / 5);
             this.item.name = recipe.name;
 
-            for(const ingr of ingrArrayClone) {
+            for(const ingr of recipe.ingredients) {
                 ingr.consumeQuant = ingr.quantity;
             }
         } else {
-            for(const ingr of ingrArrayClone) {
+            for(const ingr of recipe.ingredients) {
                 //run one check for each ingredient (run twice if the quantity is 2, etc)
                 let subtract = 0; 
                 for(let i = 0; i < ingr.quantity; i++) {
@@ -685,7 +705,7 @@ class Brewing extends Alchemy {
         }
 
         //get the ingredient items to consume
-        const ingredientItemsToConsume = ingrArrayClone.reduce((acc, curr) => {
+        const ingredientItemsToConsume = recipe.ingredients.reduce((acc, curr) => {
             acc.push({
                 item: this.availableIngredients.find(i => i.name === curr.name),
                 consumeQuant: curr.consumeQuant
@@ -720,8 +740,6 @@ class Brewing extends Alchemy {
             await this.grantItem();
         }
 
-
-
         //create message
         const msgData = {}
         msgData.content = `
@@ -734,7 +752,7 @@ class Brewing extends Alchemy {
             </tbody></table>
             <h2>Consumed</h2>
             <table style="border: unset;"><tbody>
-                ${ingrArrayClone.reduce((acc, curr) => acc += 
+                ${recipe.ingredients.reduce((acc, curr) => acc += 
                     `<tr>
                         <td style="width: 15%;">${curr.consumeQuant}/${curr.quantity}</td>
                         <td>${curr.name}</td>
@@ -749,5 +767,27 @@ class Brewing extends Alchemy {
         this.item.name = "";
         this.item.quantity = 0;
         return true;
+    }
+
+    async chooseResistPotion() {
+        const options = Object.entries(CONFIG.DND5E.damageTypes)
+            .reduce((acc, [key, value]) => acc += `<option value="${key}">${value.label}</option>`, "");
+        
+        const content = `<form>
+            <div class="form-group">
+                <label>Select a damage type</label>
+                <div class="form-fields">
+                    <select name="chosen">${options}</select>
+                </div>
+            </div>
+        </form>`;
+
+        const choice = await Dialog.prompt({
+            title: "Potion of Resistance",
+            content,
+            callback: ([html]) => new FormDataExtended(html.querySelector("form")).object,
+            rejectClose: false,
+        });
+        return choice?.chosen || null;
     }
 }
