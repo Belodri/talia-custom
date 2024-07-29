@@ -50,7 +50,8 @@ export class Surge {
             minor: true,
             moderate: true,
             severe: true
-        }, hideRoll = false
+        }, 
+        hideRoll = false
     } = {}) {
         /*  Roll Ranges
             1-3 =  Severe
@@ -119,47 +120,24 @@ export class Surge {
 
 
     static canTrigger(item) {
-        //always disallow trigger
-        const disallowedConsumableTypes = ["spellGem", "potion", "poison", "food"];
+        const hasWildProp = item.system.properties.has("wild");
 
-        if(item.type === "consumable" && disallowedConsumableTypes.includes(item.type.value)) return false;
+        // ALWAYS allow items with the Wild tag, no matter what
+        if(hasWildProp) return true;
 
+        // ALWAYS allow spells and scrolls
+        if(item.type === "spell" || (item.type === "consumable" && item.system.type.value === "scroll"))
 
-        //always allow trigger
-        const itemTypes = ["spell", "scroll"];  //item.type
-        const itemLabels = ["Wild", "Magical"]; //item.labels.properties.label
+        // NEVER allow ["spellGem", "potion", "poison", "food"]
+        if(item.type === "consumable" && ["spellGem", "potion", "poison", "food"].includes(item.system.type.value)) return false;
 
-        if(item.labels.properties.some(property => itemLabels.includes(property.label))
-        || itemTypes.includes(item.type)) {
-            return true;
-        }
+        // NEVER allow non-wild items if it's a player character
+        if(item.actor.type === "character" && !hasWildProp) return false;
 
-        //check npc
-        if(item.actor.type === "npc") return this._doesNpcTrigger(item);
+        // NEVER allow items used by NPCs of type beast (unless they have the wild tag but that's handled above)
+        if(item.actor.type === "npc" && item.actor.system.details?.type?.value === "beast") return false;
 
-        //if it didn't return true by now, it should be false
-        return false;
-    }
-
-    static _doesNpcTrigger(item) {
-        const creatureType = item.actor.system.details?.type?.value;
-        if(!creatureType) return false;
-
-        //always disallow trigger
-        const disallowNpcType = ["beast"];
-        if(disallowNpcType.includes(creatureType)) return false;
-
-        //always allow trigger
-        const allowNpcType = ["abberation", "celestial", "construct", "dragon", "elemental", "fey", "fiend", "monstrosity", "ooze", "plant", "undead"];
-        if(allowNpcType.includes(creatureType)) return true;
-
-        //check CR for the rest (humanoid, giant, custom)
-        const alwaysDisallowCrThreshold = 5;    //always disallow triggers of humanoids, giants and custom creatures below this CR
-        if(item.actor.system?.details && item.actor.system.details <= alwaysDisallowCrThreshold) return false;
-
-        //all other filters are passed so return true
         return true;
     }
-
 }
 

@@ -95,9 +95,6 @@ const RECIPES = {
         {name: "Plant Muscle Fibres", quantity: 1}, 
         {name: "Gills", quantity: 1}
     ]},
-    potionOfPoison: {name: "Potion of Poison", rarity: "common", ingredients: [
-        {name: "Fever Grass", quantity: 3}
-    ]},
     potionOfHeroism: {name: "Potion of Heroism", rarity: "common", ingredients: [
         {name: "Plant Muscle Fibres", quantity: 2}, 
         {name: "Salt Vine", quantity: 1}
@@ -105,7 +102,7 @@ const RECIPES = {
     potionOfAdvantage: {name: "Potion of Advantage", rarity: "common", ingredients: [
         {name: "Salt Vine", quantity: 3}
     ]},
-    basicPoison: {name: "Basic Poison", rarity: "common", ingredients: [
+    basicPoisonCoating: {name: "Basic Poison Coating", rarity: "common", ingredients: [
         {name: "Plant Muscle Fibres", quantity: 2}, 
         {name: "Gills", quantity: 1}
     ]},
