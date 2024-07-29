@@ -21,6 +21,8 @@ import alchemy from "../alchemy/alchemy.mjs";
 import tokenAdjacencyCheck from "../inGame-macrosAndScripts/tokenAdjacencyCheck.mjs";
 import skillEmpowerment from "../spells/skillEmpowerment.mjs";
 import martialStyleStances from "../shalkoc/Feats/martialStyleStances.mjs";
+import mythicRanks from "../allActors/mythicRanks.mjs";
+import mantleOfTheArcaneTrickster from "../plex/contraptionsCrafting/items/mantleOfTheArcaneTrickster.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -41,6 +43,7 @@ Hooks.once("init", () => {
     contraptionsCrafting._onInit();
     alchemy._onInit();
     martialStyleStances._onInit();
+    mythicRanks._onInit();
 });
 
 Hooks.once("setup", () => {
@@ -59,6 +62,7 @@ Hooks.once("setup", () => {
     tokenAdjacencyCheck._onSetup();
     skillEmpowerment._onSetup();
     martialStyleStances._onSetup();
+    mantleOfTheArcaneTrickster._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });

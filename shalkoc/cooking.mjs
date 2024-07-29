@@ -70,6 +70,76 @@ const spicesBuffsDatabase = {
             {key: "system.traits.dm.amount.psychic", mode: 2, value: "-5", priority: 20},
         ]
     },
+    "Ginseng Root Powder": {
+        description: "<p>Your hit point maximum is increased by 30 for the duration.</p>",
+        changes: [
+            {key: "system.attributes.hp.tempmax", mode: 2, value: "30", priority: 20},
+        ]
+    },
+    "Ginko Leaves": {
+        description: "<p>You gain a 1d4 bonus to Intelligence, Wisdom, and Charisma saving throws.</p>",
+        changes: [
+            {key: "system.abilities.int.bonuses.save", mode: 2, value: "1d4", priority: 20},
+            {key: "system.abilities.wis.bonuses.save", mode: 2, value: "1d4", priority: 20},
+            {key: "system.abilities.cha.bonuses.save", mode: 2, value: "1d4", priority: 20},
+        ]
+    },
+    "Licorice Root": {
+        description: "<p>Any acid damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.acid", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Mustard Seeds": {
+        description: "<p>Any bludgeoning damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.bludgeoning", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Eucalyptus": {
+        description: "<p>Any lightning damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.lightning", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Mustard Seeds": {
+        description: "<p>Any bludgeoning damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.bludgeoning", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Vanilla": {
+        description: "<p>Any necrotic damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.necrotic", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Yarrow": {
+        description: "<p>Any piercing damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.piercing", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Cardamom": {
+        description: "<p>Any poison damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.poison", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Aloe Vera": {
+        description: "<p>Any slashing damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.slashing", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+    "Rhubarb": {
+        description: "<p>Any thunder damage you take is reduced by 5.</p>",
+        changes: [
+            {key: "system.traits.dm.amount.thunder", mode: 2, value: "-5", priority: 20},
+        ]
+    },
+
+    
 }
 
 //TODO add to api so it can be called without having to take a rest

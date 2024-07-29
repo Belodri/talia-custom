@@ -1,47 +1,134 @@
 # 0.4.0 - 2024/07/30
-## Added
-- Features
-    - Alchemical Synthesis
+<details>
+<summary><h2>Added</h2></summary>
 
-- Spells
+-   <details>
+    <summary>Magic Items</summary>
+
+    - Strionic Resonator
+    - Drunken Brawler's Dancing Shoes
+    - Sneaky Spellshite's Amulet
+    - Unholy Grimoire of Blood
+    </details>
+
+-   <details>
+    <summary>Spells</summary>
+
     - Bloody Rites
     - Blood Barrier
     - Inflict Wounds
     - Gentle Repose
     - Nondetection
     - Circle of Death
-
-- Items
-    - Strionic Resonator
-    - Drunken Brawler's Dancing Shoes
-    - Sneaky Spellshite's Amulet
-    - Unholy Grimoire of Blood
-
-    - <details><summary>Spell Gems and Scrolls from Vrazzak's Lair (added to the storage chest in the cabin)</summary>  
-
-        - 2x Activated: Circle of Death - 6th
-        - 4x Activated: Circle of Death - 9th
-        - 4x Activated: Inflict Wounds - 4th
-        - 9x Activated: Nondetection - 3rd
-        - 7x Triggered: Greater Restoration - 9th
-        - 3x Spell Scroll: Gentle Repose
     </details>
 
-- Learned spells from scrolls (Fearghas)
+-   <details>
+    <summary>Spell Gems and Scrolls from Vrazzak's Lair </summary>  
+
+    Found inside the storage chest in the cabin.
+    - 2x Activated: Circle of Death - 6th
+    - 4x Activated: Circle of Death - 9th
+    - 4x Activated: Inflict Wounds - 4th
+    - 9x Activated: Nondetection - 3rd
+    - 7x Triggered: Greater Restoration - 9th
+    - 3x Spell Scroll: Gentle Repose
+    </details>
+
+-   <details>
+    <summary>Potions and Poisons</summary>
+
+    -   <details>
+        <summary>Oil of Sharpness (changed)</summary>  
+
+        from
+        > The oil can coat one slashing or piercing weapon or up to 5 pieces of slashing or piercing ammunition. Applying the oil takes 1 minute. For 1 hour, the coated item is magical and has a +3 bonus to attack and damage rolls.
+
+        to
+        > Taking a bonus action to apply, the oil can coat the user's weapons. For 1 hour, all attacks with weapons are considered magical and have a +3 bonus to attack and damage rolls.
+        </details>
+    - Potion of Invisibility
+    - Potion of Flying
+    - Potion of Speed
+    - Murgaxor's Elixir of Life
+    - Purple Worm Poison
+    - Torpor
+    - Wyvern Poison
+    - Malice
+    - Serpent Venom
+    - Drow Poison
+    -   <details>
+        <summary>Basic Poison Coating</summary>
+        
+        Altered version of Basic Poison (vial).
+        from
+        > You can use the poison in this vial to coat one slashing or piercing weapon or up to three pieces of ammunition. Applying the poison takes an action. A creature hit by the poisoned weapon or ammunition must make a DC 10 Constitution saving throw or take 1d4 poison damage. Once applied, the poison retains potency for 1 minute before drying.
+
+        to
+        > Taking a bonus action to apply, the oil can coat the user's weapons. For 1 minute, all attacks with weapons deal an additional 1d4 poison damage on a hit.
+        </details> 
+    -   <details>
+        <summary>Willowshade Oil (changed)</summary>
+
+        from
+        > A creature can use its action to apply the oil to another creature that has been petrified for less than 1 minute, causing the petrified condition on that creature to end at the start of what would be that creature's next turn.
+
+        to
+        > A creature can use a bonus action to apply the oil to another creature that has been petrified for less than 1 minute, causing the petrified condition on that creature to end immediately.
+        </details>
+    </details>
+
+-   <details>
+    <summary>Spices</summary>
+
+    - Aloe Vera
+    - Cardamom
+    - Eucalyptus
+    - Ginko Leaves
+    - Ginseng Root Powder
+    - Licorice Root
+    - Mustard Seeds
+    - Rhubarb
+    - Vanilla
+    - Yarrow
+    </details>
+
+-   <details>
+    <summary>Rules</summary>
+
+        - Triggered Abilities
+    </details>
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- Added learned spells to Fearghas
     - Teleport
     - Wind Walk
     - Greater Invisibility
+</details>
 
-- Rules for triggered abilities
-
-## Fixed
+<details>
+<summary><h2>Fixed</h2></summary>
+    
 - Spells that are granted by items while those items are equipped and/or attuned can no longer be scribed.
 - Spellbooks now check for attunement as well when adding/removing spells.
 - Created spell gems now show their spell level in the title.
 - Fixed console log spam during spellscribing.
 - Added missing spells to Plex (Animate Objects and Telekinesis)
+- Fixed (some) code for Wild Magic Surges filters being utter garbage I've written at 4am.
+- Plex's Mantle of the Arcane Trickster's effect should now be added and removed correctly alongside Mage Armor.
+</details>
 
-<details><summary><h2>Dev Details</h2></summary>  
+<details>
+<summary><h2>Removed</h2></summary>
+
+- Potion of Poison  
+    Correctly dealing with all of it's effects just takes up way too much time and trying to implement automation for it made me want to yeet my laptop out the window.  
+</details>
+
+<details>
+<summary><h2>Dev Details</h2></summary>  
 
 - API function `displayItemInfoOnly(item, options = {})`
     Displays only the most basic item info in a chat message.
@@ -49,9 +136,7 @@
 
 - API function `createBrewUI(actor)`
     Is called by "Alchemical Synthesis" feature
-    
 </details>
-
 
 # 0.3.0 - 2024/07/23
 ## Added
