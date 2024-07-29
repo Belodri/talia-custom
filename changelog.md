@@ -117,6 +117,7 @@
 - Fixed console log spam during spellscribing.
 - Added missing spells to Plex (Animate Objects and Telekinesis)
 - Fixed (some) code for Wild Magic Surges filters being utter garbage I've written at 4am.
+- Plex's Mantle of the Arcane Trickster's effect should now be added and removed correctly alongside Mage Armor.
 </details>
 
 <details>
