@@ -1,3 +1,9 @@
+# 0.5.0 - 2024/08/06
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Renamed Plant Muscle Fibers to Plant Muscle Fibres so they can actually be harvested now.
+
 # 0.4.0 - 2024/07/30
 <details>
 <summary><h2>Added</h2></summary>
