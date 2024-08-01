@@ -24,6 +24,7 @@ import martialStyleStances from "../shalkoc/Feats/martialStyleStances.mjs";
 import mythicRanks from "../allActors/mythicRanks.mjs";
 import mantleOfTheArcaneTrickster from "../plex/contraptionsCrafting/items/mantleOfTheArcaneTrickster.mjs";
 import playerInspirations from "../gmScriptsAndMacros/playerInspirations.mjs";
+import breathOfTheDragon from "../shalkoc/Feats/breathOfTheDragon.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -65,6 +66,7 @@ Hooks.once("setup", () => {
     martialStyleStances._onSetup();
     mantleOfTheArcaneTrickster._onSetup();
     playerInspirations._onSetup();
+    breathOfTheDragon._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });

@@ -9,9 +9,13 @@
 <summary><h2>Fixed</h2></summary>
 
 - Renamed Plant Muscle Fibers to Plant Muscle Fibres so they can actually be harvested now.
+- Breath of the Dragon now has the correct number of free uses per day instead of half. Also fixed it's description.
 </details>
 
 <summary><h2>Dev Details</h2></summary>  
+
+- API function `TaliaCustom.breathOfTheDragonDialog(item)`
+    ItemMacro for Breath of the Dragon
 
 - API function `TaliaCustom.gmScripts.playerInspirations()`
     Rolls inspiration for each active player and whispers the result to a different player.
