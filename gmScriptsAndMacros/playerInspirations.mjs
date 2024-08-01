@@ -12,7 +12,7 @@ export default {
 
 async function playerInspirations() {
     const packFolder = game.packs.get("talia-custom.rollable-tables").folders.find(f => f.name === "Inspirations");
-    const activePlayers = game.users.players.filter(p => p.active === true) //TODO only set to false for testing!
+    const activePlayers = game.users.players.filter(p => p.active === true)
     
     const names = activePlayers.map(obj => obj.name);
     // generate an object with player names as keys and objects as values
