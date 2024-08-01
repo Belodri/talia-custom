@@ -1,8 +1,23 @@
 # 0.5.0 - 2024/08/06
 <details>
+<summary><h2>Added</h2></summary>
+
+- Macro for assigning player inspirations
+</details>
+
+<details>
 <summary><h2>Fixed</h2></summary>
 
 - Renamed Plant Muscle Fibers to Plant Muscle Fibres so they can actually be harvested now.
+</details>
+
+<summary><h2>Dev Details</h2></summary>  
+
+- API function `TaliaCustom.gmScripts.playerInspirations()`
+    Rolls inspiration for each active player and whispers the result to a different player.
+    The generated chat message is also pinned.
+
+</details>
 
 # 0.4.0 - 2024/07/30
 <details>

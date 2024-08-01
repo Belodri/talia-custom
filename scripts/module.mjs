@@ -23,6 +23,7 @@ import skillEmpowerment from "../spells/skillEmpowerment.mjs";
 import martialStyleStances from "../shalkoc/Feats/martialStyleStances.mjs";
 import mythicRanks from "../allActors/mythicRanks.mjs";
 import mantleOfTheArcaneTrickster from "../plex/contraptionsCrafting/items/mantleOfTheArcaneTrickster.mjs";
+import playerInspirations from "../gmScriptsAndMacros/playerInspirations.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -63,6 +64,7 @@ Hooks.once("setup", () => {
     skillEmpowerment._onSetup();
     martialStyleStances._onSetup();
     mantleOfTheArcaneTrickster._onSetup();
+    playerInspirations._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });
