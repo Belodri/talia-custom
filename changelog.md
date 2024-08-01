@@ -116,7 +116,7 @@
 -   <details>
     <summary>Rules</summary>
 
-        - Triggered Abilities
+    - Triggered Abilities
     </details>
 </details>
 
