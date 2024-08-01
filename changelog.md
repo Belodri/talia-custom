@@ -2,6 +2,23 @@
 <details>
 <summary><h2>Added</h2></summary>
 
+- Common Action: Dodge
+-   <details>
+    <summary>The following status conditions now have actual effects</summary>
+
+    - blinded
+    - deafened
+    - dodging
+    - grappled (only setting movement to 0 for now)
+    - invisible
+    - paralyzed
+    - petrified
+    - poisoned
+    - prone
+    - restrained
+    - stunned
+    - unconscious
+    </details>
 - Macro for assigning player inspirations
 </details>
 

@@ -25,6 +25,7 @@ import mythicRanks from "../allActors/mythicRanks.mjs";
 import mantleOfTheArcaneTrickster from "../plex/contraptionsCrafting/items/mantleOfTheArcaneTrickster.mjs";
 import playerInspirations from "../gmScriptsAndMacros/playerInspirations.mjs";
 import breathOfTheDragon from "../shalkoc/Feats/breathOfTheDragon.mjs";
+import changesToConditions from "../allActors/changesToConditions.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -46,6 +47,7 @@ Hooks.once("init", () => {
     alchemy._onInit();
     martialStyleStances._onInit();
     mythicRanks._onInit();
+    changesToConditions._onInit();
 });
 
 Hooks.once("setup", () => {
