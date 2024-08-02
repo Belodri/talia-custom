@@ -2,7 +2,7 @@ import { MODULE } from "./constants.mjs"
 import { setupSocket } from "./socket.mjs";
 import { TaliaCustomAPI } from "./api.mjs";
 
-
+import _spells from "../spells/_spells.mjs";
 import beastSpirits from "../aviana/items/beastSpirits.mjs";
 import wildMagic from "../wildMagic/wildMagic.mjs";
 import cooking from "../shalkoc/cooking.mjs";
@@ -19,13 +19,14 @@ import { helpersToApi } from "./_foundryHelpers.mjs";
 import templateOpenCharSheet from "../systemChanges/templateOpenCharSheet.mjs";
 import alchemy from "../alchemy/alchemy.mjs";
 import tokenAdjacencyCheck from "../inGame-macrosAndScripts/tokenAdjacencyCheck.mjs";
-import skillEmpowerment from "../spells/skillEmpowerment.mjs";
 import martialStyleStances from "../shalkoc/Feats/martialStyleStances.mjs";
 import mythicRanks from "../allActors/mythicRanks.mjs";
 import mantleOfTheArcaneTrickster from "../plex/contraptionsCrafting/items/mantleOfTheArcaneTrickster.mjs";
 import playerInspirations from "../gmScriptsAndMacros/playerInspirations.mjs";
 import breathOfTheDragon from "../shalkoc/Feats/breathOfTheDragon.mjs";
 import changesToConditions from "../allActors/changesToConditions.mjs";
+import soulBoundItemProperty from "../allActors/soulBoundItemProperty.mjs";
+import guardianScales from "../allActors/sharedMagicItems/guardianScales.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -48,10 +49,12 @@ Hooks.once("init", () => {
     martialStyleStances._onInit();
     mythicRanks._onInit();
     changesToConditions._onInit();
+    soulBoundItemProperty._onInit();
 });
 
 Hooks.once("setup", () => {
     TaliaCustomAPI._setup();
+    _spells._onSetup();     //collection for all spell scripts
     cooking._onSetup();
     wildMagic._onSetup();
     beastSpirits._onSetup();
@@ -64,11 +67,12 @@ Hooks.once("setup", () => {
     helpersToApi._onSetup();
     alchemy._onSetup();
     tokenAdjacencyCheck._onSetup();
-    skillEmpowerment._onSetup();
     martialStyleStances._onSetup();
     mantleOfTheArcaneTrickster._onSetup();
     playerInspirations._onSetup();
     breathOfTheDragon._onSetup();
+    soulBoundItemProperty._onSetup();
+    guardianScales._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });

@@ -2,6 +2,95 @@
 <details>
 <summary><h2>Added</h2></summary>
 
+-   <details>
+    <summary>Spells (spoiler warning)</summary>
+
+    - Arcane Eye
+    - Death Ward
+    - Fire Shield
+    - Guardian of Nature
+    - Raulothim's Psychic Lance
+    - Minor Illusion
+    -   <details>
+        <summary>Resistance (changed)</summary>
+
+        from
+        > You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends.
+
+        to
+        > You touch one willing creature. For the duration of the spell, the creature adds a d4 to all saving throws.
+        </details>
+    - Thorn Whip
+    - Vicious Mockery
+    - Revelation Through Battle
+    - Phantasmal Horror
+    </details>
+-   <details>
+    <summary>Magic Items (spoiler warning)</summary>
+
+    - Tankard of Plenty
+    - Guardian Scale of Abjuration
+    - Guardian Scale of Conjuration
+    - Guardian Scale of Divination
+    - Guardian Scale of Enchantment
+    - Guardian Scale of Evocation
+    - Guardian Scale of Illusion
+    - Guardian Scale of Necromancy
+    - Guardian Scale of Transmutation
+    </details>
+
+-   <details>
+    <summary>Item Property: Soul-Bound</summary>
+
+    This property can be found on item types that are normally tradeable (Equipment, Weapons, Consumables, Containers, Loot, and Tools).  
+    If set on an item, please don't trade it to others or put it into a storage chest that others have access to.
+
+    -   <details>
+        <summary>Aviana Soul-Bound items</summary>
+
+        - Lethal Limbs
+        - Strionic Resonator
+        - Spelleater's Charm
+        - Royal Commander's Cloak
+        - Grateful Fey's Charm
+        - Rod of Unwilling Retribution
+        - Cursed Thunderfeet Footwraps
+        </details>
+    
+    -   <details>
+        <summary>Fearghas Soul-Bound items</summary>
+
+        - High Priest's Obsidian Battleaxe
+        - Ring of Unbridled Power
+        - Rod of Hellish Flames
+        - Dead Knight's Chain Shirt
+        - Spellbook: Strength through suffering (of others)
+        - Spellbook: Unholy Grimoire of Blood
+        </details>
+
+    -   <details>
+        <summary>Plex Soul-Bound items</summary>
+
+        - Sneaky Spellshite's Amulet
+        - Mantle of the Arcane Trickster
+        - Swiftstrider's Boots
+        - Shaman's Lucky Charms
+        - Sun Statue
+
+        </details>
+
+    -   <details>
+        <summary>Shalkoc Soul-Bound items</summary>
+
+        - Unarmed Strike (Draconic Strike)
+        - Drunken Brawler's Dancing Shoes
+        - Handwraps of Swift Strikes
+        - Necklace of Mighty Breath
+        - +3 Dragonhide Belt
+        - Wyrmreaver Gauntlets
+        </details>
+
+    </details>
 - Common Action: Dodge
 -   <details>
     <summary>The following status conditions now have actual effects</summary>
@@ -29,6 +118,7 @@
 - Breath of the Dragon now has the correct number of free uses per day instead of half. Also fixed it's description.
 </details>
 
+<details>
 <summary><h2>Dev Details</h2></summary>  
 
 - API function `TaliaCustom.breathOfTheDragonDialog(item)`
@@ -38,6 +128,8 @@
     Rolls inspiration for each active player and whispers the result to a different player.
     The generated chat message is also pinned.
 
+- _foundryHelpers function `insertListLabels(htmlString, newLabels)`
+    Used to add item properties to chat cards. Added to Wild and Soul-Bound properties. 
 </details>
 
 # 0.4.0 - 2024/07/30
