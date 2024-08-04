@@ -27,6 +27,7 @@ import breathOfTheDragon from "../shalkoc/Feats/breathOfTheDragon.mjs";
 import changesToConditions from "../allActors/changesToConditions.mjs";
 import soulBoundItemProperty from "../allActors/soulBoundItemProperty.mjs";
 import guardianScales from "../allActors/sharedMagicItems/guardianScales.mjs";
+import homebrewRules from "../allActors/homebrewRules.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -50,6 +51,7 @@ Hooks.once("init", () => {
     mythicRanks._onInit();
     changesToConditions._onInit();
     soulBoundItemProperty._onInit();
+    homebrewRules._onInit();
 });
 
 Hooks.once("setup", () => {

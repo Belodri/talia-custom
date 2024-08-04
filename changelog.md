@@ -2,42 +2,8 @@
 <details>
 <summary><h2>Added</h2></summary>
 
--   <details>
-    <summary>Spells (spoiler warning)</summary>
-
-    - Arcane Eye
-    - Death Ward
-    - Fire Shield
-    - Guardian of Nature
-    - Raulothim's Psychic Lance
-    - Minor Illusion
-    -   <details>
-        <summary>Resistance (changed)</summary>
-
-        from
-        > You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends.
-
-        to
-        > You touch one willing creature. For the duration of the spell, the creature adds a d4 to all saving throws.
-        </details>
-    - Thorn Whip
-    - Vicious Mockery
-    - Revelation Through Battle
-    - Phantasmal Horror
-    </details>
--   <details>
-    <summary>Magic Items (spoiler warning)</summary>
-
-    - Tankard of Plenty
-    - Guardian Scale of Abjuration
-    - Guardian Scale of Conjuration
-    - Guardian Scale of Divination
-    - Guardian Scale of Enchantment
-    - Guardian Scale of Evocation
-    - Guardian Scale of Illusion
-    - Guardian Scale of Necromancy
-    - Guardian Scale of Transmutation
-    </details>
+- Rules: Legendary Resistances
+- Rules: Triggered Abilities
 
 -   <details>
     <summary>Item Property: Soul-Bound</summary>
@@ -109,17 +75,77 @@
     - unconscious
     </details>
 - Macro for assigning player inspirations
+-   <details>
+    <summary>Spells (spoiler warning)</summary>
+
+    - Arcane Eye
+    - Death Ward
+    - Fire Shield
+    - Guardian of Nature
+    - Raulothim's Psychic Lance
+    - Minor Illusion
+    -   <details>
+        <summary>Resistance (changed)</summary>
+
+        from
+        > You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends.
+
+        to
+        > You touch one willing creature. For the duration of the spell, the creature adds a d4 to all saving throws.
+        </details>
+    - Thorn Whip
+    - Vicious Mockery
+    - Revelation Through Battle
+    - Phantasmal Horror
+    </details>
+-   <details>
+    <summary>Magic Items (spoiler warning)</summary>
+
+    - Tankard of Plenty
+    - Guardian Scale of Abjuration
+    - Guardian Scale of Conjuration
+    - Guardian Scale of Divination
+    - Guardian Scale of Enchantment
+    - Guardian Scale of Evocation
+    - Guardian Scale of Illusion
+    - Guardian Scale of Necromancy
+    - Guardian Scale of Transmutation
+    - Broken Sentinel Statue (alongside Ironfeather Sentinel actor)
+    </details>
+
+-   <details>
+    <summary>Mythic Features (major spoiler warning!)</summary>
+
+    - Mythic Power (1 for each)
+    - Legendary Vigor
+    - Titanous Strength
+    - Fishy Magic
+    - Master of Chance
+    - Rejuvination
+    - Legendary Resistance
+    - The Price of Knowledge
+    - Spectral Hand
+    </details>
+
 </details>
 
 <details>
 <summary><h2>Fixed</h2></summary>
 
+- Attunements not working (very bandaid fix, will likely break again, system devs have no idea what's causing it and don't want to provide support since the bug isn't happening in never versions).
 - Renamed Plant Muscle Fibers to Plant Muscle Fibres so they can actually be harvested now.
 - Breath of the Dragon now has the correct number of free uses per day instead of half. Also fixed it's description.
 </details>
 
 <details>
-<summary><h2>Dev Details</h2></summary>  
+<summary><h2>Dev Details (also major spoiler warning)</h2></summary>  
+
+- added flag `flags.talia-custom.mythicRank` = 0 to every player character.
+- added macro "Set Mythic Rank" which sets the mythic rank for selected actor. 
+    For player characters it also changes their alignment to instead dislpay their mythic path and rank.
+
+- added macro "Recharge Mythic Power" which Simple Calendar will execute every sunday ingame.
+    It recharges any expended uses of Mythic Power for all characters which have `flags.talia-custom.mythicRank` set to a truthy value.
 
 - API function `TaliaCustom.breathOfTheDragonDialog(item)`
     ItemMacro for Breath of the Dragon
