@@ -8,6 +8,7 @@ export const _foundryHelpers = {
     consumeItem,
     displayItemWithoutEffects,
     getUserIdsArray,
+    insertListLabels,
     SECONDS: {
         IN_ONE_MINUTE: 60,
         IN_TEN_MINUTES: 600,
@@ -235,4 +236,58 @@ async function rollTableGrantItems(actor, tableUuid, {drawsNum = 1, fractionOfTa
     }, {}));
 
     return actor.createEmbeddedDocuments("Item", combinedItemsArray);
+}
+
+/**
+ * Inserts new list items into an HTML string containing a ul element with class "card-footer pills unlist".
+ * Each new item is added only if its label doesn't already exist in the list.
+ * 
+ * @param {string} htmlString - The original HTML string containing the ul element.
+ * @param {string[]} newLabels - An array of strings to be added as new list item labels.
+ * @returns {string} The modified HTML string with new list items added.
+ */
+function insertListLabels(htmlString, newLabels) {
+    // Create a temporary DOM element to parse the HTML string
+    const tempElement = document.createElement('div');
+    tempElement.innerHTML = htmlString;
+
+    // Find the target ul element
+    const ulElement = tempElement.querySelector('ul.card-footer.pills.unlist');
+
+    if (ulElement) {
+        // Get existing labels
+        const existingLabels = Array.from(ulElement.querySelectorAll('li span.label'))
+        .map(span => span.textContent.trim().toLowerCase());
+
+        // Process each new label
+        newLabels.forEach(label => {
+            const normalizedLabel = label.trim().toLowerCase();
+            
+            // Check if the label already exists
+            if (!existingLabels.includes(normalizedLabel)) {
+                // Create a new li element
+                const newLi = document.createElement('li');
+                newLi.className = 'pill pill-sm';
+                
+                // Create a new span element
+                const newSpan = document.createElement('span');
+                newSpan.className = 'label';
+                newSpan.textContent = label.trim();
+                
+                // Append the span to the li, and the li to the ul
+                newLi.appendChild(newSpan);
+                ulElement.appendChild(newLi);
+                
+                // Add to existing labels to prevent duplicates
+                existingLabels.push(normalizedLabel);
+            }
+        });
+
+        // Return the modified HTML as a string
+        return tempElement.innerHTML;
+    } else {
+        // If the target ul is not found, return the original string
+        console.warn('Target ul not found');
+        return htmlString;
+    }
 }

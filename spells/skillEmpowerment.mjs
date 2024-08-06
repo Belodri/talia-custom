@@ -1,17 +1,5 @@
-import { TaliaCustomAPI } from "../scripts/api.mjs"
-
-export default {
-    _onSetup() {
-        TaliaCustomAPI.add({
-            Spells: {
-                skillEmpowerment
-            }
-        })
-    }
-}
-
 // called from item macro
-async function skillEmpowerment(item) {
+export async function skillEmpowerment(item) {
     const targetActor = game.user.targets.first()?.actor;
     const effect = item.effects?.contents[0];
     if(!targetActor || !effect) return false;

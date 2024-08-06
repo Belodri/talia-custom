@@ -6,6 +6,7 @@
 
 import { surgesTable } from "./surgesTable.mjs";
 import { TaliaCustomAPI } from "../scripts/api.mjs";
+import { _foundryHelpers } from "../scripts/_foundryHelpers.mjs";
 
 export default {
     _onInit() {
@@ -32,6 +33,13 @@ export default {
             const surge = await Surge.causeSurge();
             const actor = item.actor || canvas.tokens.controlled[0]?.actor;
             await Surge.createChatMessage(surge, actor);
+        });
+
+        Hooks.on("dnd5e.preDisplayCard", (item, chatData, options) => {
+            if(!item.system?.properties.has("wild")) return;
+
+            //add new labels to chatCard
+            chatData.content = _foundryHelpers.insertListLabels(chatData.content, ["Wild"]);
         });
     }
 }
