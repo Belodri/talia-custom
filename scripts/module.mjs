@@ -28,6 +28,7 @@ import changesToConditions from "../allActors/changesToConditions.mjs";
 import soulBoundItemProperty from "../allActors/soulBoundItemProperty.mjs";
 import guardianScales from "../allActors/sharedMagicItems/guardianScales.mjs";
 import homebrewRules from "../allActors/homebrewRules.mjs";
+import grapple from "../allActors/grapple.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -75,6 +76,7 @@ Hooks.once("setup", () => {
     breathOfTheDragon._onSetup();
     soulBoundItemProperty._onSetup();
     guardianScales._onSetup();
+    grapple._onSetup();
 
     console.log(`${MODULE.ID} set up.`);
 });
