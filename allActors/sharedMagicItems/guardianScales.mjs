@@ -5,7 +5,7 @@ export default {
                 if(!allScaleItems.includes(item.name)) return;
 
                 //check if any other scale items are currently equipped and if so, give a warning and return false to cancel the equip update
-                if(item.actor.itemTypes.find(i => i.system.equipped === true && allScaleItems.includes(i.name))) {
+                if(item.actor.itemTypes.equipment.find(i => i.system.equipped === true && allScaleItems.includes(i.name))) {
                     ui.notifications.info("You can equip no more than one Guardian Scale at once.");
                     return false;
                 }
