@@ -1,6 +1,12 @@
 # 0.5.0 - 2024/08/06
 <details>
 <summary><h2>Added</h2></summary>
+- Common Action: Grapple
+</details>
+
+# 0.5.0 - 2024/08/06
+<details>
+<summary><h2>Added</h2></summary>
 
 - Rules: Legendary Resistances
 - Rules: Triggered Abilities
