@@ -1,3 +1,9 @@
+# 0.6.0 - 2024/08/13
+<details>
+<summary><h2>Added</h2></summary>
+- Common Action: Grapple
+</details>
+
 # 0.5.0 - 2024/08/06
 <details>
 <summary><h2>Added</h2></summary>
