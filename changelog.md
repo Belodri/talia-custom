@@ -6,6 +6,12 @@
 </details>
 
 <details>
+<summary><h2>Fixed</h2></summary>
+
+- Vice Grip is now typed as a melee weapon and can be affected by buffs and debuffs involving these. No gameplay changes, just future proofing.
+</details>
+
+<details>
 <summary><h2>Dev Details</h2></summary>
 
 - api function `requestRoll` to allow macros and players to make us of the system's roll request feature added via enrichers. Check enrichers for documentation.

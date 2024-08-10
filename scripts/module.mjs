@@ -29,6 +29,7 @@ import soulBoundItemProperty from "../allActors/soulBoundItemProperty.mjs";
 import guardianScales from "../allActors/sharedMagicItems/guardianScales.mjs";
 import homebrewRules from "../allActors/homebrewRules.mjs";
 import grapple from "../allActors/grapple.mjs";
+import _itemMacros from "../ItemMacros/_itemMacros.mjs";
 
 Hooks.once("socketlib.ready", () => {
     setupSocket();
@@ -57,7 +58,8 @@ Hooks.once("init", () => {
 
 Hooks.once("setup", () => {
     TaliaCustomAPI._setup();
-    _spells._onSetup();     //collection for all spell scripts
+    _spells._onSetup();         //collection for all spell scripts  //move these to the more generalised _itemMacros 
+    _itemMacros._onSetup();     //collection for all item macros
     cooking._onSetup();
     wildMagic._onSetup();
     beastSpirits._onSetup();
@@ -77,6 +79,7 @@ Hooks.once("setup", () => {
     soulBoundItemProperty._onSetup();
     guardianScales._onSetup();
     grapple._onSetup();
+    
 
     console.log(`${MODULE.ID} set up.`);
 });
