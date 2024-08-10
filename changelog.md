@@ -1,8 +1,16 @@
 # 0.6.0 - 2024/08/13
 <details>
 <summary><h2>Added</h2></summary>
+
 - Common Action: Grapple
 </details>
+
+<details>
+<summary><h2>Dev Details</h2></summary>
+
+- api function `requestRoll` to allow macros and players to make us of the system's roll request feature added via enrichers. Check enrichers for documentation.
+</details>
+
 
 # 0.5.0 - 2024/08/06
 <details>
