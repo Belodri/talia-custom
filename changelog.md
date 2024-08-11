@@ -6,6 +6,21 @@
 </details>
 
 <details>
+<summary><h2>Changed</h2></summary>
+
+-   <details>
+    <summary>Reckless Attack</summary>
+
+        Changed so it's easier to integrate with other effect and to make it more flexible.
+        
+        from
+        > Starting at 2nd level, you can throw aside all concern for defense to attack with fierce desperation. When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but leaves you flat-footed (attack rolls against you have advantage) until the start of your next turn.
+
+        to
+        > Starting at 2nd level, you can throw aside all concern for defence to attack with fierce desperation. When you make an attack, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls, but attack rolls against you have advantage. These effects last until the start your next turn.
+    </details>
+</details>
+<details>
 <summary><h2>Fixed</h2></summary>
 
 - Vice Grip is now typed as a melee weapon and can be affected by buffs and debuffs involving these. No gameplay changes, just future proofing.
