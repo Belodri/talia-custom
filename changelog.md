@@ -3,6 +3,7 @@
 <summary><h2>Added</h2></summary>
 
 - Common Action: Grapple
+- Spell: Traitorous Blood
 </details>
 
 <details>
@@ -24,6 +25,9 @@
 <summary><h2>Fixed</h2></summary>
 
 - Vice Grip is now typed as a melee weapon and can be affected by buffs and debuffs involving these. No gameplay changes, just future proofing.
+- Rage
+    - Added the effects of Totem Barbarian's level 3 Eagle feature to the Rage feature itself. (no mechanical change)
+    - It now correctly adds the damage on melee weapon attacks using Strength only instead of to all damage.
 </details>
 
 <details>

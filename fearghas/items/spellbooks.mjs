@@ -69,7 +69,8 @@ export class Spellbooks {
         "Unholy Grimoire of Blood": {
             spellList: [
                 "Bloody Rites",
-                "Blood Barrier"
+                "Blood Barrier",
+                "Traitorous Blood"
             ],
             changes: {
                 "system.preparation.mode": "always",
