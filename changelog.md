@@ -1,3 +1,47 @@
+# 0.6.0 - 2024/08/13
+<details>
+<summary><h2>Added</h2></summary>
+
+-   <details>
+    <summary>Common Action: Grapple</summary>
+
+        Allows grappling and moving of other tokens.
+        To release the grapple, simply delete the grappling active effect on the grappling actor or delete the grappled condition on the grappled actor.
+    </details>
+- Spell: Traitorous Blood
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+-   <details>
+    <summary>Reckless Attack</summary>
+
+        Changed so it's easier to integrate with other effects.
+        
+        from
+        > Starting at 2nd level, you can throw aside all concern for defense to attack with fierce desperation. When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but leaves you flat-footed (attack rolls against you have advantage) until the start of your next turn.
+
+        to
+        > Starting at 2nd level, you can throw aside all concern for defence to attack with fierce desperation. When you make an attack, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls, but attack rolls against you have advantage. These effects last until the start your next turn.
+    </details>
+</details>
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Vice Grip is now typed as a melee weapon and can be affected by buffs and debuffs involving these. No gameplay changes, just future proofing.
+- Rage
+    - Added the effects of Totem Barbarian's level 3 Eagle feature to the Rage feature itself. (no mechanical change)
+    - It now correctly adds the damage on melee weapon attacks using Strength only instead of to all damage.
+</details>
+
+<details>
+<summary><h2>Dev Details</h2></summary>
+
+- api function `requestRoll` to allow macros and players to make us of the system's roll request feature added via enrichers. Check enrichers for documentation.
+</details>
+
+
 # 0.5.0 - 2024/08/06
 <details>
 <summary><h2>Added</h2></summary>

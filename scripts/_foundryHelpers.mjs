@@ -23,7 +23,8 @@ export const helpersToApi = {
     _onSetup() {
         TaliaCustomAPI.add({
             rollTableGrantItems,
-            displayItemInfoOnly
+            displayItemInfoOnly,
+            requestRoll
         });
     }
 }
@@ -290,4 +291,45 @@ function insertListLabels(htmlString, newLabels) {
         console.warn('Target ul not found');
         return htmlString;
     }
+}
+
+/**
+ * 
+ * @param {string} type             check, save, skill, tool 
+ * @param {string} ability
+ * @param {string} skill
+ * @param {string} tool             name of the tool type (e.g. "weaver"); requires ability to be set!
+ * @param {number} dc
+ * @param {boolean} hideDC  
+ * @param {object} messageOptions   object which is merged into the final message data
+ * @returns {Promise<ChatMessage>}  A promise which resolves when the chat message is created.
+ */
+async function requestRoll({
+    type,      
+    ability,    
+    skill,
+    tool,   
+    dc,     
+    hideDC = true,   
+    messageOptions, 
+} = {}) {
+    const chatData = foundry.utils.mergeObject({
+        user: game.user.id,
+        flavor: "Roll Request",
+        speaker: ChatMessage.implementation.getSpeaker({user: game.user.id}),
+    }, messageOptions);
+
+    const tDataset = { type, ability, skill, tool, dc, hideDC };
+
+    const templateData = {
+        buttonLabel: dnd5e.enrichers.createRollLabel({...tDataset, format: "short", icon: true,}),
+        hiddenLabel: dnd5e.enrichers.createRollLabel({...tDataset, format: "short", icon: true, hideDC: true,}),
+        dataset: {...tDataset, action: "rollRequest"},
+    }
+    chatData.content = await renderTemplate("systems/dnd5e/templates/chat/request-card.hbs", templateData);
+
+    // Remove when v11 support is dropped.
+    if ( game.release.generation < 12 ) chatData.type = CONST.CHAT_MESSAGE_TYPES.OTHER;
+
+    return ChatMessage.implementation.create(chatData);
 }
