@@ -2,7 +2,12 @@
 <details>
 <summary><h2>Added</h2></summary>
 
-- Common Action: Grapple
+-   <details>
+    <summary>Common Action: Grapple</summary>
+
+        Allows grappling and moving of other tokens.
+        To release the grapple, simply delete the grappling active effect on the grappling actor or delete the grappled condition on the grappled actor.
+    </details>
 - Spell: Traitorous Blood
 </details>
 
@@ -12,7 +17,7 @@
 -   <details>
     <summary>Reckless Attack</summary>
 
-        Changed so it's easier to integrate with other effect and to make it more flexible.
+        Changed so it's easier to integrate with other effects.
         
         from
         > Starting at 2nd level, you can throw aside all concern for defense to attack with fierce desperation. When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but leaves you flat-footed (attack rolls against you have advantage) until the start of your next turn.
