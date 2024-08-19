@@ -1,5 +1,12 @@
-// called from item macro
-export async function skillEmpowerment(item) {
+import { TaliaCustomAPI } from "../scripts/api.mjs";
+
+export default {
+    register() {
+        TaliaCustomAPI.add({skillEmpowerment}, "ItemMacros");
+    }
+}
+
+async function skillEmpowerment(item) {
     const targetActor = game.user.targets.first()?.actor;
     const effect = item.effects?.contents[0];
     if(!targetActor || !effect) return false;
