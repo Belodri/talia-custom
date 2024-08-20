@@ -57,7 +57,8 @@ class Jump {
             .setPosition();
         const position = crosshairs.getPosition();
         if(!position) return;
-        return await Jump.jumpAnimation(sourceToken, position);
+        await Jump.jumpAnimation(sourceToken, position);
+        return true;
     }
 
     static async jumpAnimation(token, targetLocation) {

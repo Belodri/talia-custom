@@ -1,3 +1,18 @@
+# 1.0.0 - 2024/08/20
+
+Rewrote/restructured most of the code to better integrate with the v12 changes and future system updates.
+Expect lots of bugs and please report each one you encounter in the discord.
+
+## Known Issues
+- Size changing effects no longer work and need to be rewritten from the ground up.
+- Shalkoc's item "Wyrmreaver Gauntlets" break on activation. Their passive still works as intended.
+
+<details>
+<summary><h2>Added</h2></summary>
+
+    - Common Action: Jump
+</details>
+
 # 0.6.0 - 2024/08/13
 <details>
 <summary><h2>Added</h2></summary>
