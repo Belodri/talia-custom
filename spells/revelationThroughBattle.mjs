@@ -1,6 +1,12 @@
+import { TaliaCustomAPI } from "../scripts/api.mjs";
 
+export default {
+    register() {
+        TaliaCustomAPI.add({revelationThroughBattle}, "ItemMacros");
+    }
+}
 
-export async function revelationThroughBattle(item, deleteAfterMS) {
+async function revelationThroughBattle(item, deleteAfterMS) {
     const target = game.user.targets?.first();
     if(!target) {
         ui.notifications.info("If you cannot target a token, just ask for the info.");

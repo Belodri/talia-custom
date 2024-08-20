@@ -1,45 +1,151 @@
 import { MODULE } from "./constants.mjs"
-import { setupSocket } from "./socket.mjs";
 import { TaliaCustomAPI } from "./api.mjs";
+import _utils from "../utils/_utils.mjs";
+import { registerWrappers } from "../wrappers/_wrappers.mjs";
 
+import _world from "../world/_world.mjs";
+import _gmMacros from "../gmMacros/_gmMacros.mjs";
+import _items from "../items/_items.mjs";
 import _spells from "../spells/_spells.mjs";
+import _features from "../features/_features.mjs";
+
+
+/*
 import beastSpirits from "../aviana/items/beastSpirits.mjs";
-import wildMagic from "../wildMagic/wildMagic.mjs";
-import cooking from "../shalkoc/cooking.mjs";
+import cooking from "../features/professions/chefAndCooking/cooking.mjs";
 import chef from "../shalkoc/Feats/chef.mjs";
 import spellscribing from "../spellscribing/spellscribing.mjs";
 import spellbooks from "../fearghas/items/spellbooks.mjs";
 import spellbookLich from "../fearghas/items/spellbookLich.mjs";
-import jump from "../allActors/jump.mjs";
-import gratefulFeyCharm from "../aviana/items/gratefulFeyCharm.mjs";
-import commonActions from "../allActors/commonActions.mjs";
-import shove from "../allActors/shove.mjs";
+
+
 import contraptionsCrafting from "../plex/contraptionsCrafting/contraptionsCrafting.mjs";
-import { helpersToApi } from "./_foundryHelpers.mjs";
-import templateOpenCharSheet from "../systemChanges/templateOpenCharSheet.mjs";
 import alchemy from "../alchemy/alchemy.mjs";
 import tokenAdjacencyCheck from "../inGame-macrosAndScripts/tokenAdjacencyCheck.mjs";
-import martialStyleStances from "../shalkoc/Feats/martialStyleStances.mjs";
+import martialStyleStances from "../features/character/shalkoc/martialStyleStances.mjs";
 import mythicRanks from "../allActors/mythicRanks.mjs";
-import mantleOfTheArcaneTrickster from "../plex/contraptionsCrafting/items/mantleOfTheArcaneTrickster.mjs";
-import playerInspirations from "../gmScriptsAndMacros/playerInspirations.mjs";
 import breathOfTheDragon from "../shalkoc/Feats/breathOfTheDragon.mjs";
-import changesToConditions from "../allActors/changesToConditions.mjs";
-import soulBoundItemProperty from "../allActors/soulBoundItemProperty.mjs";
-import guardianScales from "../allActors/sharedMagicItems/guardianScales.mjs";
 import homebrewRules from "../allActors/homebrewRules.mjs";
-import grapple from "../allActors/grapple.mjs";
-import _itemMacros from "../ItemMacros/_itemMacros.mjs";
+*/
 
-Hooks.once("socketlib.ready", () => {
-    setupSocket();
+
+/*
+    API looks like this:
+
+    TaliaCustom = {
+        AlchemyAPI: {...},
+        TaliaUtils: {...},  
+        ItemMacros: {
+            grapple,
+            jump,
+            viceGrip,
+            gratefulFeyCharm,
+            shiftingStances,
+            breathOfTheDragon,
+            revelationThroughBattle,
+            skillEmpowerment,
+            beastSpirits,
+            spellScribing,
+            cunningContraptions,
+            triggerContraption
+        },
+        EffectMacros: {},
+        GmMacros: {
+            rollPlayerInspirations,
+        },
+        Macros: {
+            wildMagicSurge,  
+        },
+        Other: {
+            getJumpDistance
+        }
+    }
+*/
+
+/*
+    LOAD ORDER
+
+    1) API
+    2) Utils
+    3) Wrappers
+    4) SECTIONS (each section should manage it's own hooks)
+
+
+    SECTIONS
+
+    - GM Macros
+        - (DONE) playerInspirations             //change call
+
+    - World
+        - (DONE) Wild Magic                     //change call
+        - (DONE) Soul-Bound Item Property
+        - (DONE) Conditions
+
+    - Items
+        - (DONE) Guardian Scales
+        - (DONE) Grateful Fey Charm             //change call
+        - (DONE) Mantle of the Arcane Trickster
+        - (DONE) Vice Grip                      //change call
+
+
+    - Features
+        - Mythic
+        - Shared
+            - Common Actions
+                - (DONE) Jump                   //change call
+                - (DONE) Grapple                //change call
+                - Shove
+        - Character (class, subclass, race, & special)
+            - Shalkoc
+                - (DONE) Martial Style Stances         //change call
+                - (DONE) Breath of the Dragon                  //change call
+
+            - Aviana
+                - (DONE) Beast Spirits             //change call for each
+
+            - Wizard (shared)
+            - Fearghas
+            - Plex
+
+        - Professions
+            - Spellscribing
+            - Cooking & Chef    //TODO: combine cooking and chef
+            - Alchemy    
+            - Contraptions
+
+    - Spells
+        - (DONE) Revelation Through Battle
+        - (DONE) Skill Empowerment
+    
+    
+
+    - Homebrew Rules
+*/
+
+
+Hooks.once("init", () => {
+    TaliaCustomAPI._setup();
+    _utils.registerSection();
+    registerWrappers();
+
+    //sections
+    _world.registerSection();
+    _gmMacros.registerSection();
+    _items.registerSection();
+    _spells.registerSection();
+    _features.registerSection();
+    registerHomebrewRules();
 });
 
-Hooks.once("libWrapper.Ready", () => {
-    jump._onLibWrapperReady();
-    templateOpenCharSheet._onLibWrapperReady();
-});
+function registerHomebrewRules() {
+    //  all of the keys have to be lowercase only for some reason!
+    CONFIG.DND5E.rules.legres = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.y7XsmDawHmZdSTTR";
+    CONFIG.DND5E.rules.alchemy = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.Z0XP4RuNUbFSIMVN";       //also in alchemy.mjs
+    CONFIG.DND5E.rules.craftingcontraptions = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.0pmGvF3yS5xoUoEU";  //also in craftingContraptions.mjs
+    CONFIG.DND5E.rules.triggeredabilities = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.DCZAvOjR2CqqnEpT";
+}
 
+/*
 Hooks.once("init", () => {
     wildMagic._onInit();
     cooking._onInit();
@@ -81,11 +187,7 @@ Hooks.once("setup", () => {
     grapple._onSetup();
     
 
-    console.log(`${MODULE.ID} set up.`);
+    console.log(`${MODULE.ID} setup complete.`);
 });
 
-//add flags to DAE
-Hooks.once("DAE.setupComplete", () => {
-    jump._onDAESetup();
-    shove._onDAESetup();
-});
+*/
