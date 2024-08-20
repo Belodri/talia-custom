@@ -52,7 +52,10 @@ class Jump {
     
         const sourceToken = rollData.token;
     
-        const position = await new TaliaUtils.Crosshairs(sourceToken, jumpDistanceInFt, {showRangeIndicator: true, validateDistance: true}).getPosition();
+        const crosshairs = await new TaliaUtils
+            .Crosshairs(sourceToken, jumpDistanceInFt, {showRangeIndicator: true, validateDistance: true})
+            .setPosition();
+        const position = crosshairs.getPosition();
         if(!position) return;
         return await Jump.jumpAnimation(sourceToken, position);
     }
@@ -61,9 +64,8 @@ class Jump {
         new Sequence()
             .animation()
                 .on(token)
-                .moveTowards(targetLocation, { ease: "easeInOutQuint", relativeToCenter: true })
+                .moveTowards(targetLocation, { ease: "easeInOutQuint"})
                 .duration(1200)
-                .snapToGrid()
                 .waitUntilFinished()
             .effect()
                 .file("jb2a.impact.ground_crack.orange.02")

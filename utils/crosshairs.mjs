@@ -44,7 +44,11 @@ export class Crosshairs {
         return this;
     }
 
-    async getPosition() {
+    getPosition() {
+        return this.position ?? null;
+    }
+
+    async setPosition() {
         Hooks.call("talia_preCreateCrosshairs", this);
         
         if(this.options.showRangeIndicator) {
@@ -98,10 +102,47 @@ export class Crosshairs {
             canvas.app.stage.removeListener("pointerdown", onClick);
         }
 
-        this.position = position;
+        this.position = this.sourceToken.scene.grid.getTopLeftPoint(position);
 
         Hooks.call("talia_postGetPosition", this);
-        return this.position;
+        return this;
+    }
+
+    static VECTORS = {
+        "N": {x: 0, y: -1},
+        "NE": {x: 1, y: -1},
+        "E": {x: 1, y: 0},
+        "SE": {x: 1, y: 1},
+        "S": {x: 0, y: 1},
+        "SW": {x: -1, y: 1},
+        "W": {x: -1, y: 0},
+        "NW": {x: -1, y: -1}
+    }
+
+    static getDirectionVector(direction = "") {
+        return Crosshairs.VECTORS[direction];
+    }
+
+    shiftPosition(direction = "", distanceInSquares = 0) {
+        const distance = this.sourceToken.scene.grid.size * distanceInSquares;
+        const vector = Crosshairs.getDirectionVector(direction);
+        if(!vector) throw new Error(`Invalid direction: ${direction}`);
+
+        //constrain by scene dimensions & padding
+        const dimensions = this.sourceToken.scene.dimensions;
+        const constraints = {
+            xMin: dimensions.sceneX,
+            xMax: dimensions.sceneX + dimensions.sceneWidth - this.sourceToken.scene.grid.size,
+            yMin: dimensions.sceneY,
+            yMax: dimensions.sceneY + dimensions.sceneHeight - this.sourceToken.scene.grid.size
+        }
+
+        // Calculate new location
+        this.position = {
+            x: Math.min(constraints.xMax, Math.max(constraints.xMin, this.position.x + vector.x * distance)),
+            y: Math.min(constraints.yMax, Math.max(constraints.yMin, this.position.y + vector.y * distance))
+        };
+        return this;
     }
 
     _isValidDistance(topLeft) {
