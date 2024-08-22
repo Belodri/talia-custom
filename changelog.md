@@ -1,3 +1,13 @@
+# 1.1.0 - 2024/08/27
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+    - TaliaUtils.Helpers.SECONDS is now correctly accessible as a static property.
+    
+</details>
+
+
 # 1.0.0 - 2024/08/20
 
 Rewrote/restructured most of the code to better integrate with the v12 changes and future system updates.

@@ -1,5 +1,5 @@
 export class Helpers {
-    SECONDS = {
+    static SECONDS = {
         IN_ONE_MINUTE: 60,
         IN_TEN_MINUTES: 600,
         IN_ONE_HOUR: 3600,
