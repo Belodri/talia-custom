@@ -4,7 +4,7 @@
 <summary><h2>Fixed</h2></summary>
 
     - TaliaUtils.Helpers.SECONDS is now correctly accessible as a static property.
-    
+    - Fixed faulty rolling of player inspirations.
 </details>
 
 

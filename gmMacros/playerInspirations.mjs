@@ -34,9 +34,28 @@ async function rollPlayerInspirations() {
         
         //roll each result (rr so they can never be the same) and add the roll and the text results to pairs
         const tableSize = table.results.size;
-        value.tableRoll = await new Roll(`1d${tableSize}rr(1d${tableSize})`).evaluate();
-        value.tableTextResults = value.tableRoll.dice.map(d => {
-            const indexVal = d.total - 1;
+        const rollFormula = `1d${tableSize}rr1d${tableSize}`;
+
+        function getUniqueRandomNumbers(x) {
+            if (x < 2) {
+              return []; // Return an empty array if x is less than 2
+            }
+          
+            let num1, num2;
+            do {
+              num1 = Math.floor(Math.random() * x) + 1;
+              num2 = Math.floor(Math.random() * x) + 1;
+            } while (num1 === num2);
+          
+            return [num1, num2];
+        }
+
+        
+        //value.tableRoll = await new Roll(rollFormula).evaluate();
+
+        const randomNums = getUniqueRandomNumbers(tableSize);
+        value.tableTextResults = randomNums.map(d => {
+            const indexVal = d - 1;
             return table.results.contents[indexVal].text;    
         });
         
@@ -48,7 +67,7 @@ async function rollPlayerInspirations() {
             `;
             
         const speaker = ChatMessage.getSpeaker({alias: "Aerelia"});
-        await game.dice3d.showForRoll(value.tableRoll, game.user, true, null, false, null, speaker);
+        //await game.dice3d.showForRoll(value.tableRoll, game.user, true, null, false, null, speaker);
         const msg = await ChatMessage.create({
             speaker: speaker,
             content,
