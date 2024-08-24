@@ -123,10 +123,10 @@ export class Helpers {
             flags: {"core.canPopout": true}
         };
 
-        if(createMessage) {
+        if(!createMessage) {
             return chatData;
         }
-        return await ChatMessage.create(chatData);
+        return await ChatMessage.implementation.create(chatData);
     }
 
 

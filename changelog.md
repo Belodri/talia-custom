@@ -9,6 +9,7 @@
     - Fixed faulty rolling of player inspirations.
     - Effects granted by spices have been added to dfred's CE
     - Fixed spices' item type not matching the assigned itemType in the config.
+    - Fixed `displayItemInfoOnly()` helper displaying a message when it shouldn't and not displaying one when it should. Also supports pop-out now.
 </details>
 
 <details>
