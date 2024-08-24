@@ -1,12 +1,21 @@
 # 1.1.0 - 2024/08/27
 
+
+
 <details>
 <summary><h2>Fixed</h2></summary>
 
     - TaliaUtils.Helpers.SECONDS is now correctly accessible as a static property.
     - Fixed faulty rolling of player inspirations.
+    - Effects granted by spices have been added to dfred's CE
+    - Fixed spices' item type not matching the assigned itemType in the config.
 </details>
 
+<details>
+<summary><h2>Dev Details</h2></summary>
+
+- added message flag `talia-custom.hideFromSelf || boolean` to hide chat messages from the author
+</details>
 
 # 1.0.0 - 2024/08/20
 
