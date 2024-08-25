@@ -3,6 +3,8 @@
 <details>
 <summary><h2>Added</h2></summary>
 
+- Feature: Aspect of the Wyrm
+
 -   <details>
     <summary>Trade Goods: Food (Snacks)</summary>
 
@@ -33,6 +35,8 @@
 
 <details>
 <summary><h2>Changed</h2></summary>
+
+- Leveled up characters from 10 to 11.
 
 -   <details>
     <summary>Resting, Chef Feat, Cooking, Spices, and Food</summary>
