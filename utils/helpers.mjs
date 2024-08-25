@@ -301,6 +301,18 @@ export class Helpers {
         return ChatMessage.implementation.create(chatData);
     }
 
+    /**
+     * Helper function to check if a roll is successful against it's own target value.
+     * @param {D20Roll} roll A roll instance
+     * @returns {boolean | null} True if the roll is a success, fail if not, null if there is no target value.
+     */
+    static isRollSuccess(roll) {
+        if(roll.isCritical) return true;
+        if(roll.isFumble) return false;
+        if(typeof roll.options.targetValue !== "number") return null;
+        if(roll.total >= roll.options.targetValue) return true;
+        else return false;
+    }
 }
 
 

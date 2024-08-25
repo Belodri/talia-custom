@@ -73,6 +73,7 @@
 - added GM macro `TaliaCustom.GmMacros.requestRest()` to request a long/short rest from any actor that clicks the msg button.
     also advances time and checks if newDay item use refresh should be triggered
     Note: This will have to be reworked properly once the 4.0.0 changes to resting are out.
+- added helper function `isRollSuccess(roll)` to easily determine if a d20 roll is a success against it's own target value.
 </details>
 
 # 1.0.0 - 2024/08/20
