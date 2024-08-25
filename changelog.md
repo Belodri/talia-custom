@@ -4,6 +4,7 @@
 <summary><h2>Added</h2></summary>
 
 - Feature: Aspect of the Wyrm
+- Feature: Relentless Rage
 
 -   <details>
     <summary>Trade Goods: Food (Snacks)</summary>
