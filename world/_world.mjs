@@ -1,15 +1,6 @@
-
-
-
-/** 
-    TODO:  Wild Magic
-    TODO:  Soul-Bound Item Property
-    TODO:  Conditions
-    TODO:  Inspiration
-*/
-
 import changesToConditions from "./changesToConditions.mjs";
 import soulBoundItemProperty from "./soulBoundItemProperty.mjs";
+import spellFailureChance from "./spellFailureChance.mjs";
 import wildMagic from "./wildMagic/wildMagic.mjs";
 
 
@@ -18,5 +9,6 @@ export default {
         wildMagic.register();
         soulBoundItemProperty.register();
         changesToConditions.register();
+        spellFailureChance.register();
     }
 }
