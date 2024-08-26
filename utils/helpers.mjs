@@ -313,6 +313,19 @@ export class Helpers {
         if(roll.total >= roll.options.targetValue) return true;
         else return false;
     }
+
+    /**
+     * Generates a random integer between (and including) min and max.
+     * That means the return value could equal min or max.
+     * @param {number} min (gets ceiled if not an integer)
+     * @param {number} max (gets floored if not an integer)
+     * @returns {number} Integer
+     */
+    static getRandomInt(min, max) {
+        const minCeiled = Math.ceil(min);
+        const maxFloored = Math.floor(max);
+        return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); // The maximum is inclusive and the minimum is inclusive
+    }
 }
 
 

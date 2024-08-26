@@ -40,6 +40,16 @@
 - Leveled up characters from 10 to 11.
 
 -   <details>
+    <summary>Dwarf (Mountain) racial feature: Speed</summary>
+
+    from
+    > Your speed is not reduced by wearing heavy armor.
+
+    to
+    > Your speed is not reduced by wearing armor.
+    </details>
+
+-   <details>
     <summary>Resting, Chef Feat, Cooking, Spices, and Food</summary>
 
     Big changes to the way resting works.
@@ -74,6 +84,7 @@
     also advances time and checks if newDay item use refresh should be triggered
     Note: This will have to be reworked properly once the 4.0.0 changes to resting are out.
 - added helper function `isRollSuccess(roll)` to easily determine if a d20 roll is a success against it's own target value.
+- added helper function `getRandomInt(min, max)` to easily generate random integers inclusively
 </details>
 
 # 1.0.0 - 2024/08/20
