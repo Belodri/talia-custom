@@ -1,16 +1,5 @@
-import { TaliaCustomAPI } from "../../../scripts/api.mjs";
-import { MODULE } from "../../../scripts/constants.mjs";
 import { TaliaUtils } from "../../../utils/_utils.mjs";
 import { ItemHookManager } from "../../../utils/ItemHookManager.mjs";
-import { cookingMain } from "./cooking.mjs";
-
-/*
-    As part of a short rest, you can cook a quick meal for your party, provided you have ingredients and cook's utensils on hand. 
-    Doing so takes one ration and lets everyone in your party regain hit points equal to 1d8 * your proficiency bonus.
-
-    When you finish a long rest and at the cost of 5 rations, you can make a meal for your party that gives them temporary hit points equal to 2d4 * your proficiency bonus.
-*/
-
 
 /*
     Required modules & settings:
@@ -29,33 +18,14 @@ export default {
             }
         };
 
-
         CONFIG.DND5E.consumableTypes.food.subtypes = {
             meal: "Meal",
             snack: "Snack"
         };
 
         ItemHookManager.register("Chef", ChefFeat.itemMacro);
-
-        TaliaCustomAPI.add({chefFeat: chefFeatCustomCall}, "ItemMacros");
-
-        /*
-        Hooks.on("dnd5e.restCompleted", async (actor, result) => {
-            if(!actor.name.includes("Shalkoc")) return;
-    
-            if(result.longRest) {
-                if(!await confirmDialog("long")) return;
-                await longRest(actor);
-            } else {
-                if(!await confirmDialog("short")) return;
-                await shortRest(actor);
-            }
-        });
-        */
     }
 }
-
-//TODO Cleanup old code and remove cooking.mjs once ChefFeat has been tested.
 
 /*
     WORKFLOW
@@ -225,7 +195,7 @@ class ChefFeat {
     getEffectData() {
         if(!this.chosenSpiceItem) return undefined;
         const effect = game.dfreds.effectInterface.findEffect({effectName: this.chosenSpiceItem.name});
-        if(!effect) throw new Error(`Couldn't find effect data for: ${this.chosenSpiceItem.name}`);
+        if(!effect) ChefFeat.throwCustomError(`Couldn't find effect data for: ${this.chosenSpiceItem.name}`);
         
         const effObj = effect.toObject();
         this.effectData = foundry.utils.mergeObject(effObj, {
@@ -242,25 +212,27 @@ class ChefFeat {
         //short rest (healing) is rollGroup0
         //long rest (tempHp) is rollGroup1
         const roll = await this.chefItem.rollDamageGroup({rollGroup: this.isLongRest ? 1 : 0, options: {chatMessage: true, fastForward: true}});
-        //wait for 3d dice animation (diceSoNice)
-        //await game.dice3d.showForRoll(roll, game.user, true);
         this.rollTotal = roll.total;
         return this;
+    }
+
+    static throwCustomError(msg) {
+        ui.notifications.warn(msg);
+        throw new Error(msg);
     }
 
     getItems() {
         /** @type {Item5e | undefined} */
         this.cooksTool = this.actor.itemTypes.tool.find(i => i.system?.type?.baseItem === "cook");
-        if(!this.cooksTool) {
-            throw new Error("You need to have cook's utensils on you to cook.");
-        }
+        if(!this.cooksTool) ChefFeat.throwCustomError("You need to have cook's utensils on you to cook.");
+
 
         /** @type {Item5e[] | []} */
         this.foodItems = this.actor.itemTypes.loot
             .filter( i => i.system?.type?.subtype === `${this.isLongRest ? "meal" : "snack"}` && i.system?.quantity >= this.restingActors.length);
         
         if(!this.foodItems?.length) {
-            throw new Error(`You don't have enough of one ${this.isLongRest ? "meal" : "snack"} on you to cook for the entire party.`);
+            ChefFeat.throwCustomError(`You don't have enough of one ${this.isLongRest ? "meal" : "snack"} on you to cook for the entire party.`);
         }
 
         /** @type {Item5e[] | []} */
@@ -323,185 +295,4 @@ class ChefFeat {
         }
         return this;
     }
-}
-
-
-
-
-async function chefFeatCustomCall(actor) {
-    //dialog with choice between short rest, long rest, or item card only
-    const choice = await Dialog.wait({
-        title: "Chef",
-        content: "",
-        buttons: {
-            shortRest: {
-                label: "Short Rest",
-                callback: () => 'shortRest'
-            },
-            longRest: {
-                label: "Long Rest",
-                callback: () => "longRest"
-            },
-            itemCard: {
-                label: "Chat Only",
-                callback: () => "itemCard"
-            }
-        },
-        close: () => false,
-        default: "shortRest"
-    });
-
-    switch(choice) {
-        case 'shortRest': 
-            shortRest(actor); 
-            break;
-        case 'longRest': 
-            longRest(actor); 
-            break;
-        case "itemCard": 
-            const chefItem = actor.items.find(i => i.name === "Chef");
-            chefItem.displayCard();
-            break;
-    }
-}
-
-async function confirmDialog(restType) {
-    let title, content;
-    if(restType === "long") {
-        title = `Chef Feat - Long Rest`;
-        content = `Use 5 Rations to cook a tasty meal which gives temporary hit points to each member of your party?`;
-    }
-    else if (restType === "short"){
-        title = "Chef Feat - Short Rest";
-        content = `Use 1 Ration to cook a quick meal which lets every member of your party regain hit points?`;
-    } else {
-        throw new Error("restType is neither 'short' nor 'long'.");
-    }
-    const choice = await Dialog.confirm({
-        title: title, 
-        content: content,
-    });
-    return choice;
-}
-
-
-
-async function shortRest(actor) {
-    const rationItemName = "Rations";
-    const requiredRations = 1;
-
-    //- has cook's utensils?
-    if(!actor.items.find(i => i.system?.type?.baseItem === 'cook')) {
-        ui.notifications.warn("Chef feat - Short Rest  requires you to have cook's utensils on you.");
-        return;
-    }
-    
-    //get ration item from actor
-    const rationItem = actor.items.find(i => i.name === rationItemName && i.system?.quantity >= requiredRations);
-    if(!rationItem) {   
-        ui.notifications.warn(`You need ${requiredRations} ${rationItemName} to cook a quick meal.`);
-        return;
-    }
-
-    //get chef item
-    const chefItem = actor.items.find(i => i.name === "Chef");
-
-    //use it to roll damage (healing)
-        //make sure that short rest (healing) is rollgroup 0!
-    const roll = await chefItem.rollDamageGroup({rollgroup: 0, options: {chatMessage: false}});
-
-    //wait for 3d dice animation (diceSoNice)
-    await game.dice3d.showForRoll(roll, game.user, true);
-
-    //get user _id from all active users (for the whisper)
-    const userIdsArray = game.users.players.map((user) => {
-        if(user.active) return user._id
-    });
-
-    //Create the damages array to pass to the requestor callback
-    const damages = dnd5e.dice.aggregateDamageRolls([roll], {respectProperties: true}).map(roll => ({
-        value: roll.total,
-        type: roll.options.type,
-        properties: new Set(roll.options.properties ?? [])
-    }));
-
-    //create the requestor message
-    await Requestor.request({
-        img: rationItem.img,        //maybe replace this with a random image from Kris' Food stuff
-        title: "Chef Feat: Short Rest",
-        description: `${actor.name} made a quick meal.`,
-        buttonData: [{
-            label: `Eat to regain up to ${damages[0].value} hp.`,
-            command: async function(){
-                //apply damage/healing to the actor (uses the character of the player who clicked the button.) 
-                await actor.applyDamage(damages, {multiplier: 1, ignore: false});
-                ui.notifications.info(`Restored up to ${damages[0].value} hp to ${actor.name}.`);
-            },
-            scope: {damages: damages}
-        }],
-        speaker: ChatMessage.implementation.getSpeaker({actor: actor}),
-        messageOptions: {
-            whisper: userIdsArray,
-            blind: true     //check if shalkoc gets his own whisper too: YES he does
-        }
-    });
-    //consume ration
-    await TaliaUtils.Helpers.consumeItem(rationItem, requiredRations);
-
-    //TODO integrate cooking (spice) into chef feat properly
-    await cookingMain(actor);   //also handles cooking (spice) here.
-}
-
-async function longRest(actor) {
-    const rationItemName = "Rations";
-    const requiredRations = 5;
-
-    //get ration item from actor
-    const rationItem = actor.items.find(i => i.name === rationItemName && i.system?.quantity >= requiredRations);
-    if(!rationItem) {   
-        ui.notifications.warn(`You need ${requiredRations} ${rationItemName} to cook a quick meal.`);
-        return;
-    }
-
-    //get chef item
-    const chefItem = actor.items.find(i => i.name === "Chef");
-
-    //use it to roll damage (temporary healing)
-    //make sure that long rest (temporary healing) is rollgroup 1!
-    const roll = await chefItem.rollDamageGroup({rollgroup: 0, options: {chatMessage: false}});
-
-    //wait for 3d dice animation (diceSoNice)
-    await game.dice3d.showForRoll(roll, game.user, true);
-
-    //get user _id from all active users (for the whisper)
-    const userIdsArray = game.users.players.map((user) => {
-        if(user.active) return user._id
-    });
-
-    //create the requestor message
-    await Requestor.request({
-        img: rationItem.img,        //maybe replace this with a random image from Kris' Food stuff
-        title: "Chef Feat: Long Rest",
-        description: `${actor.name} made a tasty meal.`,
-        buttonData: [{
-            label: `Eat to gain ${roll.total} temporary hp.`,
-            command: async function(){
-                //apply temp HP to the actor (uses the character of the player who clicked the button.) 
-                await actor.applyTempHP(rollTotal);
-                ui.notifications.info(`Added up to ${rollTotal} temp hp to ${actor.name}.`);
-            },
-            scope: {rollTotal: roll.total}
-        }],
-        speaker: ChatMessage.implementation.getSpeaker({actor: actor}),
-        messageOptions: {
-            whisper: userIdsArray,
-            blind: true     //check if shalkoc gets his own whisper too: YES he does
-        }
-    });
-
-    //consume ration
-    await TaliaUtils.Helpers.consumeItem(rationItem, requiredRations);
-
-    //TODO integrate cooking (spice) into chef feat properly
-    await cookingMain(actor);   //also handles cooking (spice) here.
 }
