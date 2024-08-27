@@ -4,7 +4,7 @@ import { MODULE } from "./constants.mjs";
  * TaliaCustomAPI class to manage adding classes, objects, and others to a global API object.
  */
 export class TaliaCustomAPI {
-    static CATEGORIES = ["none", "ItemMacros", "EffectMacros", "GmMacros", "Macros", "Other"];
+    static CATEGORIES = ["none", "ItemMacros", "EffectMacros", "GmMacros", "Macros", "RegionMacros", "Other"];
 
     /**
      * Sets up the global API object.
@@ -29,7 +29,7 @@ export class TaliaCustomAPI {
 
     /**
      * Adds methods to the global API object. The methods can be nested within objects.
-     * 
+     * Allowed categories are: "none", "ItemMacros", "EffectMacros", "GmMacros", "Macros", "RegionMacros", "Other"
      * @param {Object} methodsObject - An object containing methods and nested objects with methods to add to the API.
      * @param {string} [category="none"] - The category under which to add the methods. 
      *                                     If "none", methods are added to the root of the API object.
@@ -46,17 +46,17 @@ export class TaliaCustomAPI {
      *   }
      * });
      * 
-     * // Adding methods to the 'itemMacros' category
+     * // Adding methods to the 'ItemMacros' category
      * TaliaCustomAPI.add({
      *   applyDamage: (target, amount) => { },
      *   healTarget: (target, amount) => {  }
-     * }, "itemMacros");
+     * }, "ItemMacros");
      * 
-     * // Adding methods to the 'gmMacros' category
+     * // Adding methods to the 'GmMacros' category
      * TaliaCustomAPI.add({
      *   spawnMonster: (type, location) => {  },
      *   changeWeather: (condition) => {  }
-     * }, "gmMacros");
+     * }, "GmMacros");
      */
     static add(methodsObject, category = "none") {
         if (!TaliaCustomAPI.CATEGORIES.includes(category)) {

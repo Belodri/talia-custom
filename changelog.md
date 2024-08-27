@@ -5,6 +5,18 @@
 
 - Feature: Aspect of the Wyrm
 - Feature: Relentless Rage
+- Rule: Ancient Armor and Shields
+- Automation for handling Arcane Spell Failure
+- Magic Item: Ancient Chainmail of Celerity
+
+-   <details>
+    <summary>Spells</summary>
+
+    - Arcane Gate
+        Unfortunately I cannot implement the directional part of this spell, the rest works though.
+    - Sunbeam
+    </details>
+
 
 -   <details>
     <summary>Trade Goods: Food (Snacks)</summary>
