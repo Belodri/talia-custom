@@ -86,6 +86,7 @@
 - Effects granted by spices have been added to dfred's CE
 - Fixed spices' item type not matching the assigned itemType in the config.
 - Fixed `displayItemInfoOnly()` helper displaying a message when it shouldn't and not displaying one when it should. Also supports pop-out now.
+- Temporary fix for Wyrmreaver Gauntlets until I can figure out a better solution. At least they no longer break everything when used.
 </details>
 
 <details>
@@ -97,6 +98,7 @@
     Note: This will have to be reworked properly once the 4.0.0 changes to resting are out.
 - added helper function `isRollSuccess(roll)` to easily determine if a d20 roll is a success against it's own target value.
 - added helper function `getRandomInt(min, max)` to easily generate random integers inclusively
+- added helper function `checkAttunement(item)` to easily check an item's attunement status
 </details>
 
 # 1.0.0 - 2024/08/20

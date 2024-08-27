@@ -326,6 +326,17 @@ export class Helpers {
         const maxFloored = Math.floor(max);
         return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); // The maximum is inclusive and the minimum is inclusive
     }
+
+    /**
+     * 
+     * @param {Item5e} item 
+     * @returns {boolean} true if the item is attuned if it requires attunement, true if the item does not require attunement, false otherwise
+     */
+    static checkAttunement(item) {
+        if((item.system?.attunement === "required" && item.system.attuned) || item.system?.attunement !== "required") {
+            return true;
+        } else return false;
+    }
 }
 
 
