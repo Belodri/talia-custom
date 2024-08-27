@@ -1,3 +1,108 @@
+# 1.1.0 - 2024/08/27
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- Feature: Aspect of the Wyrm
+- Feature: Relentless Rage
+- Rule: Ancient Armor and Shields
+- Automation for handling Arcane Spell Failure
+- Magic Item: Ancient Chainmail of Celerity
+- Magic Item: Glasses of Scarlet Sight
+- Magic Item: Ring of Free Action
+
+-   <details>
+    <summary>Spells</summary>
+
+    - Arcane Gate
+        Unfortunately I cannot implement the directional part of this spell, the rest works though.
+    - Sunbeam
+    - Gates and Wards 
+    </details>
+
+-   <details>
+    <summary>Trade Goods: Food (Snacks)</summary>
+
+    - Bread
+    - Chocolate
+    - Chocolate Chip Cookies
+    - Honey Cookies
+    - Mead
+    - Mixed Jellied Fruits
+    - Mulled Wine
+    - Pistachio Pie
+    - Rhubarb Pie
+    </details>
+
+-   <details>
+    <summary>Trade Goods: Food (Meals)</summary>
+
+    - Cheese
+    - Dried Meat
+    - Eggs and Sausage
+    - Eggs, Rice, and Green Beans
+    - Goulash
+    - Grilled Ribs
+    - Grilled Steak
+    - Smoked Meats
+    </details>
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- Leveled up characters from 10 to 11.
+
+-   <details>
+    <summary>Dwarf (Mountain) racial feature: Speed</summary>
+
+    from
+    > Your speed is not reduced by wearing heavy armor.
+
+    to
+    > Your speed is not reduced by wearing armor.
+    </details>
+
+-   <details>
+    <summary>Resting, Chef Feat, Cooking, Spices, and Food</summary>
+
+    Big changes to the way resting works.
+    Rests are now initiated either by the GM or by Shalkoc by using his Chef feat.
+    If Shalkoc uses his Chef feat, he'll either cook a meal during a long rest or a snack during a short rest. In both cases he can choose to flavour the food with spices.
+    The food items are now split into two categories: meals, which are eaten during long rests, and snacks, which are eaten during short rests.
+
+    To be able cook, Shalkoc needs to have enough food items on him. Or rather he needs to have a single food item (say for example Goulash) on him which has a quantity that's larger than or equal to the number of active player characters. 
+    Using multiple different food items at once is not possible at the moment.
+
+    While a number of food items are required to cook during a rest, using a spice item while cooking is optional and if used, only one will be consumed, no matter how many characters are resting.
+    
+    The added items will also be available for sale from merchants and serve as a test for various kinds of merchant, loot, and trading related additions that I'm working on.
+    </details>
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- TaliaUtils.Helpers.SECONDS is now correctly accessible as a static property.
+- Fixed faulty rolling of player inspirations.
+- Effects granted by spices have been added to dfred's CE
+- Fixed spices' item type not matching the assigned itemType in the config.
+- Fixed `displayItemInfoOnly()` helper displaying a message when it shouldn't and not displaying one when it should. Also supports pop-out now.
+- Temporary fix for Wyrmreaver Gauntlets until I can figure out a better solution. At least they no longer break everything when used.
+</details>
+
+<details>
+<summary><h2>Dev Details</h2></summary>
+
+- added message flag `talia-custom.hideFromSelf || boolean` to hide chat messages from the author
+- added GM macro `TaliaCustom.GmMacros.requestRest()` to request a long/short rest from any actor that clicks the msg button.
+    also advances time and checks if newDay item use refresh should be triggered
+    Note: This will have to be reworked properly once the 4.0.0 changes to resting are out.
+- added helper function `isRollSuccess(roll)` to easily determine if a d20 roll is a success against it's own target value.
+- added helper function `getRandomInt(min, max)` to easily generate random integers inclusively
+- added helper function `checkAttunement(item)` to easily check an item's attunement status
+</details>
+
 # 1.0.0 - 2024/08/20
 
 Rewrote/restructured most of the code to better integrate with the v12 changes and future system updates.
@@ -10,7 +115,7 @@ Expect lots of bugs and please report each one you encounter in the discord.
 <details>
 <summary><h2>Added</h2></summary>
 
-    - Common Action: Jump
+- Common Action: Jump
 </details>
 
 # 0.6.0 - 2024/08/13
@@ -20,8 +125,8 @@ Expect lots of bugs and please report each one you encounter in the discord.
 -   <details>
     <summary>Common Action: Grapple</summary>
 
-        Allows grappling and moving of other tokens.
-        To release the grapple, simply delete the grappling active effect on the grappling actor or delete the grappled condition on the grappled actor.
+    Allows grappling and moving of other tokens.
+    To release the grapple, simply delete the grappling active effect on the grappling actor or delete the grappled condition on the grappled actor.
     </details>
 - Spell: Traitorous Blood
 </details>
@@ -32,13 +137,13 @@ Expect lots of bugs and please report each one you encounter in the discord.
 -   <details>
     <summary>Reckless Attack</summary>
 
-        Changed so it's easier to integrate with other effects.
-        
-        from
-        > Starting at 2nd level, you can throw aside all concern for defense to attack with fierce desperation. When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but leaves you flat-footed (attack rolls against you have advantage) until the start of your next turn.
+    Changed so it's easier to integrate with other effects.
+    
+    from
+    > Starting at 2nd level, you can throw aside all concern for defense to attack with fierce desperation. When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but leaves you flat-footed (attack rolls against you have advantage) until the start of your next turn.
 
-        to
-        > Starting at 2nd level, you can throw aside all concern for defence to attack with fierce desperation. When you make an attack, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls, but attack rolls against you have advantage. These effects last until the start your next turn.
+    to
+    > Starting at 2nd level, you can throw aside all concern for defence to attack with fierce desperation. When you make an attack, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls, but attack rolls against you have advantage. These effects last until the start your next turn.
     </details>
 </details>
 <details>

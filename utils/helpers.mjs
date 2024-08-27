@@ -1,5 +1,5 @@
 export class Helpers {
-    SECONDS = {
+    static SECONDS = {
         IN_ONE_MINUTE: 60,
         IN_TEN_MINUTES: 600,
         IN_ONE_HOUR: 3600,
@@ -123,10 +123,10 @@ export class Helpers {
             flags: {"core.canPopout": true}
         };
 
-        if(createMessage) {
+        if(!createMessage) {
             return chatData;
         }
-        return await ChatMessage.create(chatData);
+        return await ChatMessage.implementation.create(chatData);
     }
 
 
@@ -301,6 +301,42 @@ export class Helpers {
         return ChatMessage.implementation.create(chatData);
     }
 
+    /**
+     * Helper function to check if a roll is successful against it's own target value.
+     * @param {D20Roll} roll A roll instance
+     * @returns {boolean | null} True if the roll is a success, fail if not, null if there is no target value.
+     */
+    static isRollSuccess(roll) {
+        if(roll.isCritical) return true;
+        if(roll.isFumble) return false;
+        if(typeof roll.options.targetValue !== "number") return null;
+        if(roll.total >= roll.options.targetValue) return true;
+        else return false;
+    }
+
+    /**
+     * Generates a random integer between (and including) min and max.
+     * That means the return value could equal min or max.
+     * @param {number} min (gets ceiled if not an integer)
+     * @param {number} max (gets floored if not an integer)
+     * @returns {number} Integer
+     */
+    static getRandomInt(min, max) {
+        const minCeiled = Math.ceil(min);
+        const maxFloored = Math.floor(max);
+        return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); // The maximum is inclusive and the minimum is inclusive
+    }
+
+    /**
+     * 
+     * @param {Item5e} item 
+     * @returns {boolean} true if the item is attuned if it requires attunement, true if the item does not require attunement, false otherwise
+     */
+    static checkAttunement(item) {
+        if((item.system?.attunement === "required" && item.system.attuned) || item.system?.attunement !== "required") {
+            return true;
+        } else return false;
+    }
 }
 
 
