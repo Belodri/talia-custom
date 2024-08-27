@@ -8,6 +8,8 @@
 - Rule: Ancient Armor and Shields
 - Automation for handling Arcane Spell Failure
 - Magic Item: Ancient Chainmail of Celerity
+- Magic Item: Glasses of Scarlet Sight
+- Magic Item: Ring of Free Action
 
 -   <details>
     <summary>Spells</summary>
@@ -15,8 +17,8 @@
     - Arcane Gate
         Unfortunately I cannot implement the directional part of this spell, the rest works though.
     - Sunbeam
+    - Gates and Wards 
     </details>
-
 
 -   <details>
     <summary>Trade Goods: Food (Snacks)</summary>
