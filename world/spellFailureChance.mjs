@@ -1,5 +1,3 @@
-import { TaliaUtils } from "../utils/_utils.mjs";
-
 export default {
     register() {
         //add "Spell Failure" item property to indicate items that can cause spell failure
@@ -18,8 +16,8 @@ async function arcaneSpellFailure(item, config, options) {
     if(options.flags?.dnd5e?.use?.type !== "spell") return;     //only allow spells
     if(!item.system.properties?.has("somatic")) return;         //only allow spells with somatic components
 
-    //check if user is wearing equipment with spell failure chance
-    const spellFailItems = item.actor.itemTypes.equipment.filter(i => i.system.properties.has("spellFail") && i.system.equipped);
+    //check if user is attuned to equipment with spell failure chance
+    const spellFailItems = item.actor.itemTypes.equipment.filter(i => i.system.properties.has("spellFail") && (i.system.attuned && i.system.attunement === "required"));
     if(!spellFailItems.length) return;
 
     //check the base type for the spell failure chance to apply for each item and sum them up

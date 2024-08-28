@@ -1,3 +1,25 @@
+# 1.2.0 - 2024/09/03
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+-   <details>
+    <summary>Evocation Savant</summary>
+
+    from
+    > Beginning when you select this school at 2nd level, the gold and time you must spend to copy an evocation spell into your spellbook is halved.
+
+    to
+    > As a bonus action, you can swap out any of your prepared spells with an unprepared evocation spell you know. You can use this feature a number of times per day equal to your proficiency bonus.
+    </details>
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Spell Failure chance now applies only when the item is attuned, not if it's just equipped.
+</details>
+
 # 1.1.0 - 2024/08/27
 
 <details>
