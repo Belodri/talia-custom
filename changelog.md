@@ -18,6 +18,13 @@
 <summary><h2>Fixed</h2></summary>
 
 - Spell Failure chance now applies only when the item is attuned, not if it's just equipped.
+- Wild Magic Surges throwing an error instead of triggering properly.
+</details>
+
+<details>
+<summary><h2>Dev Details</h2></summary>
+
+- Wild magic surge chance can now be set per scene via a flag `scene.flags.talia-custom.surgeChance = {number between 0 and 1}`. If no flag is found, a default chance of 5% will be used.
 </details>
 
 # 1.1.0 - 2024/08/27
