@@ -1,6 +1,12 @@
 # 1.2.0 - 2024/09/03
 
 <details>
+<summary><h2>Added</h2></summary>
+
+- Spell: Contingency
+</details>
+
+<details>
 <summary><h2>Changed</h2></summary>
 
 -   <details>
