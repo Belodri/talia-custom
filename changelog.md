@@ -25,12 +25,15 @@
 
 - Spell Failure chance now applies only when the item is attuned, not if it's just equipped.
 - Wild Magic Surges throwing an error instead of triggering properly.
+- Size-changing effects work again.
 </details>
 
 <details>
 <summary><h2>Dev Details</h2></summary>
 
 - Wild magic surge chance can now be set per scene via a flag `scene.flags.talia-custom.surgeChance = {number between 0 and 1}`. If no flag is found, a default chance of 5% will be used.
+- To grow or shrink an actor, make a non-transfer active effect with the change `macro.execute || CUSTOM || "daeMacro_sizeChange" {Number of steps} {grow|shrink}`.  
+    Example: `macro.execute || CUSTOM || "daeMacro_sizeChange" 1 shrink` - shrinks the actor by 1 category on effect application, grows by 1 on effect end
 </details>
 
 # 1.1.0 - 2024/08/27
