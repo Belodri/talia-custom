@@ -32,8 +32,9 @@
 <summary><h2>Dev Details</h2></summary>
 
 - Wild magic surge chance can now be set per scene via a flag `scene.flags.talia-custom.surgeChance = {number between 0 and 1}`. If no flag is found, a default chance of 5% will be used.
-- To grow or shrink an actor, make a non-transfer active effect with the change `macro.execute || CUSTOM || "daeMacro_sizeChange" {Number of steps} {grow|shrink}`.  
-    Example: `macro.execute || CUSTOM || "daeMacro_sizeChange" 1 shrink` - shrinks the actor by 1 category on effect application, grows by 1 on effect end
+- To grow or shrink an actor, make a non-transfer active effect with the change `macro.execute || CUSTOM || "daeMacro_sizeChange" {Number of steps}`.
+    Number of steps can be positive (to grow) or negative (to shrink).
+    Example: `macro.execute || CUSTOM || "daeMacro_sizeChange" -1` - shrinks the actor by 1 category on effect application, grows by 1 on effect end
 </details>
 
 # 1.1.0 - 2024/08/27
