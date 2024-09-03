@@ -1,3 +1,56 @@
+# 1.2.0 - 2024/09/03
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- Spells
+    - Contingency
+    - Create or Destroy Water
+    - Maelstrom
+- Items
+    - Instant Door
+    - Wine of the Winter Court
+    - Shadow Lantern
+    - Cane of Tides
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+-   <details>
+    <summary>Evocation Savant</summary>
+
+    from
+    > Beginning when you select this school at 2nd level, the gold and time you must spend to copy an evocation spell into your spellbook is halved.
+
+    to
+    > As a bonus action, you can swap out any of your prepared spells with an unprepared evocation spell you know. You can use this feature a number of times per day equal to your proficiency bonus.
+    </details>
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Spell Failure chance now applies only when the item is attuned, not if it's just equipped.
+- Wild Magic Surges throwing an error instead of triggering properly.
+
+- Size-changing effects work again. Also fixed the following related items:
+    - Spell: Enlarge/Reduce
+    - Item: Potion of Giant Size
+    - Item: Potion of Diminuation
+    - Item: Potion of Growth
+    Known Issue: Currently the effects of Enlarge/Reduce stack with the effects of Potion of Diminuation/Growth even though they shouldn't.
+</details>
+
+<details>
+<summary><h2>Dev Details</h2></summary>
+
+- Wild magic surge chance can now be set per scene via a flag `scene.flags.talia-custom.surgeChance = {number between 0 and 1}`. If no flag is found, a default chance of 5% will be used.
+- To grow or shrink an actor, make a non-transfer active effect with the change `macro.execute || CUSTOM || "daeMacro_sizeChange" {Number of steps}`.
+    Number of steps can be positive (to grow) or negative (to shrink).
+    Example: `macro.execute || CUSTOM || "daeMacro_sizeChange" -1` - shrinks the actor by 1 category on effect application, grows by 1 on effect end
+</details>
+
 # 1.1.0 - 2024/08/27
 
 <details>

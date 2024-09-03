@@ -1,6 +1,5 @@
-/*  TODO
-    - Surges to active effect
-*/
+//  TODO Surges to active effect
+
 
 import { surgesTable } from "./surgesTable.mjs";
 import { TaliaCustomAPI } from "../../scripts/api.mjs";
@@ -75,8 +74,9 @@ class WildMagic {
      * @param {number} chance A number between 0 and 1, representing a chance of 0% to 100%
      * @returns {boolean} True if the surge check failed (which would cause a surge).
      */
-    static checkIsSurge(chance = 0.05) {
-        if(Math.random() > chance) return false;
+    static checkIsSurge(chance = undefined) {
+        const sceneChance = chance ?? canvas.scene.getFlag("talia-custom", "surgeChance") ?? 0.05;
+        if(Math.random() > sceneChance) return false;
         else return true;
     }
 
@@ -105,7 +105,7 @@ class WildMagic {
         for (const severity of ['major', 'moderate', 'minor']) {
             if (allowedSeverities[severity]) {
                 cumulativeRange += ranges[severity];
-                if (result <= cumulativeRange) {
+                if (roll.total <= cumulativeRange) {
                     return { severity, roll };
                 }
             }
@@ -120,7 +120,7 @@ class WildMagic {
         },
         hideRoll = false,
         hideMessage = false,
-    }) {
+    } = {}) {
         const severity = await WildMagic.determineSeverity(allowedSeverities);
         if(!hideRoll) await game.dice3d.showForRoll(severity.roll, game.user, true);
 
