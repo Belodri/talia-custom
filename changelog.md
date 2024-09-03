@@ -3,7 +3,15 @@
 <details>
 <summary><h2>Added</h2></summary>
 
-- Spell: Contingency
+- Spells
+    - Contingency
+    - Create or Destroy Water
+    - Maelstrom
+- Items
+    - Instant Door
+    - Wine of the Winter Court
+    - Shadow Lantern
+    - Cane of Tides
 </details>
 
 <details>
