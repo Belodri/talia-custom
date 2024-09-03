@@ -25,7 +25,13 @@
 
 - Spell Failure chance now applies only when the item is attuned, not if it's just equipped.
 - Wild Magic Surges throwing an error instead of triggering properly.
-- Size-changing effects work again.
+
+- Size-changing effects work again. Also fixed the following related items:
+    - Spell: Enlarge/Reduce
+    - Item: Potion of Giant Size
+    - Item: Potion of Diminuation
+    - Item: Potion of Growth
+    Known Issue: Currently the effects of Enlarge/Reduce stack with the effects of Potion of Diminuation/Growth even though they shouldn't.
 </details>
 
 <details>
