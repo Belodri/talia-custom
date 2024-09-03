@@ -1,3 +1,17 @@
+# 1.3.0 - 2024/09/10
+
+<details>
+<summary><h2>Added</h2></summary>
+
+
+-   <details>
+    <summary>Loot Item Category: Trade Goods</summary>
+
+    Subcategories:
+    - Livestock
+    </details>
+</details>
+
 # 1.2.0 - 2024/09/03
 
 <details>
