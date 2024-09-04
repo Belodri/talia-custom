@@ -3,13 +3,18 @@
 <details>
 <summary><h2>Added</h2></summary>
 
-
 -   <details>
     <summary>Loot Item Category: Trade Goods</summary>
 
     Subcategories:
     - Livestock
     </details>
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Fixed Skill Empowerment not displaying in chat if the same buff was chosen twice in a row.
 </details>
 
 # 1.2.0 - 2024/09/03
