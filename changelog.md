@@ -1,3 +1,27 @@
+# 1.3.0 - 2024/09/10
+
+An upcoming update for the Foundry D&D module, wihch is gonna release in 1-2 weeks, is gonna break pretty much all code that interacts with items in any way (which is like 80% of all my code) so I'm not gonna fix any more stuff until that's out.
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- Items
+- Bugman's Ale
+
+-   <details>
+    <summary>Loot Item Category: Trade Goods</summary>
+
+    Subcategories:
+    - Livestock
+    </details>
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Fixed Skill Empowerment not displaying in chat if the same buff was chosen twice in a row.
+</details>
+
 # 1.2.0 - 2024/09/03
 
 <details>

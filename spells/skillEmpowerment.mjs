@@ -30,7 +30,6 @@ async function skillEmpowerment(item) {
     const newDesc = `For the duration of this spell you double your proficiency bonus when making ${label} checks.`;
 
     const retEff = await effect.update({"description": newDesc, "changes": changes});
-    if(!retEff) return false;
 
     return true;
 }
