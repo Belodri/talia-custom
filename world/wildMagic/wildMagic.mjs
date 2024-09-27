@@ -1,6 +1,3 @@
-//  TODO Surges to active effect
-
-
 import { surgesTable } from "./surgesTable.mjs";
 import { TaliaCustomAPI } from "../../scripts/api.mjs";
 import { TaliaUtils } from "../../utils/_utils.mjs";
