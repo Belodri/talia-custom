@@ -1,9 +1,35 @@
 # 1.4.0 - 2024/10/01
 
+- Overhauled all wild magic surge effects, making them much more impactful (and potentially dangerous).
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+-   <details>
+    <summary>Reduced Active Effect Bloat</summary>
+
+    Reduced active effect bloat by moving the following active effects to character data.
+    - Powerful Build
+    - Unarmored Defense (Barbarian)
+    - Fast Movement
+    - Feral Instinct
+    - Silver Wing Shield
+    - Athletic (jumpDist.bonus flag -> actor flag)
+    - Unarmored Defense (Monk)
+    - Purity of Body
+    - Evasion
+    </details>
+</details>
+
 <details>
 <summary><h2>Fixed</h2></summary>
 
 - Relentless Rage
+- Formatting error with wild magic surges
+- Steeling Drink image
+- Sunbeam now no longer requires multiple casts, no mechanical changes
+- Sun Statue (updated with new Sunbeam)
+- Bless now works without the extra s
 </details>
 
 # 1.3.0 - 2024/09/10
