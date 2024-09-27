@@ -126,7 +126,7 @@ class WildMagic {
 
         const result = await WildMagic.rollOnTable(severity.severity, hideRoll);
         if(hideMessage) return result;
-        return await WildMagic.createChatMessage(result, actor);
+        return await WildMagic.createChatMessage(result, actor, severity.severity);
     }
     
     /**
@@ -142,11 +142,12 @@ class WildMagic {
         return surgesTable[severity][roll.total];
     }
     
-    static async createChatMessage(messageString, actor) {
+    static async createChatMessage(messageString, actor, severity) {
+        const severityStr = severity[0].toUpperCase() + severity.slice(1);
         await ChatMessage.create({
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({actor: actor}),
-            content: `<h2 style="text-align: center; font-weight: bold;">Wild Magic Surge</h2><p>${messageString}</p>`,
+            content: `<h2 style="text-align: center; font-weight: bold;">${severityStr} Wild Magic Surge</h2><p>${messageString}</p>`,
         });
     }
 

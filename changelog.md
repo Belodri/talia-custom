@@ -1,10 +1,16 @@
 # 1.4.0 - 2024/10/01
 
-- Overhauled all wild magic surge effects, making them much more impactful (and potentially dangerous).
+<details>
+<summary><h2>Added</h2></summary>
+
+- Rule for "Undoing a Surge"
+- The chat card of wild magic surges now mention the surge's severity.
+</details>
 
 <details>
 <summary><h2>Changed</h2></summary>
 
+- Overhauled all wild magic surge effects, making them much more impactful.
 -   <details>
     <summary>Reduced Active Effect Bloat</summary>
 
