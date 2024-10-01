@@ -17,7 +17,9 @@ export default {
 }
 
 function preDamageApplyHook(actor, amount, updates, options) {
-    if(updates.system?.attributes?.hp?.value > 0) return;
+    const updatesHpValue = updates["system.attributes.hp.value"] ?? 1;
+
+    if(updatesHpValue > 0) return;
 
     const item = actor.itemTypes?.feat?.find(i => i.name === "Relentless Rage");
     if(!item) return;
