@@ -1,3 +1,17 @@
+# 1.5.0 - 2024/10/15
+<details>
+<summary><h2>Added</h2></summary>
+
+
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- HP bars for player character tokens are now visible for everyone.
+- Sun Statue is no longer soulbound.
+</details>
+
 # 1.4.0 - 2024/10/01
 
 <details>
