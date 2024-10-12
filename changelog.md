@@ -12,6 +12,12 @@
 - Sun Statue is no longer soulbound.
 </details>
 
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Towering Pillar of Hats now grants the correct bonus again.
+</details>
+
 # 1.4.0 - 2024/10/01
 
 <details>
