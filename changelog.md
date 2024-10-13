@@ -2,7 +2,7 @@
 <details>
 <summary><h2>Added</h2></summary>
 
-
+- Items can now have limited uses per turn or per round which are regained automatically (only works while in combat).
 </details>
 
 <details>
@@ -10,6 +10,22 @@
 
 - HP bars for player character tokens are now visible for everyone.
 - Sun Statue is no longer soulbound.
+
+-   <details>
+    <summary>Sneaky Spellshite's Amulet</summary>
+
+    - No longer soulbound
+    - Now tracks and regains uses per turn automatically
+    - Minor mechanical buff
+
+    from
+    > Once per turn, you can deal an extra 1d6 damage per character level to one creature you hit with a spell attack if you are hidden from them or if you are invisible.
+    > Additionally whenever you make a spell attack while hidden or invisible, the critical range of the spell attack is increased by 2.
+
+    to
+    > The critical range of spell attacks you make while hiding or invisible is increased by 2.
+    > Once per turn, when you make a spell attack while hiding or invisible, you can add an extra 1d6 damage per character level to that attack's damage roll.
+    </details>
 </details>
 
 <details>
