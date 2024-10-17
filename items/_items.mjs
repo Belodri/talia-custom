@@ -3,6 +3,7 @@ import guardianScales from "./guardianScales.mjs"
 import mantleOfTheArcaneTrickster from "./mantleOfTheArcaneTrickster.mjs";
 import viceGrip from "./viceGrip.mjs";
 import wyrmreaverGauntlets from "./wyrmreaverGauntlets.mjs";
+import otherItemCategories from "./otherItemCategories.mjs";
 
 export default {
     registerSection() {
@@ -11,6 +12,7 @@ export default {
         mantleOfTheArcaneTrickster.register();
         viceGrip.register();
         wyrmreaverGauntlets.register();
+        otherItemCategories.register();
     }
 }
 
