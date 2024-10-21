@@ -1,18 +1,6 @@
 import { MODULE } from "../../../scripts/constants.mjs";
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
-import { TaliaUtils } from "../../../utils/_utils.mjs";
 const debug = false;
-
-/*
-    - Feature item 'Training': Opens dialog to choose between the available blessings
-
-    - Available blessings are passive feature items on the actor.
-
-    - Once a blessing is chosen, items belonging to other blessings are removed from the actor and items belonging to the chosen blessing are added from the compendium.
-
-
-
-*/
 
 export default {
     register() {
@@ -33,7 +21,7 @@ const blessingsDatabase = {
     },
     "Spirit of the Elk": {
         "Adept Forager": 6,
-        "Stampede": 6,
+        "Battering Ram": 6,
         "Survival Instincts": 10,
         "Unstoppable": 14,
     },
@@ -52,7 +40,7 @@ const blessingsDatabase = {
     },
     "Spirit of the Eagle": {
         "Keen Sight": 6,
-        "Counterstrike": 6,
+        "Billowing Wings": 6,
         "Diving Strike": 10,
         "Double Down": 14,
     },
@@ -95,40 +83,4 @@ async function activateSpirit(actor, chosenSpirit) {
         const created = await Item.createDocuments(itemObjects, {parent: actor});
         if(debug) console.log({created});
     }
-
-    const spiritItem = actor.itemTypes.feat.find(i => i.name === chosenSpirit);
-    TaliaUtils.Helpers.displayItemInfoOnly(spiritItem);
 }
-
-
-
-async function trainingDialog(actor) {
-    if(!actor.name.includes("Aviana")) return;
-    const unlockedSpirits = actor.itemTypes.feat.filter(item => Object.keys(blessingsDatabase).includes(item.name));
-    if(!unlockedSpirits.length) return;
-
-    const options = unlockedSpirits.reduce((acc, e) => acc += `<option value="${e.name}">${e.name}</option>`, "");
-
-    const content = `
-        <form>
-            <span>Choose a blessing.</span>
-            <div class="form-group">
-                <label>Blessing</label>
-                <div class="form-fields">
-                    <select name="blessing">${options}</select>
-                </div>
-            </div>
-        </form>
-    `;
-
-    const choice = await Dialog.prompt({
-        title: "Training",
-        content: content,
-        callback: ([html]) => new FormDataExtended(html.querySelector("form")).object,
-        rejectClose: false,
-    });
-    if(!choice) return;
-
-    return await activateSpirit(actor, choice.blessing);
-}
-

@@ -1,3 +1,103 @@
+# 1.6.0 - 2024/10/22
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- 'Fixed' Necklace of Mighty Breath by adding an upgraded version.
+- Spirit of the Eagle features
+    - Spirit of the Eagle
+    - Keen Sight
+    - Billowing Wings
+    - Diving Strike
+    - Double Down
+- Condition "Distracted"
+    > A distracted creature cannot take reactions.
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- Activating (changing to) a new Beast Spirit can now cause a wild magic surge.
+- Spirit of the Bear: Reduced the duration of the Taunted effect from Savage Taunt and Compelled Duel from three turns to two turns.
+-   <details>
+    <summary>Spirit of the Elk</summary>
+
+    -   Adept Forager (unchanged)
+    -   <details>
+        <summary>Stampede -> Battering Ram</summary>
+
+        from
+        > As a bonus action, you charge forward in a straight line up to a distance equal to your maximum jump distance.
+        > You pass through creatures in your path, pushing them backward in the direction of your charge. The distance each creature is pushed is equal to the distance you can shove a creature of that size.
+        > Colliding with a creature does not slow or stop your charge.
+
+        to
+        > When you take the Attack action on your turn, you can replace one of your attacks with a special charge attack.
+        >
+        > You move up to 50 feet in a straight line that is 5 feet wide, stopping when you hit the first creature in your path. The creature must make a Strength saving throw (DC = 8 + your Strength modifier + your Constitution modifier + your proficiency bonus). On a failed save, the creature takes 1d12 + your Strength modifier bludgeoning damage and is knocked back a distance equal to how far you charged before hitting it (to a maximum of 50 feet).
+        >
+        > If the creature is knocked back into another creature or a solid object, additional effects occur based on the distance it was knocked back:
+        >
+        > - Less than 30 feet: The creature is distracted until the start of its next turn.
+        > - 30 to 40 feet: The creature is restrained until the end of its next turn.
+        > - More than 40 feet: The creature is paralyzed until the end of its next turn.
+        >
+        > If the creature collides with another creature, both creatures suffer the same effect.
+        </details>
+    
+    -   <details>
+        <summary>Survival Instincts</summary>
+
+        from
+        > When you use Stampede, you gain an amount of temporary hit points equal to your barbarian level.
+        > Additionally, the distance you're able to shove a creature is increased by 10ft.
+
+        to
+        > Your walking speed is increased by 20ft, you have a 1d6 bonus to your initiative rolls and, as long as you aren't incapacitated, you cannot be surprised.
+        > Using Battering Ram grants you an amount of temporary hit points equal to your barbarian level.
+        </details>
+    
+    -   <details>
+        <summary>Unstoppable</summary>
+
+        from
+        > As long as you're not incapacitated, your movement speed cannot be reduced.
+        > 
+        > Additionally, when using Stampede, you can charge through and break objects, such as walls, up to 5ft thick.
+        > Stampede can also charge through magical barriers by succeeding on a Strength saving throw against the caster's spell save DC. If the barrier requires concentration to sustain, breaking through it immediately ends the caster's concentration.
+
+        to
+        > As long as you're not incapacitated, your movement speed cannot be reduced and you are immune to being frightened, restrained, grappled, or knocked prone..
+        >
+        > Additionally, you can use Battering Ram to charge through and break solid objects, such as walls, up to 5ft thick.
+        > You can also charge through and create holes in magical barriers this way if you succeed on a Strength saving throw against the caster's spell save DC. If the barrier requires concentration to maintain, breaking through it immediately ends the caster's concentration on the barrier.
+        </details>
+    </details>
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Feral Instinct now correctly grants advantage on automatic initiative rolls
+- Applying the incapacitated status no longer throws an error (fixed in DAE 11.3.65)
+- Continual Flame Gem no longer duplicates auras.
+- Beast Spirit Blessing activations appearing twice in the chat log.
+-   <details>
+    <summary>Barbaric Critical</summary>
+
+    Fixed the deleted effect and clarified the wording of the ability so it better reflects the implementation.
+
+    from
+    > Attack rolls against you or creatures within 5ft of you have their critical hit threshold reduced by 1. When you reach level 13 and 17, this increases to a reduction in critical hit threshold of 2 and 3 respectively.
+    >
+    > Additionally whenever a hostile creature scores a critical hit against you, you recover 1 spent Rage. When you reach level 13 and 17, this increases the amount of Rage you recover to 2 and 3 respectively.
+
+    to
+    > If you or a creature within 5ft of you is the first target of an attack roll, that attack's critical hit threshold is reduced by 1. Additionally, whenever a hostile creature scores a critical hit against you, you recover 1 spent Rage.
+    > At levels 13 and 17, the reduction to the critical hit threshold and the amount of Rage you recover both increase by 1.
+    </details>
+</details>
+
 # 1.5.0 - 2024/10/15
 <details>
 <summary><h2>Added</h2></summary>
