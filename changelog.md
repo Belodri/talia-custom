@@ -12,6 +12,7 @@
     - Double Down
 - Condition "Distracted"
     > A distracted creature cannot take reactions.
+- Spellscribing to rules (no changes)
 </details>
 
 <details>

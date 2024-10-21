@@ -73,4 +73,5 @@ function registerHomebrewRules() {
     CONFIG.DND5E.rules.triggeredabilities = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.DCZAvOjR2CqqnEpT";
     CONFIG.DND5E.rules.ancientarmor = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.teudeOPJnJzaJQiV";      //also in spellFailureChance.mjs
     CONFIG.DND5E.rules.undoingasurge = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.fXqW6yKBSh1Duwlw";
+    CONFIG.DND5E.rules.spellscribing = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.RRUMkplfkv2jAr8s";
 }
