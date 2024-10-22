@@ -5,6 +5,7 @@
 export default {
     register() {
         addChangesToStatusEffects();
+        addNewStatusEffects();
     }
 }
 
@@ -106,3 +107,23 @@ function addChangesToStatusEffects() {
 }
 
 
+function addNewStatusEffects() {
+    const effectsToAdd = {
+        distracted: {
+            label: "Distracted",
+            icon: "TaliaCampaignCustomAssets/c_Icons/svg/distraction.svg",
+            reference: "Compendium.talia-custom.rules.JournalEntry.RZVeB9Toae7IWbzN.JournalEntryPage.5R0uPqr2WgB08C2T",
+        }
+    };
+
+    for(const [k, v] of Object.entries(effectsToAdd)) {
+        CONFIG.statusEffects.push({
+            _id: `dnd5e${k}00000`,
+            id: k, 
+            name: v.label,
+            icon: v.icon,
+            reference: v.reference
+        });
+        CONFIG.DND5E.conditionTypes[k] = v;
+    }
+}

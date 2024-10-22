@@ -22,7 +22,8 @@ export default {
 }
 
 class Jump {
-    static getDistance(rollData) {
+    static getDistance(actor) {
+        const rollData = actor.getRollData();
         const acr = Math.max(foundry.utils.getProperty(rollData, "skills.acr.total") ?? 0, 0);
         const ath = Math.max(foundry.utils.getProperty(rollData, "skills.ath.total") ?? 0, 0);
 
@@ -48,7 +49,7 @@ class Jump {
 
     static async itemMacro(item) {
         const rollData = item.actor.getRollData();
-        const jumpDistanceInFt = Jump.getDistance(rollData);
+        const jumpDistanceInFt = Jump.getDistance(item.actor);
     
         const sourceToken = rollData.token;
     
