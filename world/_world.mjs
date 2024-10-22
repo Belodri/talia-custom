@@ -3,6 +3,7 @@ import soulBoundItemProperty from "./soulBoundItemProperty.mjs";
 import spellFailureChance from "./spellFailureChance.mjs";
 import wildMagic from "./wildMagic/wildMagic.mjs";
 import customLimitedUsePeriods from "./customLimitedUsePeriods.mjs";
+import _settlement from "./settlement/_settlement.mjs";
 
 
 export default {
@@ -12,5 +13,6 @@ export default {
         changesToConditions.register();
         spellFailureChance.register();
         customLimitedUsePeriods.register();
+        _settlement.registerSubsection();
     }
 }
