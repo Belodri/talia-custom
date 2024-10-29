@@ -11,6 +11,10 @@ import { MODULE } from "../scripts/constants.mjs";
 
 export default {
     register() {
+
+        CONFIG.DND5E.equipmentTypes.spellbook = CONFIG.DND5E.miscEquipmentTypes.spellbook = "Spellbook";
+
+
         Hooks.on("talia-custom.postEquip", async (item) => {
             if(!Spellbook.isSpellbook(item)) return;
             return await new Spellbook(item).addSpellsToActor();
