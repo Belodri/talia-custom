@@ -1,3 +1,43 @@
+# 1.7.0 - 2024/10/29
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- Condition "Dazed"
+    > A dazed creature can only do one of the following things on their turn: move, use an action, or use a bonus action. If a creature becomes dazed during their turn, their turn ends. The cure ailment power, lesser restoration spell, and greater restoration spell remove the dazed condition. At the GM's discretion, other powers, spells, or effects might also remove the dazed condition.
+    >
+    > When a dazed creature is affected by a spell or effect that gives them an extra action on their turn (like the haste spell or the fighter's Action Surge feature), they can still take this extra action, in addition to the movement, action, or bonus action allowed by the dazed condition.
+    > 
+    > Some creatures in this book have immunity to the dazed condition. At the GM's discretion, a creature published in the core rules or another supplement who has immunity to the paralyzed or stunned condition also has immunity to the dazed condition.
+- Item "Abyssal Nail Polish"
+- Item "Voidborn Explorer's Spellbook"
+
+-   <details>
+    <summary>Spells</summary>
+
+    - Call of the Void
+    - Legend Lore
+    - Forbiddance
+    - Word of Recall
+    - Foresight
+    - Sign of Sanctuary
+    </details>
+- GM Macro `pcItemsToJSON` - used to update the character website
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- Formatting of spell gem descriptions (no functionality change)
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Spellbooks once again have the equipment type 'spellbook'
+- Custom conditions are now implemented correctly and should no longer throw errors when applied via the character sheet.
+</details>
+
 # 1.6.0 - 2024/10/22
 
 <details>

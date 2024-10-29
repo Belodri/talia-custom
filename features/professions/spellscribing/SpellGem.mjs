@@ -16,7 +16,7 @@ export async function createSpellGem(actor, chosenArgs) {
 
     //fixes after creating the scroll but before creating the actual spell gem on the actor
     foundry.utils.mergeObject(workingObj, {
-        "system.description.value": `${descFixes(chosenArgs)}${workingObj.system.description.value}`,
+        "system.description.value": `${chosenArgs.isTrigger ? `<p><strong>Trigger: </strong>${chosenArgs.triggerConditions}</p><hr>` : ""}${workingObj.system.description.value}`,
         "system.properties": ["mgc"],
     });
     
@@ -61,27 +61,4 @@ function getChanges(actor, chosenArgs) {
     }
 
     return changes;
-}
-
-
-function descFixes(chosenArgs) {
-    //fix description
-    const triggerAdd = chosenArgs.isTrigger ? `
-            <tr>
-                <td>
-                    <p>${chosenArgs.triggerConditions}</p>
-                </td>
-            </tr>` : "";
-    
-    const spellLevelText = CONFIG.DND5E.spellLevels[chosenArgs.selectedSpellSlotLevel];
-    return `<table>
-        <tbody>
-            <tr>
-                <td>
-                    <p style="text-align: center; font-weight: bold;">${spellLevelText}</p>
-                </td>
-            </tr>
-            ${triggerAdd}
-        </tbody>
-    </table>`;
 }
