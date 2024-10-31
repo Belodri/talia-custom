@@ -162,21 +162,17 @@ class ChefFeat {
                                     await actor.longRest({dialog: false, newDay: isNewDay});
                                     actor.applyTempHP(rollTotal);
             
-                                } else if (isLongRest === false) {
+                                } else {
                                     await actor.shortRest({dialog: false, newDay: isNewDay});
                                     actor.applyDamage([{value: rollTotal, type: "healing"}]);
                                 }
 
                                 if(effectData) {
                                     const prevEffects = actor.appliedEffects.filter( e => e.flags?.["talia-custom"]?.isSpiceEffect === true);
-                                    if(prevEffects.length) {
-                                        const promises = [];
-                                        for(const eff of prevEffects) {
-                                            promises.push(eff.delete());
-                                        }
-                                        await Promise.all(promises);
+                                    for(let eff of prevEffects) {
+                                        await eff.delete();
                                     }
-                                    ActiveEffect.implementation.create(effectData, {parent: actor});
+                                    await ActiveEffect.implementation.create(effectData, {parent: actor});
                                 }
                             }
                         }
