@@ -1,5 +1,4 @@
 import { TaliaCustomAPI } from "../scripts/api.mjs";
-import { Crosshairs } from "./crosshairs.mjs";
 import { Helpers } from "./helpers.mjs";
 import { ItemHookManager } from "./ItemHookManager.mjs";
 import sizeChange from "./sizeChange.mjs";
@@ -18,7 +17,6 @@ export default {
 }
 
 export const TaliaUtils = {
-    Crosshairs,
     Helpers,
 }
 

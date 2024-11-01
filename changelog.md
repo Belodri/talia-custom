@@ -40,10 +40,14 @@
 <summary><h2>Fixed</h2></summary>
 
 - Jump: improved performance by removing crosshairs animation.
+- Fey Step: improved performance by removing crosshairs animation.
+- Removed custom crosshairs class (replaced by Sequencer).
 - Eating the same spice twice in a row should now correctly refresh the effect's duration.
 - Missing import in `pcItemsToJSON` macro.
 - Added timeout functionality to `pcItemsToJSON` macro so it can be used from the console.
 </details>
+
+
 # 1.7.0 - 2024/10/29
 
 <details>
