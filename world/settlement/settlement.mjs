@@ -3,454 +3,459 @@ import { MODULE } from "../../scripts/constants.mjs";
 
 export default {
     register() {
-        TaliaCustomAPI.add({Settlement}, "none");
+        (async () => {
+            await Effect.init();
+            await Building.init();
+            TaliaCustomAPI.add({Settlement}, "none");
+        })();
     }
 }
 
+/*
+    What data does the settlement UI need?
+
+    - settlement name              
+    - founding date
+    - derived attributes
+    - constructed buildings
+    - available buildings
+    - active events
+    - factions
+    - advisors
+*/
+
+/*
+    TODO
+    - add a saveToFlag method
+    - add a loadFromFlag method
+    - add getter for available buildings to Settlement
+    - add advisors (no need for separate class, just make it an object)
+    - add effects to effectData
+    - UI
+*/
 
 
-// just use a class to manage the single settlement of Promise
+/**
+ * @typedef {Object} TaliaDate
+ * @property {number} day       Day of the month, starting with 0. Total of 30 days in each month.
+ * @property {number} month     Month of the year, starting with 0. Total of 12 months in each year.
+ * @property {number} year      The year. Game start year is 1497.
+ */
+
+/**
+ * @typedef {Object} SettlementObject
+ * @property {string} name                                  The settlement's name
+ * @property {TaliaDate} foundingDate                       The founding date in the Talian calender
+ * @property {BuildingObject[]} constructedBuildings        An array of building objects that represent constructed buildings.
+ * @property {EffectObject[]} currentEffects                An array of effect objects that represent the currently active effects.
+ */
+
 class Settlement {
-    static flagKey = "settlementFlag";
-
-    // Properties
-    buildings = {
-        /** @type {Map} */
-        constructed: new foundry.utils.Collection(),
-        /** @type {Map} */
-        all: new foundry.utils.Collection(),
-    }
-    name = "Promise";
-    foundingDate = { //Septimus 1st 1497
-        year: 1497,
-        month: 6,
-        day: 0,
-    };
-    attributes = {
+    /*----------------------------------------------------------------------------
+                    Static Properties            
+    ----------------------------------------------------------------------------*/
+    static baseAttributes = {
         authority: 0,
         economy: 0,
         community: 0,
         progress: 0,
         intrigue: 0,
-        capacity: 4,
-    };
+    }
+    static baseCapacity = 4;
 
-    /**
-     * Creates a new Settlement instance
-     * @param {object|string|null} [data] - Initial data for the settlement. Can be an object or JSON string
-     * @throws {Error} If data is a string but contains invalid JSON
-     * @throws {TypeError} If data is neither an object nor a string
-     */
-    constructor(data) {
-        if (data) {
-            if (typeof data === 'string') {
-                try {
-                    const parsed = Settlement.fromJSON(data);
-                    Object.assign(this, parsed);
-                } catch (error) {
-                    throw new Error(`Failed to construct Settlement from JSON string: ${error.message}`);
-                }
-                return;
-            }
-            if (typeof data !== 'object') {
-                throw new TypeError('Settlement constructor data must be an object or JSON string');
-            }
-            Object.assign(this, data);
-        }
+    /*----------------------------------------------------------------------------
+                    Static Methods            
+    ----------------------------------------------------------------------------*/
+
+    static getTestData() {
+        return {
+            name: "testSettlement",
+            foundingDate: {
+                day: 0,
+                month: 6,
+                year: 1497
+            },
+        };
+    }
+    
+    /*----------------------------------------------------------------------------
+                    Instance Properties            
+    ----------------------------------------------------------------------------*/
+
+
+    /*----------------------------------------------------------------------------
+                    Instance Methods            
+    ----------------------------------------------------------------------------*/
+
+    /** @param {SettlementObject} settlementData  */
+    constructor(settlementData) {
+        this.name = settlementData.name;
+        this.foundingDate = settlementData.foundingDate;
+
+        /** @type {Collection<string, Building>} */
+        this.constructedBuildings = Building.collectionFromArray(settlementData.constructedBuildings ?? []);
+        /** @type {Collection<string, Effect>} */
+        this.currentEffects = Effect.collectionFromArray(settlementData.currentEffects ?? []);
     }
 
     /**
-     * Converts the Settlement instance to a JSON-serializable object with type information
-     * Handles special data types including Sets, Maps, Collections, and Dates
-     * @returns {object} A plain object representation with type metadata
-     * @throws {Error} If circular references are detected
+     * Returns a plain object representation of the settlement instance for JSON serialization.
+     * This method is automatically called by JSON.stringify().
+     * @returns {SettlementObject} A plain object containing the settlement's properties.
      */
     toJSON() {
-        // Set to track processed objects for circular reference detection
-        const processed = new WeakSet();
-
-        const serialize = (value, path = []) => {
-            // Handle null/undefined
-            if (value == null) return value;
-
-            // Check for circular references in objects
-            if (typeof value === 'object') {
-                if (processed.has(value)) {
-                    throw new Error(`Circular reference detected at path: ${path.join('.')}`);
-                }
-                processed.add(value);
-            }
-
-            try {
-                // Handle Date objects
-                if (value instanceof Date) {
-                    if (isNaN(value.getTime())) {
-                        throw new Error(`Invalid Date at path: ${path.join('.')}`);
-                    }
-                    return { __type: 'Date', value: value.toISOString() };
-                }
-
-                // Handle Sets
-                if (value instanceof Set) {
-                    return {
-                        __type: 'Set',
-                        value: Array.from(value).map((v, i) => serialize(v, [...path, `Set[${i}]`]))
-                    };
-                }
-
-                // Handle Maps and Collections
-                if (value instanceof Map) {
-                    return {
-                        __type: value.constructor.name,
-                        value: Array.from(value.entries()).map(([k, v], i) => [
-                            serialize(k, [...path, `${value.constructor.name}[${i}].key`]),
-                            serialize(v, [...path, `${value.constructor.name}[${i}].value`])
-                        ])
-                    };
-                }
-
-                // Handle Arrays
-                if (Array.isArray(value)) {
-                    return value.map((v, i) => serialize(v, [...path, i]));
-                }
-
-                // Handle Objects
-                if (typeof value === 'object') {
-                    const obj = {};
-                    for (const [key, val] of Object.entries(value)) {
-                        obj[key] = serialize(val, [...path, key]);
-                    }
-                    return obj;
-                }
-
-                // Return primitive values directly
-                return value;
-
-            } catch (error) {
-                // Add path information to error message if not already present
-                if (!error.message.includes('path:')) {
-                    error.message += ` at path: ${path.join('.')}`;
-                }
-                throw error;
-            }
-        };
-        return serialize(this);
+        return {
+            name: this.name,
+            foundingDate: this.foundingDate,
+            constructedBuildings: this.constructedBuildings.toJSON(),
+            currentEffects: this.currentEffects.toJSON(),
+        }
     }
 
     /**
-     * Creates a Settlement instance from a JSON string or object
-     * @param {string|object} json - JSON string or pre-parsed object to deserialize
-     * @returns {Settlement} A new Settlement instance
-     * @throws {SyntaxError} If the JSON string is malformed
-     * @throws {TypeError} If the deserialized data contains invalid type markers
-     * @throws {Error} If the data structure is invalid or contains unknown type markers
-     * @static
+     * Adds a building to the settlement's constructed buildings.
+     * @param {string} buildingId The building's id as found in Building.allBuildings
+     * @throws {Error} Will throw an error if buildingId is not a key of Building.allBuildings
+     * @returns {this}
      */
-    static fromJSON(json) {
-        // Parse JSON string if necessary
-        let data;
-        try {
-            data = typeof json === 'string' ? JSON.parse(json) : json;
-        } catch (error) {
-            throw new SyntaxError(`Invalid JSON string: ${error.message}`);
+    constructBuilding(buildingId) {
+        //check if the building is already constructed
+        if(this.constructedBuildings.get(buildingId)) {
+            ui.notifications.warn(`Building ID: ${buildingId} is already constructed.`);
+            return this;
         }
 
-        const deserialize = (value, path = []) => {
-            try {
-                // Handle null/undefined
-                if (value == null) return value;
+        const buildingObj = Building.allBuildings[buildingId];
+        if(!buildingObj) throw new Error(`Building ID: ${buildingId} was not found in Building.allBuildings.`);
 
-                // Handle special types
-                if (value && typeof value === 'object' && value.__type) {
-                    switch (value.__type) {
-                        case 'Set':
-                            if (!Array.isArray(value.value)) {
-                                throw new TypeError('Set value must be an array');
-                            }
-                            return new Set(value.value.map((v, i) => 
-                                deserialize(v, [...path, `Set[${i}]`])));
-                            
-                        case 'Map':
-                        case 'Collection':
-                            if (!Array.isArray(value.value)) {
-                                throw new TypeError(`${value.__type} value must be an array of entries`);
-                            }
-                            const entries = value.value.map(([k, v], i) => [
-                                deserialize(k, [...path, `${value.__type}[${i}].key`]),
-                                deserialize(v, [...path, `${value.__type}[${i}].value`])
-                            ]);
-                            return value.__type === 'Collection' 
-                                ? new foundry.utils.Collection(entries)
-                                : new Map(entries);
-                            
-                        case 'Date':
-                            const date = new Date(value.value);
-                            if (isNaN(date.getTime())) {
-                                throw new TypeError('Invalid Date value');
-                            }
-                            return date;
-                            
-                        default:
-                            throw new Error(`Unknown type marker: ${value.__type}`);
-                    }
-                }
+        const building = new Building(buildingObj)
+            .setConstructionDate(this.currentDate);
+        this.constructedBuildings.set(building.id, building);
+        return this;
+    }
 
-                // Handle Arrays
-                if (Array.isArray(value)) {
-                    return value.map((v, i) => deserialize(v, [...path, i]));
-                }
+    /**
+     * Adds an effect to the settlement's current effects.
+     * @param {string} effectId The effect's id as found in Effect.allEffects
+     * @throws {Error} Will throw an error if effectId is not a key of Effect.allEffects
+     * @returns {this}
+     */
+    beginEffect(effectId) {
+        //check if the effect is already active
+        if(this.currentEffects.get(effectId)) {
+            ui.notifications.warn(`Effect ID: ${effectId} is already active.`);
+            return this;
+        }
 
-                // Handle Objects
-                if (typeof value === 'object') {
-                    const obj = {};
-                    for (const [key, val] of Object.entries(value)) {
-                        obj[key] = deserialize(val, [...path, key]);
-                    }
-                    return obj;
-                }
+        const effectObj = Effect.allEffects[effectId];
+        if(!effectObj) throw new Error(`Effect ID: ${effectId} was not found in Effect.allEffects.`);
 
-                // Return primitive values directly
-                return value;
+        const effect = new Effect(effectObj)
+            .setBeginDate(this.currentDate);
+        this.currentEffects.set(effect.id, effect);
+        return this;
+    }
 
-            } catch (error) {
-                // Add path information to error message if not already present
-                if (!error.message.includes('path:')) {
-                    error.message += ` at path: ${path.join('.')}`;
-                }
-                throw error;
+    /*----------------------------------------------------------------------------
+                    Getters            
+    ----------------------------------------------------------------------------*/
+
+    /**
+     * Calculates the total attributes for the settlement by summing up the base attributes,
+     * attributes from all constructed buildings, and attributes from current effects.
+     */
+    get attributes() {
+        // Start with a copy of baseAttributes to avoid mutating the static object
+        const attributes = {...Settlement.baseAttributes};
+
+        // sum up the attributes from each constructed building
+        for(let building of this.constructedBuildings) {
+            for( let key in building.attributes) {
+                attributes[key] += building.attributes[key];
             }
-        };
+        }
 
-        try {
-            return new Settlement(deserialize(data));
-        } catch (error) {
-            throw new Error(`Failed to deserialize Settlement: ${error.message}`);
+        //sum up the attributes from each current effect
+        for(let effect of this.currentEffects) {
+            for( let key in effect.attributes) {
+                attributes[key] += effect.attributes[key]
+            }
+        }
+
+        return attributes;
+    }
+
+    /**
+     * Gets the current date from simple calendar.
+     * @returns {TaliaDate} The current date in TaliaDate format.
+     */
+    get currentDate() {
+        const simpleCalendarDate = SimpleCalendar.api.currentDateTime();
+        return {
+            day: simpleCalendarDate.day,
+            month: simpleCalendarDate.month,
+            year: simpleCalendarDate.year
         }
     }
 
-    static async saveToFlag() {
-        const data = JSON.stringify(this);
-        if(!game.user.isGM) throw new Error("Only GM can set world flags.")
-        return await game.world.setFlag(MODULE.ID, Settlement.flagKey, data);
+    /**
+     * Calculates the total capacity of the settlement by summing up the base capacity and all capacityEffects from current effects.
+     * @returns {number}    The total capacity of the settlement
+     */
+    get capacity() {
+        return this.baseCapacity + this.currentEffects.reduce((acc, curr) => acc += curr.capacityEffect ?? 0, 0)
     }
 
-
-    init() {
-        let flagData = Settlement.loadFromFlagData() ?? {};
-
+    /**
+     * @returns {number}   The sum of scale of all recently constructed buildings. 
+     */
+    get constructionScale() {
+        return this.recentlyConstructedBuildings.reduce((acc, curr) => acc += curr.scale, 0)
     }
 
+    /**
+     * @returns {Building[]}    An array of buildings that have been constructed within the last MAX_DAYS_APART days.
+     */
+    get recentlyConstructedBuildings() {
+        const MAX_DAYS_APART = 30; 
+        /**
+         * Converts a TaliaDate into an absolute day count.
+         * @param {TaliaDate} date
+         * @returns {number} The total day count from a base date (day 0, month 0, year 0).
+         */
+        function convertToDays(date) {
+            return date.year * 360 + date.month * 30 + date.day ?? 0;   
+        }
 
-    static loadFromFlagData() {
-        return game.world.getFlag(MODULE.ID, Settlement.flagKey) ?? null;
-    }
-
-    static async setFlagData(data) {
-        if(!game.user.isGM) throw new Error("Only GM can set world flags.")
-        return await game.world.setFlag(MODULE.ID, Settlement.flagKey, data);
-    }
-
-    async importBuildingsFromJson() {
-        const {StringField} = foundry.data.fields;
-        const {DialogV2} = foundry.applications.api;
-
-        const stringPart = new StringField({
-            label: "Input JSON"
-        }).toFormGroup({},{name: "jsonString"}).outerHTML;
-
-        const input = await DialogV2.prompt({
-            content: stringPart,
-            ok: {
-                callback: (event, button) => new FormDataExtended(button.form).object
-            },
-            rejectClose: false,
+        const currentDateInDays = convertToDays(this.currentDate);
+        const filteredBuildings = this.constructedBuildings.filter(b => {   //true if the construction date is less than or equal to MAX_DAYS_APART days apart from the current date.
+            const constructionDateInDays = convertToDays(b.constructionDate);
+            const difference = Math.abs(currentDateInDays - constructionDateInDays);
+            return difference <= MAX_DAYS_APART;
         });
-        if(!input) return;
-        const inputObj = JSON.parse(input.jsonString)
-
-        for(const buildingData of Object.values(inputObj)) {
-            const building = new Building(buildingData);
-            this.buildings.all.set(building.id, building);        
-        }
+        return filteredBuildings;
     }
-} 
+}
+
+
+/**
+ * @typedef {Object} BuildingObject
+ * @property {string} id                            - The unique identifier for the building (same as the key in `allBuildings`).
+ * @property {string} name                          - The name of the building.
+ * @property {number} scale                         - The scale of the building, representing its size or impact level.
+ * @property {Object} attributes                    - The attributes that this building affects.  
+ * @property {number} attributes.authority          - How much does this building increase/decrease authority.
+ * @property {number} attributes.economy            - How much does this building increase/decrease economy.
+ * @property {number} attributes.community          - How much does this building increase/decrease community.
+ * @property {number} attributes.progress           - How much does this building increase/decrease progress.
+ * @property {number} attributes.intrigue           - How much does this building increase/decrease intrigue.
+ * @property {string} requirements                  - A description of requirements needed to construct the building.
+ * @property {string} description                   - A detailed description of the building.
+ * @property {string} buildingEffectDescription     - The building's persistent effect.
+ * @property {TaliaDate | null} constructionDate    - The date the building was constructed. Null if the building hasn't been constructed yet.
+ */
 
 class Building {
-    constructor({id, name, description, scale, attributes, requirements, specialEffects}) {
-        this.id = id;
-        this.name = name;
-        this.description = description,
-        this.scale = scale;
-        this.attributes = {
-            authority: attributes.authority || 0,
-            economy: attributes.economy || 0,
-            community: attributes.community || 0,
-            progress: attributes.progress || 0,
-            intrigue: attributes.intrigue || 0,
-        };
-        this.requirements = requirements || undefined;
-        this.specialEffects = specialEffects || undefined;
-    }
-    
-}
 
-async function addBuildingsDataJson() {
-    const {StringField} = foundry.data.fields;
-    const {DialogV2} = foundry.applications.api;
+    /*----------------------------------------------------------------------------
+                    Static Properties            
+    ----------------------------------------------------------------------------*/
 
-    const stringPart = new StringField({
-        label: "Input JSON"
-    }).toFormGroup({},{name: "jsonString"}).outerHTML;
+    /**
+     * An object of all buildings available in the game.
+     * Each key in this object corresponds to the `id` property of its associated `BuildingObject`.
+     * @type {Object<string, BuildingObject>}
+     */
+    static allBuildings;
 
-    const input = await DialogV2.prompt({
-        content: stringPart,
-        ok: {
-            callback: (event, button) => new FormDataExtended(button.form).object
-        },
-        rejectClose: false,
-    });
-    if(!input) return;
-    const inputObj = JSON.parse(input.jsonString)
+    /*----------------------------------------------------------------------------
+                    Static Methods            
+    ----------------------------------------------------------------------------*/
 
-    
-    console.log(inputObj);
-}
-
-
-async function addBuildingToJournal(journalName = "Promise") {
-    //get buildings from rules entry
-    const rulePageUuid = "Compendium.talia-custom.rules.JournalEntry.SJAQXPyELYfOfRE4.JournalEntryPage.uruo07oEBNb25uEe";
-    const rulePage = await fromUuid(rulePageUuid);
-
-    //get substrings
-    const subStrings = rulePage.text.content.split(/(?=<h3>)/);
-
-    //get the parsed building data for each building
-    const buildings = {};
-    for(const substr of subStrings) {
-
+    /**
+     * Initializes the class by asynchronously loading JSON data for static property `allBuildings`
+     * @returns {Promise<void>}  A promise that resolves when both `allBuildings` property is fully loaded.
+     */
+    static async init() {
+        const fileName = "buildingData";
+        const path = `modules/${MODULE.ID}/world/settlement/${fileName}.json`;
+        const response = await fetch(path);
+        Building.allBuildings = await response.json();
     }
 
-    //transform to object
-
-    for(const substr of subStrings) {
-        const titleMatch = substr.match(/<h3>(.*?)<\/h3>/);
-        if(titleMatch) {
-            const title = titleMatch[1];
-            buildings[title] = substr
+    /**
+     * Creates a Collection of Buildings from an array of building data
+     * @param {BuildingObject[]} buildingsArray - Array of building data objects
+     * @returns {Collection<string, Building>} A Collection of Buildings keyed by their IDs
+     */
+    static collectionFromArray(buildingObjArray) {
+        const collection = new foundry.utils.Collection();
+        for(let buildingObj of buildingObjArray) {
+            const building = new Building(buildingObj);
+            collection.set(building.id, building);
         }
+        return collection;
     }
 
-    //choose the building
-    const choice = await (async () => {
-        const choices = Object.keys(buildings).reduce((acc, curr) => {
-            acc[curr] = curr;
-            return acc;
-        }, {});
-        const selectBuilding = new foundry.data.fields.StringField({
-            label: "Select a building",
-            required: true,
-            choices: choices
-        }).toFormGroup({}, {name: "building", choices}).outerHTML;
-        return await foundry.applications.api.DialogV2.prompt({
-            window: {
-                title: "Add Building"
-            },
-            content: `<fieldset>${selectBuilding}</fieldset>`,
-            modal: true,
-            rejectClose: false,
-            ok: {
-                label: "Ok",
-                callback: (event, button) => new FormDataExtended(button.form).object,
-            },
-        });
-    })();
-    if(!choice) return;
+    /*----------------------------------------------------------------------------
+                    Instance Methods            
+    ----------------------------------------------------------------------------*/
 
-    //get the parsed building data;
+    /** @param {BuildingObject} buildingObject */
+    constructor(buildingObject) {
+        //required properties
+        this.id = buildingObject.id;
+        this.name = buildingObject.name;
+        this.scale = buildingObject.scale;
+        this.attributes = {
+            authority: buildingObject.attributes.authority,
+            economy: buildingObject.attributes.economy,
+            community: buildingObject.attributes.community,
+            progress: buildingObject.attributes.progress,
+            intrigue: buildingObject.attributes.intrigue,
+        };
+        this.requirements = buildingObject.requirements;
+        this.description = buildingObject.description;
+        this.buildingEffectDescription = buildingObject.buildingEffectDescription;
 
-    //get the journal & page
-    const journal = game.journal.getName(journalName);
-    const buildingsPage = journal.pages.contents.find(e => e.name === "Buildings");
-    
-    //if the building is not yet built, add it to the journal
-    if(!buildingsPage.text.content.includes(buildings[choice.building])) {
-        await buildingsPage.update({"text.content": buildingsPage.text.content + buildings[choice.building]});
+        //optional properties
+        this.constructionDate = buildingObject.constructionDate ?? null;
     }
 
-    
+    /**
+     * Returns a plain object representation of the building instance for JSON serialization.
+     * This method is automatically called by JSON.stringify().
+     * @returns {BuildingObject} A plain object containing the building's properties.
+     */
+    toJSON() {
+        return {
+            id: this.id,
+            name: this.name,
+            scale: this.scale,
+            attributes: this.attributes,
+            requirements: this.requirements,
+            description: this.description,
+            buildingEffectDescription: this.buildingEffectDescription,
+            constructionDate: this.constructionDate,
+        };
+    }
+
+    /**
+     * Sets the construction date of the building.
+     * @argument {TaliaDate} date   - The date of the building's construction.
+     * @returns {this}
+     */
+    setConstructionDate(date) {
+        this.constructionDate = {
+            day: date.day, 
+            month: date.month, 
+            year: date.year
+        }
+        return this;
+    }
 }
 
 /**
- * Parses an HTML string representing a building and extracts relevant data such as name, description, effects, and special effects.
- * 
- * @param {string} htmlString - The HTML string containing building data, including an <h3> tag for the name, a <p> tag for the description, and <li> elements for effects and special effects.
- * 
- * @returns {Object} - An object containing the parsed building data.
- * @returns {string} return.name - The name of the building, extracted from the <h3> tag.
- * @returns {string} return.description - The description of the building, extracted from the first <p> tag.
- * @returns {Object} return.effects - An object containing the effects of the building. Each effect (authority, economy, community, progress, intrigue) is a key, with a number as the value.
- * @returns {number} return.effects.authority - The value of the authority effect, defaulting to 0 if not specified.
- * @returns {number} return.effects.economy - The value of the economy effect, defaulting to 0 if not specified.
- * @returns {number} return.effects.community - The value of the community effect, defaulting to 0 if not specified.
- * @returns {number} return.effects.progress - The value of the progress effect, defaulting to 0 if not specified.
- * @returns {number} return.effects.intrigue - The value of the intrigue effect, defaulting to 0 if not specified.
- * @returns {string|null} return.specialEffects - A string describing the special effects of the building, or null if no special effects are present.
+ * @typedef {Object} EffectObject
+ * @property {string} id                    - The unique identifier for the effect (same as the key in `allEffects`).
+ * @property {string} name                  - The name of the effect.
+ * @property {Object} attributes            - The attributes that this effect affects.  
+ * @property {number} attributes.authority  - How much does this effect increase/decrease authority.
+ * @property {number} attributes.economy    - How much does this effect increase/decrease economy.
+ * @property {number} attributes.community  - How much does this effect increase/decrease community.
+ * @property {number} attributes.progress   - How much does this effect increase/decrease progress.
+ * @property {number} attributes.intrigue   - How much does this effect increase/decrease intrigue.
+ * @property {number} capacityEffect        - How much does this effect increase/decrease the settlement's capacity.
+ * @property {string} description           - A detailed description of the effect.
+ * @property {TaliaDate | null} beginDate   - The date the effect started. Null if the effect hasn't started yet.
  */
-function parseBuildingData(htmlString) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, "text/html");
+class Effect {
 
-    const name = doc.querySelector("h3")?.textContent || "";
-    const description = doc.querySelector("p")?.textContent || "";
+    /*----------------------------------------------------------------------------
+                    Static Properties            
+    ----------------------------------------------------------------------------*/
 
+    /**
+     * An object of all effects available in the game.
+     * Each key in this object corresponds to the `id` property of its associated `EffectObject`.
+     * @type {Object<string, EffectObject>}
+     */
+    static allEffects;
 
-    // Set default values for all effects attributes
-    const effects = {
-        authority: 0,
-        economy: 0,
-        community: 0,
-        progress: 0,
-        intrigue: 0
-    };
-    
-    // Find all <li> elements
-    const listItems = doc.querySelectorAll('li');
-    
-    // Loop through the <li> elements and find the effects and special effects
-    let specialEffects = '';
-    listItems.forEach(li => {
-        const strongTag = li.querySelector('strong');
-        if (strongTag) {
-            const strongText = strongTag.textContent.trim();
-        
-            // Check if this is the "Effects" line
-            if (strongText.includes('Effects')) {
-                const effectsText = li.textContent;
-                
-                // Regular expression to find the numbers associated with each effect
-                const effectMatches = effectsText.match(/([+-]?\d+)\s*(Authority|Economy|Community|Progress|Intrigue)/gi);
-                
-                // If there are matches, update the effects object
-                if (effectMatches) {
-                    effectMatches.forEach(match => {
-                        const [ , value, attribute ] = match.match(/([+-]?\d+)\s*(Authority|Economy|Community|Progress|Intrigue)/i);
-                        effects[attribute.toLowerCase()] = parseInt(value, 10);  // Update the effects object
-                    });
-                }
-            }
-            
-            // Check if this is the "Special Effects" line
-            if (strongText.includes('Special Effects')) {
-                specialEffects = li.textContent.replace(/.*Special Effects:\s*/, '').trim();
-            }
+    /*----------------------------------------------------------------------------
+                    Static Methods            
+    ----------------------------------------------------------------------------*/
+
+    /**
+     * Initializes the class by asynchronously loading JSON data for static property `allEffects`
+     * @returns {Promise<void>}  A promise that resolves when both `allEffects` property is fully loaded.
+     */
+    static async init() {
+        const fileName = "effectData";
+        const path = `modules/${MODULE.ID}/world/settlement/${fileName}.json`;
+        const response = await fetch(path);
+        Effect.allEffects = await response.json();
+    }
+
+    static collectionFromArray(effectObjArray) {
+        const collection = new foundry.utils.Collection();
+        for(let effectObj of effectObjArray) {
+            const effect = new Effect(effectObj);
+            collection.set(effect.id, effect);
         }
-    });
+        return collection;
+    }
 
-    return {
-        name,
-        description,
-        effects,
-        specialEffects: specialEffects || null  // Return null if no special effects found
-    };
+    /*----------------------------------------------------------------------------
+                    Instance Methods            
+    ----------------------------------------------------------------------------*/
+
+    /** @param {EffectObject} effectObject */
+    constructor(effectObject) {
+        //required properties
+        this.id = effectObject.id;
+        this.name = effectObject.name;
+        this.attributes = {
+            authority: effectObject.attributes.authority,
+            economy: effectObject.attributes.economy,
+            community: effectObject.attributes.community,
+            progress: effectObject.attributes.progress,
+            intrigue: effectObject.attributes.intrigue,
+        };
+        this.capacityEffect = effectObject.capacityEffect;
+        this.description = effectObject.description;
+
+        //optional properties
+        this.beginDate = effectObject.beginDate ?? null;
+    }
+
+    /**
+     * Returns a plain object representation of the effect instance for JSON serialization.
+     * This method is automatically called by JSON.stringify().
+     * @returns {EffectObject} A plain object containing the effect's properties.
+     */
+    toJSON() {
+        return {
+            id: this.id,
+            name: this.name,
+            attributes: this.attributes,
+            capacityEffect: this.capacityEffect,
+            description: this.description,
+            beginDate: this.beginDate,
+        };
+    }
+
+    /**
+     * Sets the begin date of the effect.
+     * @argument {TaliaDate} date   - The date of the effects's begin.
+     * @returns {this}
+     */
+    setBeginDate(date) {
+        this.beginDate = {
+            day: date.day, 
+            month: date.month, 
+            year: date.year
+        }
+        return this;
+    }
 }

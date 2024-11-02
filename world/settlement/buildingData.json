@@ -1,0 +1,242 @@
+{
+  "farm": {
+    "id": "farm",
+    "name": "Farm",
+    "scale": 1,
+    "attributes": {
+      "authority": 0,
+      "economy": 0,
+      "community": 1,
+      "progress": 0,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "Nestled amidst open fields, the farm is a lifeline for the town, producing fresh crops and bringing families together in shared labor and celebration of the land.",
+    "buildingEffectDescription": ""
+  },
+  "inn": {
+    "id": "inn",
+    "name": "Inn",
+    "scale": 1,
+    "attributes": {
+      "authority": -1,
+      "economy": 1,
+      "community": 1,
+      "progress": 0,
+      "intrigue": 1
+    },
+    "requirements": "",
+    "description": "A haven for locals and travellers alike, the inn stands as a cornerstone of the community, a place where the weary find respite and the curious find intrigue. ",
+    "buildingEffectDescription": ""
+  },
+  "barracks": {
+    "id": "barracks",
+    "name": "Barracks",
+    "scale": 1,
+    "attributes": {
+      "authority": 1,
+      "economy": 0,
+      "community": 0,
+      "progress": 0,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "Inside the barracks, the clamor of armor and weapons is constant, a reassuring sound for some and a reminder of authority's ever-watchful presence for others.",
+    "buildingEffectDescription": ""
+  },
+  "smithy": {
+    "id": "smithy",
+    "name": "Smithy",
+    "scale": 1,
+    "attributes": {
+      "authority": 0,
+      "economy": 0,
+      "community": 1,
+      "progress": 0,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "Billowing smoke and glowing embers mark the heart of the smithy, where metal meets fire to create everything from horseshoes to blades.",
+    "buildingEffectDescription": ""
+  },
+  "brothel": {
+    "id": "brothel",
+    "name": "Brothel",
+    "scale": 1,
+    "attributes": {
+      "authority": 0,
+      "economy": 1,
+      "community": -1,
+      "progress": 0,
+      "intrigue": 1
+    },
+    "requirements": "",
+    "description": "Whispers of discontent fill the streets as the brothel flourishes, a gilded cage where the powerful indulge while the common folk see their dignity sold one night at a time.",
+    "buildingEffectDescription": ""
+  },
+  "watchtower": {
+    "id": "watchtower",
+    "name": "Watchtower",
+    "scale": 2,
+    "attributes": {
+      "authority": 3,
+      "economy": 0,
+      "community": -1,
+      "progress": -1,
+      "intrigue": 0
+    },
+    "requirements": "Barracks",
+    "description": "Perched on high, the watchtower offers a clear view of the horizon, but its cold, unyielding gaze leaves many feeling watched rather than protected.",
+    "buildingEffectDescription": ""
+  },
+  "orphanage": {
+    "id": "orphanage",
+    "name": "Orphanage",
+    "scale": 1,
+    "attributes": {
+      "authority": 0,
+      "economy": -1,
+      "community": 2,
+      "progress": 0,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "A place of refuge for those without families, the orphanage provides care for the town’s lost children, though whispers from the guilds bemoan the loss of cheap labor.",
+    "buildingEffectDescription": ""
+  },
+  "monument": {
+    "id": "monument",
+    "name": "Monument",
+    "scale": 3,
+    "attributes": {
+      "authority": 2,
+      "economy": 2,
+      "community": -1,
+      "progress": -1,
+      "intrigue": 0
+    },
+    "requirements": "4 Authoiry, 4 Economy",
+    "description": "A symbol of the town’s might and wealth, the monument inspires awe in some but frustration in others, who see it as an unnecessary display of vanity.",
+    "buildingEffectDescription": ""
+  },
+  "graveyard": {
+    "id": "graveyard",
+    "name": "Graveyard",
+    "scale": 1,
+    "attributes": {
+      "authority": 0,
+      "economy": 0,
+      "community": 1,
+      "progress": 0,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "The graveyard stands as a solemn reminder of lives past, a quiet place of reflection that fosters unity among the living through shared grief and memory.",
+    "buildingEffectDescription": ""
+  },
+  "library": {
+    "id": "library",
+    "name": "Library",
+    "scale": 2,
+    "attributes": {
+      "authority": 0,
+      "economy": 0,
+      "community": 0,
+      "progress": 2,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "The library stands as a testament to the value of knowledge, where every book and tome represents a step toward a brighter, more enlightened future.",
+    "buildingEffectDescription": ""
+  },
+  "sewerSystem": {
+    "id": "sewerSystem",
+    "name": "Sewer System",
+    "scale": 4,
+    "attributes": {
+      "authority": 0,
+      "economy": 1,
+      "community": 3,
+      "progress": 2,
+      "intrigue": 1
+    },
+    "requirements": "8 Economy, 8 Progress",
+    "description": "Beneath the town, the newly constructed sewer system flows—a marvel of engineering that improves health and cleanliness, though its hidden depths harbor unseen secrets.",
+    "buildingEffectDescription": ""
+  },
+  "school": {
+    "id": "school",
+    "name": "School",
+    "scale": 2,
+    "attributes": {
+      "authority": -1,
+      "economy": 0,
+      "community": 1,
+      "progress": 2,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "While the school strengthens the community and pushes for progress, it also teaches the value of questioning authority—something not all are eager to see.",
+    "buildingEffectDescription": ""
+  },
+  "jail": {
+    "id": "jail",
+    "name": "Jail",
+    "scale": 1,
+    "attributes": {
+      "authority": 1,
+      "economy": 0,
+      "community": 0,
+      "progress": 0,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "Behind its barred windows, the jail holds those who defy the law, its presence a quiet warning to any who might challenge the town’s authority.",
+    "buildingEffectDescription": ""
+  },
+  "stables": {
+    "id": "stables",
+    "name": "Stables",
+    "scale": 2,
+    "attributes": {
+      "authority": 2,
+      "economy": 0,
+      "community": 0,
+      "progress": 0,
+      "intrigue": 0
+    },
+    "requirements": "3 Authority",
+    "description": "The stables provide not only shelter for horses but also serve as a hub for the town’s mounted forces, ensuring swift responses to any threats.",
+    "buildingEffectDescription": ""
+  },
+  "fightingPit": {
+    "id": "fightingPit",
+    "name": "Fighting Pit",
+    "scale": 1,
+    "attributes": {
+      "authority": 1,
+      "economy": 2,
+      "community": 0,
+      "progress": -1,
+      "intrigue": 0
+    },
+    "requirements": "",
+    "description": "The fighting pit draws crowds and coin alike, but some fear its focus on bloodsport dulls the town’s desire for anything more meaningful.",
+    "buildingEffectDescription": ""
+  },
+  "dwarvenBrewery": {
+    "id": "dwarvenBrewery",
+    "name": "Dwarven Brewery",
+    "scale": 2,
+    "attributes": {
+      "authority": 1,
+      "economy": 2,
+      "community": 0,
+      "progress": -1,
+      "intrigue": 0
+    },
+    "requirements": "A skilled dwarven brewmaster",
+    "description": "The air around the Dwarven Brewery is always thick with the smell of brewing ale. It is a place where dwarven tradition meets celebration, its warm hearth a beacon on cold nights.",
+    "buildingEffectDescription": "8 bottles of the legendary Bugman’s Ale become available for purchase each month."
+  }
+}
