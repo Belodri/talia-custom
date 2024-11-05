@@ -1,5 +1,4 @@
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
-import { TaliaUtils } from "../../../utils/_utils.mjs";
 
 /*  API
 
@@ -49,17 +48,36 @@ class Jump {
 
     static async itemMacro(item) {
         const rollData = item.actor.getRollData();
-        const jumpDistanceInFt = Jump.getDistance(item.actor);
-    
         const sourceToken = rollData.token;
-    
-        const crosshairs = await new TaliaUtils
-            .Crosshairs(sourceToken, jumpDistanceInFt, {showRangeIndicator: true, validateDistance: true})
-            .setPosition();
-        const position = crosshairs.getPosition();
-        if(!position) return;
-        await Jump.jumpAnimation(sourceToken, position);
+
+        const location = await Jump.selectLocation(sourceToken);
+        if(!location) return;
+
+        await Jump.jumpAnimation(sourceToken, {x: location.x, y: location.y});
         return true;
+    }
+
+    static async selectLocation(token) {
+        const maxJumpDistInFt = Jump.getDistance(token.actor);
+
+        const location = await Sequencer.Crosshair.show({
+            location: {
+                obj: token,
+                limitMaxRange: maxJumpDistInFt,
+                showRange: true,
+                wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.NO_COLLIDABLES,
+                displayRangePoly: true,
+                rangePolyLineColor: 0o000000,
+                rangePolyLineAlpha: 1,
+            },
+            gridHighlight: true,
+            snap: {
+                position: Math.max(1, token.document.width) % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER
+            }
+        });
+        await Sequencer.Helpers.wait(500);  //wait a little so the control works properly
+        token.control();
+        return location;    //can be false if cancelled
     }
 
     static async jumpAnimation(token, targetLocation) {
@@ -69,6 +87,7 @@ class Jump {
                 .moveTowards(targetLocation, { ease: "easeInOutQuint"})
                 .duration(1200)
                 .waitUntilFinished()
+                .snapToGrid(true)
             .effect()
                 .file("jb2a.impact.ground_crack.orange.02")
                 .atLocation(token)

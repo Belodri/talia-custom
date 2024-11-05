@@ -1,2 +1,5 @@
 /talia-custom.code-workspace
 /packs
+system/**
+foundry/**
+/.vscode/**

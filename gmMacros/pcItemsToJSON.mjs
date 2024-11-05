@@ -1,3 +1,4 @@
+import { TaliaCustomAPI } from "../scripts/api.mjs";
 export default {
     register() {
         TaliaCustomAPI.add({pcItemsToJSON: actorItemsToClipboard}, "GmMacros");
@@ -26,42 +27,43 @@ export default {
 
 async function actorItemsToClipboard() {
     if(!game.user.isGM) return;
-    const pcNames = ["Aviana Winterwing", "Fearghas MacAllistar", "Plex", "Shalkoc Zornax"];
-    const allowedItemTypes = ["consumable", "container", "equipment", "feat", "loot", "spell", "tool", "weapon"];
 
-    let actorItems = {};
-    for(let actorName of pcNames) {
-        const workingActor = game.actors.getName(actorName, {strict: true});
-        actorItems[actorName] = workingActor.items 
-            .filter(i => allowedItemTypes.includes(i.type))
-            .map(i => {
-                return {
-                    name: i.name,
-                    itemType: i.type,
-                    description: i.system.description.value,
-                    attunement: i.system.attunement,
-                    quantity: i.system.quantity,
-                    requirements: i.system.requirements,
+    setTimeout(async()=> {
+        const pcNames = ["Aviana Winterwing", "Fearghas MacAllistar", "Plex", "Shalkoc Zornax"];
+        const allowedItemTypes = ["consumable", "container", "equipment", "feat", "loot", "spell", "tool", "weapon"];
 
-                    typeLabel: i.system.type?.label,
-                    subType: i.system.type?.subtype,
-                    spellLevel: i.type === "spell" ? i.labels.level : null,
-                    spellRange: i.type === "spell" ? i.labels.range : null,
-                    spellSchool: i.type === "spell" ? i.labels.school : null,
-                }
-            });
-    }
+        let actorItems = {};
+        for(let actorName of pcNames) {
+            const workingActor = game.actors.getName(actorName, {strict: true});
+            actorItems[actorName] = workingActor.items 
+                .filter(i => allowedItemTypes.includes(i.type))
+                .map(i => {
+                    return {
+                        name: i.name,
+                        itemType: i.type,
+                        description: i.system.description.value,
+                        attunement: i.system.attunement,
+                        quantity: i.system.quantity,
+                        requirements: i.system.requirements,
 
-    const jsonString = JSON.stringify(actorItems, null, 2);
+                        typeLabel: i.system.type?.label,
+                        subType: i.system.type?.subtype,
+                        spellLevel: i.type === "spell" ? i.labels.level : null,
+                        spellRange: i.type === "spell" ? i.labels.range : null,
+                        spellSchool: i.type === "spell" ? i.labels.school : null,
+                    }
+                });
+        }
 
-    console.log(jsonString);
+        const jsonString = JSON.stringify(actorItems, null, 2);
 
-    try {
-        await navigator.clipboard.writeText(jsonString);
-        alert("JSON copied to clipboard!");
-    } catch (err) {
-        console.error("Failed to copy: ", err);
-    }
+        console.log(jsonString);
 
-    return;
+        try {
+            await navigator.clipboard.writeText(jsonString);
+            alert("JSON copied to clipboard!");
+        } catch (err) {
+            console.error("Failed to copy: ", err);
+        }
+    }, 3000)
 }

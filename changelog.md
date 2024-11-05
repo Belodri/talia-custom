@@ -1,3 +1,64 @@
+# 1.8.0 - 2024/11/05
+
+<details>
+<summary><h2>Added</h2></summary>
+
+-   <details>
+    <summary>Level 12</summary>
+
+    - Aviana
+        - HD roll: 10
+        - (Feat) Guardian's Reflex (+1 CON)
+    -Fearghas
+        - HD roll: 5
+        - (Feat) Ironclad Heritage (+1 STR)
+    -Shalkoc
+        - HD roll: 8
+        - (Feat) Gift of the Metallic Dragon (+1 WIS)
+    </details>
+
+-   <details>
+    <summary>Spells</summary>
+
+    - Cure Wounds
+    - Sending
+    - Slow
+    -   <details>
+        <summary>Guidance</summary>
+
+        Changed the spell because I cannot implement the option to roll the die after the ability check due to technical limitations.
+
+        from
+        > You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice. It can roll the die before or after making the ability check. The spell then ends.
+
+        to
+        > You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice. It has to roll the die before making the ability check. The spell then ends.
+        </details>
+    </details>
+
+-   <details>
+    <summary>Feats</summary>
+
+    - Guardian's Reflex
+    - Ironclad Heritage
+    - Gift of the Metallic Dragon
+    - Versatility through Unpredictability
+    </details>
+- GM Macro `generateAttackDescriptions` - used to generate and update monster attacks
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Jump: improved performance by removing crosshairs animation.
+- Fey Step: improved performance by removing crosshairs animation.
+- Removed custom crosshairs class (replaced by Sequencer).
+- Eating the same spice twice in a row should now correctly refresh the effect's duration.
+- Missing import in `pcItemsToJSON` macro.
+- Added timeout functionality to `pcItemsToJSON` macro so it can be used from the console.
+</details>
+
+
 # 1.7.0 - 2024/10/29
 
 <details>
