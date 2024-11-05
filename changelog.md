@@ -15,16 +15,27 @@
     -Shalkoc
         - HD roll: 8
         - (Feat) Gift of the Metallic Dragon (+1 WIS)
-    - Plex
-        - HD roll:
-        - 
     </details>
 
 -   <details>
     <summary>Spells</summary>
 
     - Cure Wounds
+    - Sending
+    - Slow
+    -   <details>
+        <summary>Guidance</summary>
+
+        Changed the spell because I cannot implement the option to roll the die after the ability check due to technical limitations.
+
+        from
+        > You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice. It can roll the die before or after making the ability check. The spell then ends.
+
+        to
+        > You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice. It has to roll the die before making the ability check. The spell then ends.
+        </details>
     </details>
+
 -   <details>
     <summary>Feats</summary>
 

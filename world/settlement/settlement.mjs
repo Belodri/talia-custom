@@ -7,6 +7,8 @@ export default {
             await Effect.init();
             await Building.init();
             TaliaCustomAPI.add({Settlement}, "none");
+
+            TaliaCustomAPI.add({SettlementJournalEntry}, "none");
         })();
     }
 }
@@ -28,7 +30,6 @@ export default {
     TODO
     - add a saveToFlag method
     - add a loadFromFlag method
-    - add getter for available buildings to Settlement
     - add advisors (no need for separate class, just make it an object)
     - add effects to effectData
     - UI
@@ -78,6 +79,61 @@ class Settlement {
         };
     }
     
+    /**
+     * Creates a journal entry for a new settlement.
+     * @argument {string} settlementName    - The name of the settlement (and the journal).
+     * @returns {Promise<JournalEntry>}     - The journal entry with the settlement flag.
+     */
+    static async createNewSettlement(settlementName) {
+        if(!game.user.isGM) throw new Error("Only GM users can create new settlements.");
+        if(typeof settlementName !== "string") throw new Error("The settlement's name has to be a string.")
+
+        // make sure the settlement doesn't already exist
+        const existingJournal = game.journal.getName(settlementName);
+        if(existingJournal) throw new Error("A settlement journal with this name already exists. Each settlement must have a unique name.");
+
+        //create a new journal entry for this settlement
+        const documentData = {
+            name: settlementName,
+            ownership: {
+                'default': CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+            }
+        }
+        const createdJournal = await JournalEntry.create(documentData);
+
+        // create a new settlement
+        const settlement = new Settlement({name: settlementName});
+        const flagData = settlement.toJSON();
+        
+        //store the settlement on the document's flag and return it
+        return await createdJournal.setFlag(MODULE.ID, "settlementData", flagData);
+
+    }
+
+    /**
+     * Gets the journal entry document with the settlement.
+     * @param {string} settlementName   - The name of the settlement (and the journal).
+     * @returns {Promise<JournalEntry>} - The journal entry with the settlement flag.
+     */
+    static async getSettlementDoc(settlementName) {
+        const journalDoc = game.journal.getName(settlementName);
+        if(!journalDoc) throw new Error(`Couldn't find journal entry: ${settlementName}.`);
+
+        return journalDoc;
+    }
+
+    /**
+     * 
+     * @param {JournalEntry} journalEntryDocument   - The journal entry with the settlement flag.
+     * @returns {Settlement | undefined}            - The settlement instance or undefined.
+     */
+    static settlementFromDoc(journalEntryDocument) {
+        const flagData = journalEntryDocument?.flags?.[MODULE.ID]?.["settlementData"];
+        if(!flagData) return undefined;
+
+        return new Settlement(flagData);
+    }
+
     /*----------------------------------------------------------------------------
                     Instance Properties            
     ----------------------------------------------------------------------------*/
@@ -90,7 +146,7 @@ class Settlement {
     /** @param {SettlementObject} settlementData  */
     constructor(settlementData) {
         this.name = settlementData.name;
-        this.foundingDate = settlementData.foundingDate;
+        this.foundingDate = settlementData.foundingDate ?? {day: 0, month: 0, year: 0};
 
         /** @type {Collection<string, Building>} */
         this.constructedBuildings = Building.collectionFromArray(settlementData.constructedBuildings ?? []);
@@ -120,7 +176,7 @@ class Settlement {
      */
     constructBuilding(buildingId) {
         //check if the building is already constructed
-        if(this.constructedBuildings.get(buildingId)) {
+        if(this.constructedBuildings.has(buildingId)) {
             ui.notifications.warn(`Building ID: ${buildingId} is already constructed.`);
             return this;
         }
@@ -154,6 +210,10 @@ class Settlement {
             .setBeginDate(this.currentDate);
         this.currentEffects.set(effect.id, effect);
         return this;
+    }
+
+    async saveToFlag() {
+
     }
 
     /*----------------------------------------------------------------------------
@@ -203,7 +263,7 @@ class Settlement {
      * @returns {number}    The total capacity of the settlement
      */
     get capacity() {
-        return this.baseCapacity + this.currentEffects.reduce((acc, curr) => acc += curr.capacityEffect ?? 0, 0)
+        return Settlement.baseCapacity + this.currentEffects.reduce((acc, curr) => acc += curr.capacityEffect ?? 0, 0)
     }
 
     /**
@@ -234,6 +294,15 @@ class Settlement {
             return difference <= MAX_DAYS_APART;
         });
         return filteredBuildings;
+    }
+
+    /**
+     * @returns {Building[]}    An array of buildings that have not yet been constructed in this settlement.
+     */
+    get constructableBuildings() {
+        return Object.entries(Building.allBuildings)
+            .filter(([id, buildingObj]) => !this.constructedBuildings.has(id))
+            .map(([id, buildingObj]) => buildingObj);
     }
 }
 
