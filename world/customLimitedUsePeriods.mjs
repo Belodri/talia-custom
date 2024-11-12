@@ -49,7 +49,7 @@ function registerGMHook() {
         const isRoundChange = current.round !== prior.round;
 
         //filter alive, visible combatants and get their actors
-        const actors = combat.combatants.filter(c => c.defeated === false && c.hidden === false && typeof c.actor === "object").map(c => c.actor);
+        const actors = combat.combatants.filter(c => c.defeated === false && c.hidden === false && typeof c.actorId === "string").map(c => c.actor);
 
         for(let actor of actors) {
             //only check itemTypes which can have a system.uses property
