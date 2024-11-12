@@ -1,27 +1,19 @@
 import { MODULE } from "../scripts/constants.mjs";
+import restrictMovement from "./restrictMovement.mjs";
 
 export function registerWrappers() {
     libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", wrap_Actor_getRollData , "WRAPPER");
     libWrapper.register(MODULE.ID, 'dnd5e.applications.actor.ActorSheet5e.prototype.maximize', wrap_ActorSheet_maximize, "MIXED");
     libWrapper.register(MODULE.ID, 'dnd5e.canvas.AbilityTemplate.prototype._finishPlacement', wrap_AbilityTemplate_finishPlacement, "WRAPPER");
+    restrictMovement.registerWrapper();
 }
 
 function wrap_Actor_getRollData(wrapped, ...args) {
-    const talia = {};
-    // allows mutating the additions object before rollData is calculated
-    Hooks.callAll("talia_preGetRollData", talia);
-
-    const data = wrapped(...args);
-
-    const rollData = foundry.utils.deepClone(data);
-
-    // allows mutating the talia object
-    Hooks.call("talia_postGetRollData", rollData, talia);    
-
-    // additions to rollData can be found under 
-    return foundry.utils.mergeObject(data, {
-        talia: talia
-    });
+    const rollData = wrapped(...args);
+    // add an object to the rolldata
+    const taliaObj = Hooks.call("talia_addToRollData", rollData);
+    rollData.talia = taliaObj;
+    return rollData;
 }
 
 /** Prevents the character sheet from being maximised again after a template has been placed. */

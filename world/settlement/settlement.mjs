@@ -8,7 +8,7 @@ export default {
             await Building.init();
             TaliaCustomAPI.add({Settlement}, "none");
 
-            TaliaCustomAPI.add({SettlementJournalEntry}, "none");
+            //TaliaCustomAPI.add({SettlementJournalEntry}, "none");
         })();
     }
 }

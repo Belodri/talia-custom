@@ -1,3 +1,93 @@
+# 1.9.0 - 2024/11/12
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- Plex Level 12
+    - HD roll: 5
+    - (ASI) +2 INT
+
+-   <details>
+    <summary>Items</summary>
+
+    - Ioun Stone, Language Knowledge
+    - Conch of Teleportation
+    - Amulet of Proof against Detection and Location
+    - Hoarfrost Shield
+    - Bottle of Bagiennik Snot
+    </details>
+
+-   <details>
+    <summary>Spells</summary>
+
+    - Temporal Shunt
+    - Gravity Fissure
+    - Chain Lightning
+    - Otiluke's Freezing Sphere
+    - Curse of Biting Cold
+    - Vortex Swap
+    - Darkness
+    </details>
+
+-   <details>
+    <summary>Rule: Alternate Skill Checks</summary>
+
+    > Whenever you’re asked to make a skill check outside of combat, you may ask the DM if you can use a different skill by explaining how your character would approach the challenge. This can be expressed in whatever way you want - whether through description, narration, or in-character acting. The DM will consider your explanation and decide if the substitution is appropriate, and may adjust the difficulty (DC) of the check to reflect the nature of using the alternative skill.
+    > 
+    > Example Scenario: Imagine your ship has just sunk, and you're asked to make an Athletics (Strength) check to swim to the shore you can see in the distance. Depending on your character’s skills, you might approach this task differently. Here are a few examples for potential substitutions:
+    > 
+    > - Animal Handling (Wisdom): You recall seeing dolphins earlier and attempt to encourage them to guide you to shore.
+    > - Nature (Intelligence): You’ve read about ocean currents and use this knowledge to align yourself with a helpful current.
+    > - Survival (Wisdom): Having survived similar dangers, you focus on staying calm and moving efficiently.
+    > - Performance (Charisma): You draw from water ballet skills you once learned to impress a merfolk, moving gracefully and efficiently through the waves.
+    > 
+    > Remember, creative substitutions are encouraged to enrich gameplay and give your character unique ways to face challenges, but they don’t guarantee success or a reduced difficulty.
+    </details>
+
+-   <details>
+    <summary>Random Tables</summary>
+
+    - Props - Settlements
+    - Props - Nature
+    </details>
+- GmMacro `rest()` to choose a rest type and rest the actors of all selected tokens.
+- Implemented damage absorption.
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+-   <details>
+    <summary>Resting</summary>
+
+    - Rests are now initiated by the GM.
+    - Added rest type "extended rest" which lasts for 2 weeks.
+    - Features which are used during the rest should now be used manually after the rest is completed. Of course they can just be roleplayed as being used during the rest itself, this is purely a mechanical change.
+    </details>
+
+-   <details>
+    <summary>Chef Feat & Cooking</summary>
+
+    - Remade the UI and workflow for Cooking
+    - No longer initiates the rest.
+    - Each serving now requires 1 food and (optionally) 1 spice.
+    </details>
+</details>
+
+<details>
+<summary><h2>Fixed</h2></summary>
+
+- Items which roll to regain their expended uses now do so automatically again. This happens only after taking a rest and doesn't work for all rest types. (WIP)
+- Error when a non-actor combatant was present during a combatTurnChange event.
+</details>
+
+<details>
+<summary><h2>Removed Modules</h2></summary>
+
+- Monk's Little Details
+- Monk's Token Bar (Replaced the movement restriction in combat with custom code)
+</details>
+
 # 1.8.0 - 2024/11/05
 
 <details>

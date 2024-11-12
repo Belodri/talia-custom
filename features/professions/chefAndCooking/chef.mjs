@@ -1,10 +1,11 @@
+import { TaliaCustomAPI } from "../../../scripts/api.mjs";
 import { TaliaUtils } from "../../../utils/_utils.mjs";
-import { ItemHookManager } from "../../../utils/ItemHookManager.mjs";
 
 /*
     Required modules & settings:
         - Requestor
         - dfreds ce
+        - ItemMacroButtons
 */
 
 export default {
@@ -23,272 +24,253 @@ export default {
             snack: "Snack"
         };
 
-        ItemHookManager.register("Chef", ChefFeat.itemMacro);
+        TaliaCustomAPI.add({chefFeat_chatButton: Cooking.itemButtonMacro}, "ItemMacros");
     }
 }
 
 /*
     WORKFLOW
 
-    - Shalkoc chooses to take a short or a long rest by using the chef feat
-    - He then chooses which food/spices he wants to use for cooking
-
-    - DM gets a requestor message to approve the rest and to advance time accordingly
-    - When the DM approves of the rest, a requestor message is sent that is clickable by all
-    
-    - Clicking that requestor message then makes everyone who clicked it take a rest (no dialog!, no time advance!);
-    - After awaiting the result of that rest, apply shalkoc's buff and healing/tempHP
+    - Shalkoc chooses which food/spices he wants to use for cooking and how many servings he wants to make.
+    - That creates a requestor message for everyone to use to apply healing/tempHP and the spice buff.
 */
 
-class ChefFeat {
-    constructor(item) {
-        this.chefItem = item;
-        this.actor = item.actor;
-
-        //get resting characters (online player characters)
-        this.restingActors = game.users.players.filter(u => u.active).map(u => u.character) || [];
-        this.isLongRest = undefined;
-
-        //items
-        this.cooksTool = undefined;
-        this.foodItems = undefined;
-        this.spiceItems = undefined;
-
-        this.chosenFoodItem = undefined;
-        this.chosenSpiceItem =  undefined;
-        
-        this.effectData = undefined;
-    }
-
-    static async itemMacro(item) {
-        TaliaUtils.Helpers.displayItemInfoOnly(item);
-
-        const rest = await new ChefFeat(item).chooseRestType();
-        if(typeof rest.isLongRest !== "boolean") return;
-
-        rest.getItems();
-        await rest.chooseFoodAndSpices();
-        if(!rest.chosenFoodItem) return;
-
-        await rest.rollChefFeat();
-        rest.getEffectData();
-        if(rest.chosenSpiceItem && !rest.effectData) return;
-        return await rest.gmApprovalRequestor();
-    }
 
 
-    async chooseRestType() {
-        const restType = await foundry.applications.api.DialogV2.wait({
-            window: { title: "Chef Feat"},
-            content: "",
-            modal: true,
-            rejectClose: false,
-            buttons: [
-                { label: "Cook & Short Rest", action: "short",},
-                { label: "Cook & Long Rest", action: "long",},
-            ]
-        });
-        this.isLongRest = restType === "long" ? true :
-            restType === "short" ? false : 
-            undefined;
-        return this;
-    }
-
-    async gmApprovalRequestor() {
-        const passingScope = {
-            requestingActorUuid: this.actor.uuid,
-            requestingUserId: game.user.id,
-            chefItemUuid: this.chefItem.uuid,
-            chosenFoodItemUuid: this.chosenFoodItem.uuid,
-            chosenSpiceItemUuid: this.chosenSpiceItem?.uuid || "",
-            numberOfRestingActors: this.restingActors.length,
-            isLongRest: this.isLongRest,
-            rollTotal: this.rollTotal,
-            effectData: this.effectData || "",
+class Cooking {
+    /*----------------------------------------------------------------------------
+                    Static Properties            
+    ----------------------------------------------------------------------------*/
+    static chefFeatFormulas = {
+        snack: {
+            formula: "1d8 * @prof",
+            type: "healing",
+        },
+        meal: {
+            formula: "2d4 * @prof",
+            type: "temphp",
         }
-
-        Requestor.request({
-            title: `Approve Rest`,
-            description: `Approve this ${this.isLongRest ? "long" : "short"} rest?`,
-            speaker: ChatMessage.implementation.getSpeaker({actor: this.actor}),
-            whisper: [game.users.activeGM.id],
-            //popout: true,
-            //popoutOnly: true,
-            //autoclose: true,
-            messageOptions: {
-                blind: true,
-                flags: {
-                    "talia-custom": {
-                        hideFromSelf: true,    
-                    },
-                },
-            },
-            buttonData: [{
-                label: "Approve",
-                scope: passingScope,
-                permission: "GM",
-                command: async function() {
-                    //get the relevant items
-                    const chosenFoodItem = await fromUuid(chosenFoodItemUuid);
-                    const chosenSpiceItem = chosenSpiceItemUuid ? await fromUuid(chosenSpiceItemUuid) : undefined;
-                    const requestingActor = await fromUuid(requestingActorUuid);
-
-                    //advance time
-                    const changeMinutes = isLongRest ? CONFIG.DND5E.restTypes.long.duration.normal : CONFIG.DND5E.restTypes.short.duration.normal;
-                    const beforeDay = SimpleCalendar.api.currentDateTime().day;
-                    await SimpleCalendar.api.changeDate({minute: changeMinutes});
-                    const isNewDay = beforeDay !== SimpleCalendar.api.currentDateTime().day;
-
-                    //create the requestor message
-                    const description = `Eat a ${isLongRest ? "meal" : "snack"} of <b>${chosenFoodItem.name}</b>${chosenSpiceItem ? ` with <b>${chosenSpiceItem.name}</b>`: ""} and take a ${isLongRest ? "long" : "short"} rest.`;
-                    await Requestor.request({
-                        img: chosenFoodItem.img,
-                        title: `${isLongRest ? "Meal and Long Rest" : "Snack and Short Rest"}`,
-                        description: description,
-                        speaker: ChatMessage.implementation.getSpeaker({actor: requestingActor}),
-                        //popout: true,
-                        //popoutOnly: true,
-                        //autoclose: true,
-                        buttonData: [{
-                            label: "Eat and Rest",
-                            scope: {
-                                isLongRest: isLongRest,
-                                rollTotal: rollTotal,
-                                effectData: effectData || "",
-                                isNewDay: isNewDay,
-                            },
-                            command: async function() {
-                                if(isLongRest === true) {
-                                    await actor.longRest({dialog: false, newDay: isNewDay});
-                                    actor.applyTempHP(rollTotal);
-            
-                                } else {
-                                    await actor.shortRest({dialog: false, newDay: isNewDay});
-                                    actor.applyDamage([{value: rollTotal, type: "healing"}]);
-                                }
-
-                                if(effectData) {
-                                    const prevEffects = actor.appliedEffects.filter( e => e.flags?.["talia-custom"]?.isSpiceEffect === true);
-                                    for(let eff of prevEffects) {
-                                        await eff.delete();
-                                    }
-                                    await ActiveEffect.implementation.create(effectData, {parent: actor});
-                                }
-                            }
-                        }
-                    ]
-                    });
-
-                    //consume the items
-                    if(chosenFoodItem) TaliaCustom.Helpers.consumeItem(chosenFoodItem, numberOfRestingActors, 1, true);
-                    if(chosenSpiceItem) TaliaCustom.Helpers.consumeItem(chosenSpiceItem, 1, 1, true);
-                    
-                }
-            }]
-        })
+    };
+    /*----------------------------------------------------------------------------
+                    Static Methods            
+    ----------------------------------------------------------------------------*/
+    /**
+     * 
+     * @param {Item5e} item 
+     * @param {boolean} isMeal 
+     */
+    static async itemButtonMacro(item, isMeal) {
+        const cooking = await new Cooking(item, isMeal).chooseParams();
+        if(!cooking.chosenServings || !cooking.chosenFood) return;
+        await cooking.createRequestor();
+        await cooking.consumeIngredients();
     }
 
-    getEffectData() {
-        if(!this.chosenSpiceItem) return undefined;
-        const effect = game.dfreds.effectInterface.findEffect({effectName: this.chosenSpiceItem.name});
-        if(!effect) ChefFeat.throwCustomError(`Couldn't find effect data for: ${this.chosenSpiceItem.name}`);
+    /**
+     * @returns {Object | undefined} Active Effect data for a given spice item. 
+     */
+    static getSpiceEffectData(spiceItem) {
+        const effect = game.dfreds.effectInterface.findEffect({effectName: spiceItem.name});
+        if(!effect) {
+            ui.notifications.error(`Couldn't find effect data for: ${spiceItem.name}`);
+            return undefined;
+        }
         
         const effObj = effect.toObject();
-        this.effectData = foundry.utils.mergeObject(effObj, {
+        return foundry.utils.mergeObject(effObj, {
             flags: {
                 "talia-custom": {
                     isSpiceEffect: true
                 }
             }
         });
-        return this;
     }
 
-    async rollChefFeat() {
-        //short rest (healing) is rollGroup0
-        //long rest (tempHp) is rollGroup1
-        const roll = await this.chefItem.rollDamageGroup({rollGroup: this.isLongRest ? 1 : 0, options: {chatMessage: true, fastForward: true}});
-        this.rollTotal = roll.total;
-        return this;
+    /*----------------------------------------------------------------------------
+                    Instance Properties            
+    ----------------------------------------------------------------------------*/
+
+    /** @type {Item5e | null} The chosen food item or null if none chosen. */
+    chosenFood = null;
+    /** @type {Item5e | null} The chosen spice item or null if none chosen.*/
+    chosenSpice = null;
+    /** @type {number} The chosen number of servings. Defaults to 0. */
+    chosenServings = 0;
+    /*----------------------------------------------------------------------------
+                    Instance Methods            
+    ----------------------------------------------------------------------------*/
+    constructor(item, isMeal) {
+        this.chefFeatItem = item;
+        this.actor = item.actor;
+        this.isMeal = isMeal;
     }
 
-    static throwCustomError(msg) {
-        ui.notifications.warn(msg);
-        throw new Error(msg);
-    }
+    /**
+     * Lets the user choose food, spice and number of servings through a dialog.
+     * @param {Object} [prevArgs]           The results of the previous iteration.
+     * @returns {Promise<this>}
+     */
+    async chooseParams(prevArgs = {}) {
+        const chosen = await this._choicesDialog(prevArgs);
+        if(!chosen) return this;    //cancel
 
-    getItems() {
-        /** @type {Item5e | undefined} */
-        this.cooksTool = this.actor.itemTypes.tool.find(i => i.system?.type?.baseItem === "cook");
-        if(!this.cooksTool) ChefFeat.throwCustomError("You need to have cook's utensils on you to cook.");
+        const foodItem = chosen.foodId ? this.actor.items.get(chosen.foodId) : null;
+        const spiceItem = chosen.spiceId === "none" ? null : this.actor.items.get(chosen.spiceId);
 
-
-        /** @type {Item5e[] | []} */
-        this.foodItems = this.actor.itemTypes.loot
-            .filter( i => i.system?.type?.subtype === `${this.isLongRest ? "meal" : "snack"}` && i.system?.quantity >= this.restingActors.length);
-        
-        if(!this.foodItems?.length) {
-            ChefFeat.throwCustomError(`You don't have enough of one ${this.isLongRest ? "meal" : "snack"} on you to cook for the entire party.`);
+        if(foodItem && chosen.servings > foodItem.system.quantity) {
+            ui.notifications.warn(`You don't have enough ${foodItem.name} for ${chosen.servings} servings.`);
+            return await this.chooseParams(chosen);
+        } else if (spiceItem && chosen.servings > spiceItem.system.quantity) {
+            ui.notifications.warn(`You don't have enough ${spiceItem.name} for ${chosen.servings} servings.`);
+            return await this.chooseParams(chosen);
         }
-
-        /** @type {Item5e[] | []} */
-        this.spiceItems = this.actor.itemTypes.loot.filter(i => i.system?.type?.value === "spice");
+        this.chosenFood = foodItem;
+        this.chosenSpice = spiceItem;
+        this.chosenServings = chosen.servings ?? 0;
         return this;
     }
 
-    async chooseFoodAndSpices() {
+    /**
+     * Creates the dialog and let's the user choose options.
+     * @param {Object} [prevArgs]           The results of the previous iteration.
+     * @returns {Promise<Object | null>}    The results of the dialog. Null if cancelled.
+     */
+    async _choicesDialog(prevArgs) {
+        const {DialogV2} = foundry.applications.api;
+        const {NumberField, StringField} = foundry.data.fields;
+
         function getChoices(itemArray, addNone = false) {
             return itemArray.reduce((acc, curr) => {
                 acc[curr.id] = `${curr.name} (${curr.system.quantity})`;
                 return acc;
             }, addNone ? {none: "None"} : {});
         }
-        
-        const foodChoices = getChoices(this.foodItems, false);
-        const selectGroupFood = new foundry.data.fields.StringField({
-            label: `Select ${this.isLongRest ? "Meal" : "Snack"}`,
-            hint: `You need one ${this.isLongRest ? "meal" : "snack"} for each resting party member.`,
+
+        const foodChoices = getChoices(this.isMeal ? this.mealItems : this.snackItems, false);
+        const selectGroupFood = new StringField({
+            label: `Select ${this.isMeal ? "Meal" : "Snack"}`,
+            hint: `You need one ${this.isMeal ? "meal" : "snack"} for each servings you want to cook.`,
             choices: foodChoices,
             required: true,
+            initial: prevArgs.foodId,
         }).toFormGroup({},{name: "foodId", foodChoices}).outerHTML;
 
         const spiceChoices = getChoices(this.spiceItems, true);
-        const selectGroupSpice = new foundry.data.fields.StringField({
+        const selectGroupSpice = new StringField({
             label: "Select Spice",
-            hint: `You can select one spice to flavour all ${this.isLongRest ? "meals" : "snacks"}`,
+            hint: `You can select one spice to flavour all ${this.isMeal ? "meals" : "snacks"}.`,
             choices: spiceChoices,
             required: true,
+            initial: prevArgs.spiceId,
         }).toFormGroup({},{name: "spiceId", spiceChoices}).outerHTML;
 
-        const content = `<style>
-            .chef-feat-dialog { 
-                width: 400px; 
-                & h4 { 
-                    margin-top: 0.5em;
-                }
-            }
-            </style>
-            <h4>Choose a ${this.isLongRest ? "meal" : "snack"} and a spice to cook during your ${this.isLongRest ? "long" : "short"} rest.</h4>
-            <fieldset>${selectGroupFood}${selectGroupSpice}</fieldset>`;
+        const selectServingsGroup = new NumberField({
+            label: "Servings",
+            hint: "How many servings are you making?",
+            required: true,
+            min: 1,
+            integer: true,
+            positive: true,
+            initial: prevArgs.servings,
+        }).toFormGroup({},{name: "servings"}).outerHTML;
 
-        const selected = await foundry.applications.api.DialogV2.prompt({
+        const content = selectGroupFood+selectGroupSpice+selectServingsGroup;
+
+        return await DialogV2.prompt({
             window: {
                 title: "Chef Feat",
-                contentClasses: ["chef-feat-dialog"],
+            },
+            position: {
+                width: "auto",
+                height: "auto",
             },
             content,
             modal: true,
             rejectClose: false,
             ok: {
-                label: "Cook and rest",
+                label: "Cook",
                 callback: (event, button) => new FormDataExtended(button.form).object,
-            },
+            }
         });
+    }
 
-        if(selected) {
-            this.chosenFoodItem = this.actor.items.get(selected.foodId);
-            this.chosenSpiceItem = this.actor.items.get(selected.spiceId) || undefined;
-        }
-        return this;
+    /**
+     * Rolls the appropriate formula.
+     * @returns {Promise<Roll>} - The evaluated roll instance.
+     */
+    async getRoll() {
+        return await new Roll(Cooking.chefFeatFormulas[this.isMeal ? "meal" : "snack"].formula, this.chefFeatItem.getRollData()).evaluate();
+    }
+    
+    /**
+     * Consumes the chosen ingredients.
+     */
+    async consumeIngredients() {
+        if(this.chosenFood) await TaliaUtils.Helpers.consumeItem(this.chosenFood, this.chosenServings, 1, true);
+        if(this.chosenSpice) await TaliaUtils.Helpers.consumeItem(this.chosenSpice, this.chosenServings, 1, true);
+    }
+
+    /**
+     * Creates the requestor for everyone to use.
+     */
+    async createRequestor() {
+        const roll = await this.getRoll();
+
+        const description = `
+            <p>${this.actor.name} has prepared <strong>${this.chosenServings} servings</strong> of <strong>${this.chosenFood.name}</strong>${this.chosenSpice ? `, spiced with the finest <strong>${this.chosenSpice.name}</strong>`: ""}.</p>
+            <p>${this.isMeal ? `Grants ${roll.total} temporary hit points.` : `Restores ${roll.total} missing hit points.`}</p>
+        `;
+        const buttonLabel = this.isMeal ? `Eat to gain ${roll.total} temporary hit points.` : `Eat to restore ${roll.total} missing hit points.`;
+
+        await Requestor.request({
+            title: "Let the feasting begin!",
+            img: false,
+            description,
+            speaker: ChatMessage.implementation.getSpeaker({actor: this.actor}),
+            messageOptions: {
+                rolls: [roll]
+            },
+            buttonData: [{
+                label: buttonLabel,
+                scope: {
+                    rollTotal: roll.total,
+                    isMeal: this.isMeal,
+                    effectData: this.chosenSpice ? Cooking.getSpiceEffectData(this.chosenSpice) : null,
+                },
+                command: async function() {
+                    if(isMeal) await actor.applyTempHP(rollTotal);
+                    else await actor.applyDamage([{value: rollTotal, type: "healing"}]);
+
+                    if(effectData) {
+                        const prevEffects = actor.appliedEffects.filter( e => e.flags?.["talia-custom"]?.isSpiceEffect === true);
+                        for(let eff of prevEffects) {
+                            await eff.delete();
+                        }
+                        await ActiveEffect.implementation.create(effectData, {parent: actor});
+                    }
+                }
+            }]
+        })
+    }
+
+    /**
+     * @returns {Item5e[]}  Array of loot items with type "spice"
+     */
+    get spiceItems() {
+        return this.actor.itemTypes.loot.filter(i => i.system?.type?.value === "spice");
+    }
+
+    /**
+     * @returns {Item5e[]}  Array of loot items with subtype "snack"
+     */
+    get snackItems() {
+        return this.actor.itemTypes.loot.filter( i => i.system?.type?.subtype === "snack");
+    }
+
+    /**
+     * @returns {Item5e[]}  Array of loot items with subtype "meal"
+     */
+    get mealItems() {
+        return this.actor.itemTypes.loot.filter( i => i.system?.type?.subtype === "meal");
     }
 }
