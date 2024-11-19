@@ -5,6 +5,7 @@ import wildMagic from "./wildMagic/wildMagic.mjs";
 import customLimitedUsePeriods from "./customLimitedUsePeriods.mjs";
 import _settlement from "./settlement/_settlement.mjs";
 import damageAbsorption from "./damageAbsorption.mjs";
+import _guildmanager from "./guildmanager/_guildmanager.mjs";
 
 
 export default {

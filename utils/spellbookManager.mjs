@@ -35,10 +35,10 @@ export default {
             return await new Spellbook(item).removeSpellsFromActor(true);
         });
 
-        TaliaCustomAPI.add({spellbook: {
+        TaliaCustomAPI.add({SpellbookManager: {
             addSpell: Spellbook.addSpellToBookMacro,
             removeSpell: Spellbook.removeSpellFromBookMacro
-        }}, "GmMacros");
+        }}, "none");
     }
 }
 

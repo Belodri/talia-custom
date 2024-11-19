@@ -5,6 +5,7 @@ export function registerWrappers() {
     libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", wrap_Actor_getRollData , "WRAPPER");
     libWrapper.register(MODULE.ID, 'dnd5e.applications.actor.ActorSheet5e.prototype.maximize', wrap_ActorSheet_maximize, "MIXED");
     libWrapper.register(MODULE.ID, 'dnd5e.canvas.AbilityTemplate.prototype._finishPlacement', wrap_AbilityTemplate_finishPlacement, "WRAPPER");
+    libWrapper.register(MODULE.ID, "dnd5e.applications.components.DamageApplicationElement.prototype.getTargetOptions", wrap_DamageApplicationElement_getTargetOptions, "WRAPPER");
     restrictMovement.registerWrapper();
 }
 
@@ -30,5 +31,12 @@ async function wrap_AbilityTemplate_finishPlacement(wrapped, ...args) {
     const ret = await wrapped(...args);
     //unset flag on user to enable maximising the sheet again
     await game.user.unsetFlag(MODULE.ID, 'preventActorSheetMax')
+    return ret;
+}
+
+/** Adds the message id of the originating message to the DamageApplicationsOptions object */
+function wrap_DamageApplicationElement_getTargetOptions(wrapped, ...args) {
+    const ret = wrapped(...args);
+    ret.originatingMessageId = this.chatMessage?.id;
     return ret;
 }

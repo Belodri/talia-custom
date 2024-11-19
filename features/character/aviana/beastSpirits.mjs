@@ -1,5 +1,6 @@
 import { MODULE } from "../../../scripts/constants.mjs";
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
+import { Helpers } from "../../../utils/helpers.mjs";
 const debug = false;
 
 export default {
@@ -7,7 +8,7 @@ export default {
         CONFIG.DND5E.featureTypes.class.subtypes.beastBlessing = "Spirit Beast's Blessing";
         CONFIG.DND5E.featureTypes.class.subtypes.beastPower = "Spirit Beast Power";
 
-        TaliaCustomAPI.add({activateSpirit}, "ItemMacros");
+        TaliaCustomAPI.add({activateSpirit, chooseSpirit}, "ItemMacros");
     }
 }
 
@@ -46,7 +47,36 @@ const blessingsDatabase = {
     },
 };
 
+async function chooseSpirit(item) {
+    const {DialogV2} = foundry.applications.api;
+    const {StringField} = foundry.data.fields;
 
+    const actor = item.actor;
+
+    const availableSpirits = Object.keys(blessingsDatabase).filter(s => actor.items.getName(s));
+
+    const choicesField = new StringField({
+        label: "Select a spirit",
+        choices: availableSpirits.reduce((acc, curr) => {
+            acc[curr] = curr;
+            return acc;
+        }, {}),
+        required: true,
+    }).toFormGroup({},{name: "spiritName"}).outerHTML;
+
+    const result = await DialogV2.prompt({
+        window: { title: item.name },
+        content: choicesField,
+        modal: true,
+        rejectClose: false,
+        ok: { callback: (_, button) => new FormDataExtended(button.form).object }
+    });
+
+    if(!result) return;
+    await actor.items.getName(result.spiritName)
+        .use({},{skipItemMacro: true});
+    await activateSpirit(actor, result.spiritName);
+}
 
 /*  ItemMacro for items of type "Spirit Beast's Blessing"
 

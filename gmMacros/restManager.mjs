@@ -114,19 +114,12 @@ class RestManager {
             || this.restingActors.length <= 0
         ) return null;
 
-
-        //calculate time and new day
-        const restDuration = CONFIG.DND5E.restTypes[this.restOptions.restType]?.duration?.[game.settings.get("dnd5e", "restVariant")];
-        const beforeDate = SimpleCalendar.api.currentDateTime();
-        const isNewDay = restDuration >= 24 * 60 ? true    //if the duration is more than a day, it's obviously a new day
-            : (beforeDate.hour * 60 + beforeDate.minute + restDuration) > 24 * 60;  //if the number of minutes in the current day + the rest duration is larger than 24 hours in minutes, it's a new day
-
         //create the rest config
         const dnd5eRestConfig = {
             dialog: false,
             chat: false,
             duration: CONFIG.DND5E.restTypes[this.restOptions.restType]?.duration?.[game.settings.get("dnd5e", "restVariant")],
-            newDay: isNewDay,
+            newDay: this.restOptions.restType !== "short",  //any newDay stuff refreshes on any long or extended rest.
             advanceTime: !this.restOptions.isInstantRest,
             autoHD: false,
         };
