@@ -6,7 +6,21 @@ export default {
     register() {
         addChangesToStatusEffects();
         addNewStatusEffects();
+        fixExhaustion();
     }
+}
+
+function fixExhaustion() {
+    const newExhaustionIconRef = "TaliaCampaignCustomAssets/c_Icons/svg/exhaustion/exhaustion.svg";
+    const exhaustionJournalEntryPage = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.Wjki4nD4YAgKCtNl";
+    CONFIG.DND5E.conditionTypes.exhaustion.reference = exhaustionJournalEntryPage;  
+    CONFIG.DND5E.conditionTypes.exhaustion.levels = 10;
+    CONFIG.DND5E.conditionTypes.exhaustion.icon = newExhaustionIconRef;
+
+    const sE = CONFIG.statusEffects.find(e => e.id === "exhaustion");
+    sE.reference = exhaustionJournalEntryPage;
+    sE.levels = 10;
+    sE.img = newExhaustionIconRef;
 }
 
 function addChangesToStatusEffects() {

@@ -1,3 +1,70 @@
+# 1.10.0 - 2024/11/19
+
+<details>
+<summary><h2>Added</h2></summary>
+
+-   <details>
+    <summary>Rules: Exhaustion</summary>
+
+    Added rules for exhaustion (no gameplay changes) and fixes several issues with exhaustion integration in the system. The rules are worded as follows:
+    > While you have the Exhaustion condition, you experience the following effects.
+    >
+    > Exhaustion Levels. This condition is cumulative. Each time you receive it, you gain 1 Exhaustion level. You die if your Exhaustion level is 10.
+    >
+    > D20 Tests Affected. When you make a D20 Test the roll is reduced by your Exhaustion level.
+    >
+    > Spell Save DCs Affected. Your Spell Save DC (or other Ability Save DC) is reduced by your Exhaustion level.
+    >
+    > Removing Exhaustion Levels. Finishing a Long Rest removes 1 of your Exhaustion levels. When your Exhaustion level reaches 0, the condition ends.
+    </details>
+
+-   <details>
+    <summary>Spells</summary>
+    
+    - Detect Thoughts
+    </details>
+
+-   <details>
+    <summary>Items</summary>
+    
+    - Medallion of Thoughts
+    - Necklace of Fireballs
+    - Oil of Immovability
+    - Potion of Mind Restoration
+    - Wardstone
+    - Ioun Stone, Sandstone
+    </details>
+- Mythic Legend 2 Feature: Unflinching
+- GmMacro `displayChoices()` to access any GmMacros via a UI.
+- GmMacro `promptHarvestHerbs()` (so it's added to the displayChoices UI)
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+-   <details>
+    <summary>Beast Spirit's Blessing</summary>
+
+    In addition to the mechanical changes, spirits can now be activated by using the feature itself.
+
+    from
+    > During each short or long rest, you can spend some time training your physical abilities. Doing so will grant you the blessing of one of the beast spirits that guide or inspire you, depending on the kind of training you do.
+
+    to
+    > During each short or long rest, you can spend some time training your physical abilities. Doing so will grant you the blessing of one of the beast spirits that guide or inspire you, depending on the kind of training you do.
+    > 
+    > At level 12, your bond with the beast spirits strengthens, allowing you to exchange one blessing for another even when you're not taking a rest. Calling for a spirit's blessing this way takes an action and gives you one level of exhaustion.
+-   <details>
+    <summary>Contingency</summary>
+
+    Reworked the spell's implementation. To activate the contingency, use contingency again when the trigger conditions occur and simply choose not to expend a spell slot.
+    </details>
+- All items with a use limit of day, dawn, or dusk have been changed to have a use limit per long rest instead.
+- Removed restPrompt GmMacro (replaced by `rest()` GmMacro)
+- Replaced `GmMacros.spellbook.addSpell/removeSpell` with `SpellbookManager.addSpell/removeSpell`;
+</details>
+
+
 # 1.9.0 - 2024/11/12
 
 <details>

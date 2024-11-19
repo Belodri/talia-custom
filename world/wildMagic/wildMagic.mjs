@@ -18,7 +18,7 @@ export default {
 
 class WildMagic {
     static async hook_useItem(item, config, options) {
-        if(!WildMagic.canSurge(item) || !WildMagic.checkIsSurge()) return;
+        if(!WildMagic.canSurge(item) || !WildMagic.checkIsSurge() || options.canSurge === false) return;
         const actor = item.actor || canvas.tokens.controlled[0]?.actor;
         await WildMagic.surge(actor);
     }
