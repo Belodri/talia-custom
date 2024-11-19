@@ -11,6 +11,8 @@ export default {
             bodyPart: "Body Part"
         };
 
+        TaliaCustomAPI.add({promptHarvestHerbs: createHarvestHerbs}, "GmMacros");
+
         TaliaCustomAPI.add({AlchemyAPI: {
             INGREDIENTS,
             RECIPES,

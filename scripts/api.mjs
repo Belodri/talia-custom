@@ -52,10 +52,10 @@ export class TaliaCustomAPI {
      *   healTarget: (target, amount) => {  }
      * }, "ItemMacros");
      * 
-     * // Adding methods to the 'GmMacros' category
+     * // Adding methods to the 'GmMacros' category. GmMacros can never have non-optional arguments.
      * TaliaCustomAPI.add({
-     *   spawnMonster: (type, location) => {  },
-     *   changeWeather: (condition) => {  }
+     *   spawnMonster: () => {  },
+     *   changeWeather: () => {  }
      * }, "GmMacros");
      */
     static add(methodsObject, category = "none") {
