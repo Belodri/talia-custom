@@ -1,3 +1,18 @@
+# 1.11.0 - 2024/11/26
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- Chef Feat UI/UX improvements (no mechanical changes)
+</details>
+
+<details>
+<summary><h2>Removed</h2></summary>
+
+- Removed subtype "snack" from lootTypes.food
+</details>
+
+
 # 1.10.0 - 2024/11/19
 
 <details>

@@ -15,15 +15,8 @@ export default {
             label: "Food",
             subtypes: {
                 meal: "Meal",
-                snack: "Snack"
             }
         };
-
-        CONFIG.DND5E.consumableTypes.food.subtypes = {
-            meal: "Meal",
-            snack: "Snack"
-        };
-
         TaliaCustomAPI.add({chefFeat_chatButton: Cooking.itemButtonMacro}, "ItemMacros");
     }
 }
@@ -31,22 +24,22 @@ export default {
 /*
     WORKFLOW
 
-    - Shalkoc chooses which food/spices he wants to use for cooking and how many servings he wants to make.
+    - Shalkoc chooses which food he wants to use for cooking and how many servings he wants to make.
     - That creates a requestor message for everyone to use to apply healing/tempHP and the spice buff.
 */
-
-
 
 class Cooking {
     /*----------------------------------------------------------------------------
                     Static Properties            
     ----------------------------------------------------------------------------*/
     static chefFeatFormulas = {
-        snack: {
+        shortRest: {
+            label: "Short Rest",
             formula: "1d8 * @prof",
             type: "healing",
         },
-        meal: {
+        longRest: {
+            label: "Long Rest",
             formula: "2d4 * @prof",
             type: "temphp",
         }
@@ -56,12 +49,17 @@ class Cooking {
     ----------------------------------------------------------------------------*/
     /**
      * 
-     * @param {Item5e} item 
-     * @param {boolean} isMeal 
+     * @param {Item5e} item
      */
-    static async itemButtonMacro(item, isMeal) {
-        const cooking = await new Cooking(item, isMeal).chooseParams();
-        if(!cooking.chosenServings || !cooking.chosenFood) return;
+    static async itemButtonMacro(item) {
+        const cooking = await new Cooking(item).loadAllMealItemImagePaths();
+        if(!cooking.isInitialised) return;
+        // open food containers
+        for(let container of cooking.foodContainers) {
+            container.sheet.render(true);
+        }
+        await cooking.chooseParams();
+        if(!cooking.chosenServings) return;
         await cooking.createRequestor();
         await cooking.consumeIngredients();
     }
@@ -90,19 +88,35 @@ class Cooking {
                     Instance Properties            
     ----------------------------------------------------------------------------*/
 
-    /** @type {Item5e | null} The chosen food item or null if none chosen. */
-    chosenFood = null;
-    /** @type {Item5e | null} The chosen spice item or null if none chosen.*/
-    chosenSpice = null;
+    /** @type {string | null} */
+    chosenMealDescription = "";
+
+    /** @type {string | null} The chosen rest type. */
+    restType = null;    //default, can be changed later
+
     /** @type {number} The chosen number of servings. Defaults to 0. */
     chosenServings = 0;
+
+    /** @type {string | null} The chosen base meal item; Used to determine the name of the meal (can be overridden) and the image used to display the meal in chat. */
+    chosenBaseMealName = null;
+
+    /** @type {string | null} The name of the meal. If left blank will default to the name of the base meal item.*/
+    chosenMealName = null;
+
+    /** @type {Item5e | null} The chosen spice item or null if none chosen.*/
+    chosenSpice = null;
+
+    /** @type {Item5e | null} The chosen food item or null if none chosen.*/
+    chosenFoodItem = null;
+
+    /** @type {object<string, string> | null} An object with the meal names in human readable form as keys and their respective image paths as values. */
+    allMealItemImagePaths = null;
     /*----------------------------------------------------------------------------
                     Instance Methods            
     ----------------------------------------------------------------------------*/
-    constructor(item, isMeal) {
+    constructor(item) {
         this.chefFeatItem = item;
         this.actor = item.actor;
-        this.isMeal = isMeal;
     }
 
     /**
@@ -111,22 +125,44 @@ class Cooking {
      * @returns {Promise<this>}
      */
     async chooseParams(prevArgs = {}) {
+        if(this.isDialogOpen()) return this;    //cancel if a dialog is already open
+
         const chosen = await this._choicesDialog(prevArgs);
         if(!chosen) return this;    //cancel
 
-        const foodItem = chosen.foodId ? this.actor.items.get(chosen.foodId) : null;
         const spiceItem = chosen.spiceId === "none" ? null : this.actor.items.get(chosen.spiceId);
 
-        if(foodItem && chosen.servings > foodItem.system.quantity) {
-            ui.notifications.warn(`You don't have enough ${foodItem.name} for ${chosen.servings} servings.`);
+        const foodItem = chosen.foodItemUuid ? fromUuidSync(chosen.foodItemUuid) : null;
+        if(!foodItem) {
+            ui.notifications.warn(`You need to choose a food item.`);
             return await this.chooseParams(chosen);
-        } else if (spiceItem && chosen.servings > spiceItem.system.quantity) {
+        }
+        else if(foodItem.system?.quantity < chosen.servings) {
+            ui.notifications.warn(`You only have ${foodItem.system.quantity} ${foodItem.name}; not enough for ${chosen.servings} servings.`);
+            return await this.chooseParams(chosen);
+        }
+        else if (spiceItem && chosen.servings > spiceItem.system.quantity) {
             ui.notifications.warn(`You don't have enough ${spiceItem.name} for ${chosen.servings} servings.`);
             return await this.chooseParams(chosen);
         }
-        this.chosenFood = foodItem;
-        this.chosenSpice = spiceItem;
+
+        this.restType = chosen.restType;        //required
         this.chosenServings = chosen.servings ?? 0;
+        this.chosenBaseMealName = chosen.baseMealName ?? null;
+        this.chosenMealName = chosen.alternateMealName || chosen.baseMealName || foodItem.name;
+
+        /*
+            cases:
+            - desc & image   => desc
+            - desc & no image       => desc
+            - no desc & image       => blank
+            - no dec & no image     => item desc
+        */
+        this.chosenMealDescription = (!chosen.mealDescription && !chosen.baseMealName) ? foodItem.system.description.value :        //description.value is an html string!
+                                        (!chosen.mealDescription && chosen.baseMealName) ? "" :
+                                        `<p>${chosen.mealDescription}</p>`
+        this.chosenSpice = spiceItem;       //required
+        this.chosenFoodItem = foodItem;     //required
         return this;
     }
 
@@ -137,55 +173,84 @@ class Cooking {
      */
     async _choicesDialog(prevArgs) {
         const {DialogV2} = foundry.applications.api;
-        const {NumberField, StringField} = foundry.data.fields;
+        const {NumberField, StringField, DocumentUUIDField} = foundry.data.fields;
 
-        function getChoices(itemArray, addNone = false) {
-            return itemArray.reduce((acc, curr) => {
-                acc[curr.id] = `${curr.name} (${curr.system.quantity})`;
+        const selectRestTypeGroup = new StringField({
+            label: "Rest Duration",
+            hint: "Select either short or long rest.",
+            choices: Object.entries(Cooking.chefFeatFormulas).reduce((acc, [k, v]) => {
+                acc[k] = v.label;
                 return acc;
-            }, addNone ? {none: "None"} : {});
-        }
-
-        const foodChoices = getChoices(this.isMeal ? this.mealItems : this.snackItems, false);
-        const selectGroupFood = new StringField({
-            label: `Select ${this.isMeal ? "Meal" : "Snack"}`,
-            hint: `You need one ${this.isMeal ? "meal" : "snack"} for each servings you want to cook.`,
-            choices: foodChoices,
+            }, {}),
             required: true,
-            initial: prevArgs.foodId,
-        }).toFormGroup({},{name: "foodId", foodChoices}).outerHTML;
+            initial: prevArgs.restType,
+        }).toFormGroup({},{name: "restType"}).outerHTML;
 
-        const spiceChoices = getChoices(this.spiceItems, true);
-        const selectGroupSpice = new StringField({
-            label: "Select Spice",
-            hint: `You can select one spice to flavour all ${this.isMeal ? "meals" : "snacks"}.`,
-            choices: spiceChoices,
+        const selectFoodItemGroup = new DocumentUUIDField({
+            type: "Item",
+            embedded: true,
+            label: "Drag & Drop the food item here",
             required: true,
-            initial: prevArgs.spiceId,
-        }).toFormGroup({},{name: "spiceId", spiceChoices}).outerHTML;
+            initial: prevArgs.foodItemUuid,
+        }).toFormGroup({},{name: "foodItemUuid"}).outerHTML;
 
         const selectServingsGroup = new NumberField({
-            label: "Servings",
-            hint: "How many servings are you making?",
+            label: `Servings`,
+            hint: `How many servings are you making?`,
             required: true,
             min: 1,
             integer: true,
             positive: true,
-            initial: prevArgs.servings,
+            initial: prevArgs.servings ?? 1,
         }).toFormGroup({},{name: "servings"}).outerHTML;
 
-        const content = selectGroupFood+selectGroupSpice+selectServingsGroup;
+        const selectBaseMealGroup = new StringField({
+            label: "Select Meal Image (optional)",
+            hint: "This determines the image shown in the chat message.",
+            choices: Object.entries(this.allMealItemImagePaths).reduce((acc, [k,v]) => {
+                acc[k] = k;
+                return acc;
+            }, {}),
+            required: false,
+            initial: prevArgs.baseMealName,
+        }).toFormGroup({},{name: "baseMealName"}).outerHTML;
+
+        const alternateMealNameGroup = new StringField({
+            label: "Rename your dish (optional)",
+            hint: "Renaming your meal will override the name of the selected base meal but keep the image.",
+            required: false,
+            initial: prevArgs.alternateMealName,
+        }).toFormGroup({},{name: "alternateMealName"}).outerHTML;
+
+        const optionalMealDescriptionGroup = new StringField({
+            label: "Meal Description (optional)",
+            initial: prevArgs.mealDescription ?? "",
+            required: false,
+        }).toFormGroup({},{name: "mealDescription"}).outerHTML;
+
+        const selectGroupSpice = new StringField({
+            label: "Select Spice",
+            hint: `You can select one spice to flavour all ${this.isMeal ? "meals" : "snacks"}.`,
+            choices: this.spiceItems.reduce((acc, curr) => {
+                acc[curr.id] = `${curr.name} (${curr.system.quantity})`;
+                return acc;
+            }, {none: "None"}),
+            required: true,
+            initial: prevArgs.spiceId,
+        }).toFormGroup({},{name: "spiceId"}).outerHTML;
+
+        const content = selectRestTypeGroup + selectFoodItemGroup + selectServingsGroup + selectBaseMealGroup + alternateMealNameGroup + optionalMealDescriptionGroup + selectGroupSpice;
 
         return await DialogV2.prompt({
             window: {
-                title: "Chef Feat",
+                title: this.chefFeatItem.name,
             },
             position: {
                 width: "auto",
                 height: "auto",
             },
             content,
-            modal: true,
+            modal: false,
             rejectClose: false,
             ok: {
                 label: "Cook",
@@ -199,14 +264,15 @@ class Cooking {
      * @returns {Promise<Roll>} - The evaluated roll instance.
      */
     async getRoll() {
-        return await new Roll(Cooking.chefFeatFormulas[this.isMeal ? "meal" : "snack"].formula, this.chefFeatItem.getRollData()).evaluate();
+        return await new Roll(Cooking.chefFeatFormulas[this.restType].formula, this.chefFeatItem.getRollData()).evaluate();
     }
-    
+
     /**
-     * Consumes the chosen ingredients.
+     * Consumes a number of food items equal to the number of servings.
+     * If a spice was chosen, also consumes a number of the chosen spice item equal to the number of servings.
      */
     async consumeIngredients() {
-        if(this.chosenFood) await TaliaUtils.Helpers.consumeItem(this.chosenFood, this.chosenServings, 1, true);
+        if(this.chosenFoodItem) await TaliaUtils.Helpers.consumeItem(this.chosenFoodItem, this.chosenServings, 1, true);
         if(this.chosenSpice) await TaliaUtils.Helpers.consumeItem(this.chosenSpice, this.chosenServings, 1, true);
     }
 
@@ -216,15 +282,16 @@ class Cooking {
     async createRequestor() {
         const roll = await this.getRoll();
 
+        const title = this.chosenSpice ? `${this.chosenMealName} with ${this.chosenSpice.name}` : this.chosenMealName;
+
         const description = `
-            <p>${this.actor.name} has prepared <strong>${this.chosenServings} servings</strong> of <strong>${this.chosenFood.name}</strong>${this.chosenSpice ? `, spiced with the finest <strong>${this.chosenSpice.name}</strong>`: ""}.</p>
-            <p>${this.isMeal ? `Grants ${roll.total} temporary hit points.` : `Restores ${roll.total} missing hit points.`}</p>
-        `;
-        const buttonLabel = this.isMeal ? `Eat to gain ${roll.total} temporary hit points.` : `Eat to restore ${roll.total} missing hit points.`;
+            <p>${this.actor.name} has prepared <strong>${this.chosenServings} ${this.chosenServings === 1 ? "serving" : "servings"}</strong> of <strong>${this.chosenMealName}</strong>${this.chosenSpice ? `, spiced with <strong>${this.chosenSpice.name}</strong>`: ""}.</p>
+            <div style="font-style: italic;">${this.chosenMealDescription}</div>`;
+        const buttonLabel = this.restType === "longRest" ? `Eat to gain ${roll.total} temporary hit points.` : `Eat to restore ${roll.total} missing hit points.`;
 
         await Requestor.request({
-            title: "Let the feasting begin!",
-            img: false,
+            title,
+            img: this.chosenBaseMealName ? this.allMealItemImagePaths[this.chosenBaseMealName] : this.chosenFoodItem.img,
             description,
             speaker: ChatMessage.implementation.getSpeaker({actor: this.actor}),
             messageOptions: {
@@ -234,11 +301,11 @@ class Cooking {
                 label: buttonLabel,
                 scope: {
                     rollTotal: roll.total,
-                    isMeal: this.isMeal,
+                    restType: this.restType,
                     effectData: this.chosenSpice ? Cooking.getSpiceEffectData(this.chosenSpice) : null,
                 },
                 command: async function() {
-                    if(isMeal) await actor.applyTempHP(rollTotal);
+                    if(restType === "longRest") await actor.applyTempHP(rollTotal);
                     else await actor.applyDamage([{value: rollTotal, type: "healing"}]);
 
                     if(effectData) {
@@ -254,6 +321,36 @@ class Cooking {
     }
 
     /**
+     * Sets this.allMealItemImagePaths: An object with the meal names in human readable form as keys and their respective image paths as values.
+     * @param {string} [path] A path to the folder with the images. Root = "data". Will default to "TaliaCampaignCustomAssets/c_Icons/MealItems".
+     * @returns {Promise<this>}   
+     */
+    async loadAllMealItemImagePaths(path = "") {
+        const defaultPath = "TaliaCampaignCustomAssets/c_Icons/MealItems";
+        const imagePaths = (await FilePicker.browse("data", path || defaultPath)).files;
+
+        const allMealItemImages = imagePaths.reduce((acc, curr) => {
+            const imageName = decodeURIComponent(curr.split("/").pop())
+                .replace(/\.[^.]+$/, '');
+            acc[imageName] = curr;
+            return acc;
+        }, {});
+        this.allMealItemImagePaths = allMealItemImages;
+        return this;
+    }
+
+    /**
+     * @returns {boolean} True if the class has been properly initialised and images have been loaded successfully.
+     */
+    get isInitialised() {
+        if(!this.allMealItemImagePaths) {
+            ui.notifications.warn(`Invalid path for base images.`);
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * @returns {Item5e[]}  Array of loot items with type "spice"
      */
     get spiceItems() {
@@ -261,16 +358,39 @@ class Cooking {
     }
 
     /**
-     * @returns {Item5e[]}  Array of loot items with subtype "snack"
-     */
-    get snackItems() {
-        return this.actor.itemTypes.loot.filter( i => i.system?.type?.subtype === "snack");
-    }
-
-    /**
      * @returns {Item5e[]}  Array of loot items with subtype "meal"
      */
     get mealItems() {
         return this.actor.itemTypes.loot.filter( i => i.system?.type?.subtype === "meal");
+    }
+
+    /**
+     * @returns {Item5e[]} Array of all loot items with type "food" on the actor.
+     */
+    get foodItems() {
+        return this.actor.itemTypes.loot.filter(i => i.system?.type?.value === "food");
+    }
+
+    /**
+     * @returns {Set<Item5e>}   Set of all container items on the actor which contain food type items.
+     */
+    get foodContainers() {
+        return new Set(this.foodItems
+            .filter(i => i.system.container)
+            .map(i => this.actor.items.get(i.system.container)));
+    }
+
+    /**
+     * Checks if a dialog with the same title as the chef feat item is currently open.
+     * 
+     * @returns {boolean} 
+     * - `true` if a dialog with the matching title exists in the foundry applications instances
+     * - `false` if no such dialog is currently open
+     */
+    get isDialogOpen() {
+        for(let v of foundry.applications.instances.values()) {
+            if(v.options?.window?.title === this.chefFeatItem.name) return true;
+        }
+        return false;
     }
 }
