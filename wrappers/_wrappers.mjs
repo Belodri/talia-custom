@@ -1,5 +1,6 @@
 import { MODULE } from "../scripts/constants.mjs";
 import restrictMovement from "./restrictMovement.mjs";
+import rerollInitiative from "./rerollInitiative.mjs";
 
 export function registerWrappers() {
     libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", wrap_Actor_getRollData , "WRAPPER");
@@ -7,6 +8,7 @@ export function registerWrappers() {
     libWrapper.register(MODULE.ID, 'dnd5e.canvas.AbilityTemplate.prototype._finishPlacement', wrap_AbilityTemplate_finishPlacement, "WRAPPER");
     libWrapper.register(MODULE.ID, "dnd5e.applications.components.DamageApplicationElement.prototype.getTargetOptions", wrap_DamageApplicationElement_getTargetOptions, "WRAPPER");
     restrictMovement.registerWrapper();
+    rerollInitiative.registerWrapper();
 }
 
 function wrap_Actor_getRollData(wrapped, ...args) {
