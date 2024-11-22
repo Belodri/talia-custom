@@ -3,7 +3,32 @@
 <details>
 <summary><h2>Changed</h2></summary>
 
-- Chef Feat UI/UX improvements (no mechanical changes)
+-   <details>
+    <summary>Chef Feat</summary>
+
+    - Various UI/UX improvements
+    - Mechanical changes:
+    
+    from
+    > Time spent mastering the culinary arts has paid off, granting you the following benefits:
+    > - Increase your Dexterity, Constitution, or Wisdom by 1, to a maximum of 20.
+    > - You gain proficiency with cook's utensils if you don't already have it.
+    > - As part of a short rest, you can cook a quick snack for your party, provided you have ingredients and cook's utensils on hand. Doing so takes one snack item for each party member and lets everyone in your party regain hit points equal to 1d8 * your proficiency bonus.
+    > - When you finish a long rest and at the cost of one meal item per party member, you can make a meal for your party that gives them temporary hit points equal to 2d4 * your proficiency bonus.
+
+    to
+    > Time spent mastering the culinary arts has paid off, increasing your Dexterity score by 1, to a maximum of 20, and granting you proficiency with cook's utensils if you didn't already have it.
+    > 
+    > If you have ingredients and cook's utensils on hand, you can prepare up to 10 meals during one hour of dedicated work or as part of a short or long rest. Each meal requires one food and, optionally, one spice.
+    > 
+    > When preparing a meal, you can choose to enhance either its restorative or preventative properties, granting it one of the following benefits:
+    > - Restorative. The creature regains a number of hit points equal to 1d8 * your proficiency bonus.
+    > - Preventative. The creature gains a number of temporary hit points equal to 2d4 * your proficiency bonus.
+    > 
+    > Meals retain these enhanced properties only while fresh, meaning they must be consumed within 30 minutes of preparation. A creature that consumes a fresh meal gains the selected benefit as well as the effect of any spice used to flavor the meal.
+    > 
+    > A creature can benefit from only one enhanced meal per rest period.
+    </details>
 </details>
 
 <details>

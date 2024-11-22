@@ -32,27 +32,32 @@ class Cooking {
     /*----------------------------------------------------------------------------
                     Static Properties            
     ----------------------------------------------------------------------------*/
-    static chefFeatFormulas = {
-        shortRest: {
-            label: "Short Rest",
+
+    static types = {
+        restorative: {
+            label: "Restorative",
             formula: "1d8 * @prof",
-            type: "healing",
+            action: "healing",
+            name: "restorative"
         },
-        longRest: {
-            label: "Long Rest",
+        preventative: {
+            label: "Preventative",
             formula: "2d4 * @prof",
-            type: "temphp",
+            action: "temphp",
+            name: "preventative"
         }
-    };
+    }
+
     /*----------------------------------------------------------------------------
                     Static Methods            
     ----------------------------------------------------------------------------*/
     /**
      * 
      * @param {Item5e} item
+     * @param {string} type     "preventative" or "restorative"
      */
-    static async itemButtonMacro(item) {
-        const cooking = await new Cooking(item).loadAllMealItemImagePaths();
+    static async itemButtonMacro(item, type) {
+        const cooking = await new Cooking(item, type).loadAllMealItemImagePaths();
         if(!cooking.isInitialised) return;
         // open food containers
         for(let container of cooking.foodContainers) {
@@ -91,9 +96,6 @@ class Cooking {
     /** @type {string | null} */
     chosenMealDescription = "";
 
-    /** @type {string | null} The chosen rest type. */
-    restType = null;    //default, can be changed later
-
     /** @type {number} The chosen number of servings. Defaults to 0. */
     chosenServings = 0;
 
@@ -114,9 +116,11 @@ class Cooking {
     /*----------------------------------------------------------------------------
                     Instance Methods            
     ----------------------------------------------------------------------------*/
-    constructor(item) {
+    constructor(item, type) {
         this.chefFeatItem = item;
         this.actor = item.actor;
+        if(!Object.keys(Cooking.types).includes(type)) throw new Error(`Invalid type: ${type}`);
+        this.type = Cooking.types[type];
     }
 
     /**
@@ -125,7 +129,7 @@ class Cooking {
      * @returns {Promise<this>}
      */
     async chooseParams(prevArgs = {}) {
-        if(this.isDialogOpen()) return this;    //cancel if a dialog is already open
+        if(this.isDialogOpen) return this;    //cancel if a dialog is already open
 
         const chosen = await this._choicesDialog(prevArgs);
         if(!chosen) return this;    //cancel
@@ -133,7 +137,7 @@ class Cooking {
         const spiceItem = chosen.spiceId === "none" ? null : this.actor.items.get(chosen.spiceId);
 
         const foodItem = chosen.foodItemUuid ? fromUuidSync(chosen.foodItemUuid) : null;
-        if(!foodItem) {
+        if(!foodItem || !foodItem.type === "loot" || !foodItem.system.type?.value === "food") {
             ui.notifications.warn(`You need to choose a food item.`);
             return await this.chooseParams(chosen);
         }
@@ -146,14 +150,13 @@ class Cooking {
             return await this.chooseParams(chosen);
         }
 
-        this.restType = chosen.restType;        //required
         this.chosenServings = chosen.servings ?? 0;
         this.chosenBaseMealName = chosen.baseMealName ?? null;
         this.chosenMealName = chosen.alternateMealName || chosen.baseMealName || foodItem.name;
 
         /*
             cases:
-            - desc & image   => desc
+            - desc & image          => desc
             - desc & no image       => desc
             - no desc & image       => blank
             - no dec & no image     => item desc
@@ -175,17 +178,6 @@ class Cooking {
         const {DialogV2} = foundry.applications.api;
         const {NumberField, StringField, DocumentUUIDField} = foundry.data.fields;
 
-        const selectRestTypeGroup = new StringField({
-            label: "Rest Duration",
-            hint: "Select either short or long rest.",
-            choices: Object.entries(Cooking.chefFeatFormulas).reduce((acc, [k, v]) => {
-                acc[k] = v.label;
-                return acc;
-            }, {}),
-            required: true,
-            initial: prevArgs.restType,
-        }).toFormGroup({},{name: "restType"}).outerHTML;
-
         const selectFoodItemGroup = new DocumentUUIDField({
             type: "Item",
             embedded: true,
@@ -205,8 +197,7 @@ class Cooking {
         }).toFormGroup({},{name: "servings"}).outerHTML;
 
         const selectBaseMealGroup = new StringField({
-            label: "Select Meal Image (optional)",
-            hint: "This determines the image shown in the chat message.",
+            label: "Change Meal Image (optional)",
             choices: Object.entries(this.allMealItemImagePaths).reduce((acc, [k,v]) => {
                 acc[k] = k;
                 return acc;
@@ -216,21 +207,19 @@ class Cooking {
         }).toFormGroup({},{name: "baseMealName"}).outerHTML;
 
         const alternateMealNameGroup = new StringField({
-            label: "Rename your dish (optional)",
-            hint: "Renaming your meal will override the name of the selected base meal but keep the image.",
+            label: "Change Meal Name (optional)",
             required: false,
-            initial: prevArgs.alternateMealName,
+            initial: prevArgs.alternateMealName ?? "",
         }).toFormGroup({},{name: "alternateMealName"}).outerHTML;
 
         const optionalMealDescriptionGroup = new StringField({
-            label: "Meal Description (optional)",
+            label: "Change Meal Description (optional)",
             initial: prevArgs.mealDescription ?? "",
             required: false,
         }).toFormGroup({},{name: "mealDescription"}).outerHTML;
 
         const selectGroupSpice = new StringField({
             label: "Select Spice",
-            hint: `You can select one spice to flavour all ${this.isMeal ? "meals" : "snacks"}.`,
             choices: this.spiceItems.reduce((acc, curr) => {
                 acc[curr.id] = `${curr.name} (${curr.system.quantity})`;
                 return acc;
@@ -239,21 +228,21 @@ class Cooking {
             initial: prevArgs.spiceId,
         }).toFormGroup({},{name: "spiceId"}).outerHTML;
 
-        const content = selectRestTypeGroup + selectFoodItemGroup + selectServingsGroup + selectBaseMealGroup + alternateMealNameGroup + optionalMealDescriptionGroup + selectGroupSpice;
+        const content = selectFoodItemGroup + selectServingsGroup + selectBaseMealGroup + alternateMealNameGroup + optionalMealDescriptionGroup + selectGroupSpice;
 
         return await DialogV2.prompt({
             window: {
                 title: this.chefFeatItem.name,
             },
             position: {
-                width: "auto",
+                width: 800,
                 height: "auto",
             },
             content,
             modal: false,
             rejectClose: false,
             ok: {
-                label: "Cook",
+                label: `Cook ${this.type.label} Meal`,
                 callback: (event, button) => new FormDataExtended(button.form).object,
             }
         });
@@ -264,7 +253,7 @@ class Cooking {
      * @returns {Promise<Roll>} - The evaluated roll instance.
      */
     async getRoll() {
-        return await new Roll(Cooking.chefFeatFormulas[this.restType].formula, this.chefFeatItem.getRollData()).evaluate();
+        return await new Roll(this.type.formula, this.chefFeatItem.getRollData()).evaluate();
     }
 
     /**
@@ -287,7 +276,6 @@ class Cooking {
         const description = `
             <p>${this.actor.name} has prepared <strong>${this.chosenServings} ${this.chosenServings === 1 ? "serving" : "servings"}</strong> of <strong>${this.chosenMealName}</strong>${this.chosenSpice ? `, spiced with <strong>${this.chosenSpice.name}</strong>`: ""}.</p>
             <div style="font-style: italic;">${this.chosenMealDescription}</div>`;
-        const buttonLabel = this.restType === "longRest" ? `Eat to gain ${roll.total} temporary hit points.` : `Eat to restore ${roll.total} missing hit points.`;
 
         await Requestor.request({
             title,
@@ -298,15 +286,14 @@ class Cooking {
                 rolls: [roll]
             },
             buttonData: [{
-                label: buttonLabel,
+                label: this.type.action === "healing" ? `Eat to restore ${roll.total} missing hit points.` : `Eat to gain ${roll.total} temporary hit points.`,
                 scope: {
                     rollTotal: roll.total,
-                    restType: this.restType,
+                    action: this.type.action,
                     effectData: this.chosenSpice ? Cooking.getSpiceEffectData(this.chosenSpice) : null,
                 },
                 command: async function() {
-                    if(restType === "longRest") await actor.applyTempHP(rollTotal);
-                    else await actor.applyDamage([{value: rollTotal, type: "healing"}]);
+                    await actor.applyDamage([{value: rollTotal, type: action}]);
 
                     if(effectData) {
                         const prevEffects = actor.appliedEffects.filter( e => e.flags?.["talia-custom"]?.isSpiceEffect === true);
