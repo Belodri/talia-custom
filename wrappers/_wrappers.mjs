@@ -7,6 +7,7 @@ export function registerWrappers() {
     libWrapper.register(MODULE.ID, 'dnd5e.applications.actor.ActorSheet5e.prototype.maximize', wrap_ActorSheet_maximize, "MIXED");
     libWrapper.register(MODULE.ID, 'dnd5e.canvas.AbilityTemplate.prototype._finishPlacement', wrap_AbilityTemplate_finishPlacement, "WRAPPER");
     libWrapper.register(MODULE.ID, "dnd5e.applications.components.DamageApplicationElement.prototype.getTargetOptions", wrap_DamageApplicationElement_getTargetOptions, "WRAPPER");
+    libWrapper.register(MODULE.ID, "CONFIG.Dice.D20Roll.prototype.configureModifiers", wrap_CONFIG_Dice_D20Roll_prototype_configureModifiers, "WRAPPER");
     restrictMovement.registerWrapper();
 }
 
@@ -42,4 +43,13 @@ function wrap_DamageApplicationElement_getTargetOptions(wrapped, ...args) {
     const ret = wrapped(...args);
     ret.originatingMessageId = this.chatMessage?.id;
     return ret;
+}
+
+/** Adds a hook to configure the dice modifiers of a D20Roll. The hook can mutate the roll! */
+function wrap_CONFIG_Dice_D20Roll_prototype_configureModifiers(wrapped, ...args) {
+    wrapped(...args);
+    Hooks.callAll("talia_postConfigureD20Modifiers", this);
+
+    // Re-compile the underlying formula
+    this._formula = this.constructor.getFormula(this.terms);
 }
