@@ -5,7 +5,7 @@ export default {
     }
 }
 
-//return result or false
+/** wraps canDrag to disable token dragging if needed; returns boolean */
 function wrap_Token_prototype__canDrag(wrapped, ...args) {
     let result = wrapped(...args);
     return allowMovement(this.document) ? result: false;
@@ -28,6 +28,7 @@ function wrap_Token_prototype__canDrag(wrapped, ...args) {
  */
 function allowMovement(token) {
     //always allow movement for GM or undefined token
+    // eslint-disable-next-line eqeqeq
     if(game.user.isGM || token == undefined) return true;       
 
     //always allow movement when there is no combat or it hasn't started yet
@@ -36,6 +37,8 @@ function allowMovement(token) {
 
     // always allow movement of the current combatant
     let entry = curCombat.combatant;
+
+    // eslint-disable-next-line eqeqeq
     if(entry.tokenId == token.id) return true;
 
     // always allow vehicle movement in combat

@@ -176,12 +176,15 @@ export class ScribingUI extends FormApplication {
             return acc;
         }, {});
         return choices;
+        /*
         const choicesNoPact = {
             1: {label: "1st Level", value: 3, max: 4},
             2: {label: "2nd Level", value: 3, max: 3},
             3: {label: "3rd Level", value: 0, max: 3},
         }
+        */
     }
+
     /**
      * @returns {number} the highest spell slot the actor has access to overall, or 0 if access to no spell slots
      */
@@ -212,7 +215,7 @@ export class ScribingUI extends FormApplication {
     getGemstonesSorted() {
         const gemstoneItems = this.actor.items.filter(i => i.type === "loot" && i.system?.type?.value === "gem");
         // sort by price highest to lowest
-        gemstoneItems.sort((a,b) => b.system.price?.value - a.system.price?.value);
+        gemstoneItems.sort((a,b) => ( b.system.price?.value ?? 0 ) - ( a.system.price?.value ?? 0 ));
         return gemstoneItems;
     }
 

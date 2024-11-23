@@ -56,7 +56,7 @@ class WildMagic {
         if(item.type === "spell" || (item.type === "consumable" && item.system.type.value === "scroll"))
 
         // NEVER allow ["spellGem", "potion", "poison", "food"]
-        if(item.type === "consumable" && ["spellGem", "potion", "poison", "food"].includes(item.system.type.value)) return false;
+            if(item.type === "consumable" && ["spellGem", "potion", "poison", "food"].includes(item.system.type.value)) return false;
 
         // NEVER allow non-wild items if it's a player character
         if(item.actor.type === "character" && !hasWildProp) return false;

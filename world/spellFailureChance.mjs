@@ -12,6 +12,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function arcaneSpellFailure(item, config, options) {
     if(options.flags?.dnd5e?.use?.type !== "spell") return;     //only allow spells
     if(!item.system.properties?.has("somatic")) return;         //only allow spells with somatic components
@@ -23,7 +26,7 @@ async function arcaneSpellFailure(item, config, options) {
     //check the base type for the spell failure chance to apply for each item and sum them up
     const failChanceSumRaw = spellFailItems.reduce((acc, curr) => acc += curr.flags?.["talia-custom"]?.spellFailChance ?? 0, 0);
     //makes sure the chance is a multiple of 5, round up  to the nearest multiple of 5 if needed
-    const spellFailChance = failChanceSumRaw % 5 === 0 ? failChanceSumRaw : failChanceSumRaw + (5 - failChanceSumRaw % 5);
+    const spellFailChance = failChanceSumRaw % 5 === 0 ? failChanceSumRaw : failChanceSumRaw + (5 - ( failChanceSumRaw % 5 ));
 
     const roll = await dnd5e.dice.d20Roll({
         targetValue: spellFailChance / 5, 

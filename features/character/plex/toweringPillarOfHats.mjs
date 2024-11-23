@@ -1,13 +1,16 @@
 export default {
     register() {
         Hooks.on("updateItem", (item, change) => {
-            if(item.system?.type?.value === "hat" && typeof(change.system?.equipped) === "boolean") {
+            if(item.system?.type?.value === "hat" && typeof (change.system?.equipped) === "boolean") {
                 updateEffect(item.actor);
             }
         });
     }
 }
 
+/**
+ *
+ */
 function updateEffect(actor) {
     const effect = actor.appliedEffects.find(e => e.name === "Towering Pillar of Hats");
     if(!effect) return;

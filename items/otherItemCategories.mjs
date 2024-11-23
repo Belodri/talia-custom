@@ -4,6 +4,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 function registerLootCategories() {
     CONFIG.DND5E.lootTypes.livestock = {label: "Livestock"};
     CONFIG.DND5E.lootTypes.wood = {label: "Logs and Lumber"};

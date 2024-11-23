@@ -6,6 +6,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function breathOfTheDragonDialog(item) {
     const kiItem = item.actor.items.get(item.system.consume.target);
     

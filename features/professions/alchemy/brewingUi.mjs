@@ -1,7 +1,6 @@
 import { MODULE } from "../../../scripts/constants.mjs";
 
 
-
 export class AlchemyBrewingUI extends dnd5e.applications.DialogMixin(FormApplication) {
     constructor(actor, options = {}) {
         const object = {};
@@ -61,6 +60,7 @@ export class AlchemyBrewingUI extends dnd5e.applications.DialogMixin(FormApplica
         return data;
 
         //each item looks like this:
+        /*
         const items = [
             {
                 name: "Potion of Healing",
@@ -69,6 +69,7 @@ export class AlchemyBrewingUI extends dnd5e.applications.DialogMixin(FormApplica
                 recipeKey: "potionOfHealing"
             }
         ];
+        */
     }
 
     /** @override */

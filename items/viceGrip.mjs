@@ -7,6 +7,9 @@ export default {
 }
 
 //removes the attack roll from the card
+/**
+ *
+ */
 async function viceGrip(item) {
     const msg = await item.use({},{skipItemMacro: true, createMessage: false});
 

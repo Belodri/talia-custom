@@ -70,7 +70,7 @@ class Cooking {
     }
 
     /**
-     * @returns {Object | undefined} Active Effect data for a given spice item. 
+     * @returns {object | undefined} Active Effect data for a given spice item. 
      */
     static getSpiceEffectData(spiceItem) {
         const effect = game.dfreds.effectInterface.findEffect({effectName: spiceItem.name});
@@ -111,8 +111,9 @@ class Cooking {
     /** @type {Item5e | null} The chosen food item or null if none chosen.*/
     chosenFoodItem = null;
 
-    /** @type {object<string, string> | null} An object with the meal names in human readable form as keys and their respective image paths as values. */
+    /** @type {{[key: string]: string} | null} An object with the meal names in human readable form as keys and their respective image paths as values. */
     allMealItemImagePaths = null;
+
     /*----------------------------------------------------------------------------
                     Instance Methods            
     ----------------------------------------------------------------------------*/
@@ -125,7 +126,7 @@ class Cooking {
 
     /**
      * Lets the user choose food, spice and number of servings through a dialog.
-     * @param {Object} [prevArgs]           The results of the previous iteration.
+     * @param {object} [prevArgs]           The results of the previous iteration.
      * @returns {Promise<this>}
      */
     async chooseParams(prevArgs = {}) {
@@ -162,8 +163,8 @@ class Cooking {
             - no dec & no image     => item desc
         */
         this.chosenMealDescription = (!chosen.mealDescription && !chosen.baseMealName) ? foodItem.system.description.value :        //description.value is an html string!
-                                        (!chosen.mealDescription && chosen.baseMealName) ? "" :
-                                        `<p>${chosen.mealDescription}</p>`
+            (!chosen.mealDescription && chosen.baseMealName) ? "" :
+                `<p>${chosen.mealDescription}</p>`
         this.chosenSpice = spiceItem;       //required
         this.chosenFoodItem = foodItem;     //required
         return this;
@@ -171,8 +172,8 @@ class Cooking {
 
     /**
      * Creates the dialog and let's the user choose options.
-     * @param {Object} [prevArgs]           The results of the previous iteration.
-     * @returns {Promise<Object | null>}    The results of the dialog. Null if cancelled.
+     * @param {object} [prevArgs]           The results of the previous iteration.
+     * @returns {Promise<object | null>}    The results of the dialog. Null if cancelled.
      */
     async _choicesDialog(prevArgs) {
         const {DialogV2} = foundry.applications.api;

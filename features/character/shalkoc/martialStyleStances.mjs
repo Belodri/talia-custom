@@ -14,6 +14,9 @@ export default {
     Item macro for feature "Shifting Stances"
     await TaliaCustom.activateMartialStyleStance(item);
  */
+/**
+ *
+ */
 async function activateMartialStyleStance(item) {
     const actor = item.actor;
     const knownStances = actor.itemTypes.feat.filter(feat => feat.system?.type?.subtype === "martialStyleStance");

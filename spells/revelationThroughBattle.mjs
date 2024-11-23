@@ -6,6 +6,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function revelationThroughBattle(item, deleteAfterMS) {
     const target = game.user.targets?.first();
     if(!target) {

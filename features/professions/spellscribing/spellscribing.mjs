@@ -48,7 +48,6 @@
 */
 
 
-
 /*  --- TODO ---
 
     - excemption to WMS
@@ -94,7 +93,7 @@ export {
 }
 
 /**
- * @typedef {Object} chosenArgs 
+ * @typedef {object} chosenArgs 
  * @property {Item5e} chosenSpell
  * @property {Item5e} chosenGem
  * @property {number} selectedSpellSlotLevel
@@ -102,10 +101,12 @@ export {
  * @property {string} [triggerConditions]
  */
 
+/**
+ *
+ */
 function showUI(actor) {
     new ScribingUI(actor).render(true);
 }
-
 
 
 /**
@@ -123,8 +124,6 @@ async function spellscribing(actor, chosenArgs) {
     const dc = calculateDC(chosenArgs.chosenGem, chosenArgs.selectedSpellSlotLevel);
 
 
-
-
     if(!await inscriptionCheckSuccessful(actor, dc)) {
         causeSurges(actor, chosenArgs);
         return "surge";
@@ -140,6 +139,9 @@ async function spellscribing(actor, chosenArgs) {
     return true;
 }
 
+/**
+ *
+ */
 async function consumeSpellSlot(chosenArgs) {
     if(chosenArgs.selectedSpellSlotLevel === 0) return;
 
@@ -149,6 +151,9 @@ async function consumeSpellSlot(chosenArgs) {
 }
 
 
+/**
+ *
+ */
 function argsValid(actor, chosenArgs) {
     console.log({
         actor: actor, 
@@ -186,6 +191,9 @@ function argsValid(actor, chosenArgs) {
 }
 
 
+/**
+ *
+ */
 function isValid_spellSlot(actor, chosenArgs) {
     const rollData = actor.getRollData();
     console.log({
@@ -235,6 +243,9 @@ async function causeSurges(actor, chosenArgs) {   //do this later as it requires
     }
 }
 
+/**
+ *
+ */
 async function inscriptionCheckSuccessful(actor, dc) {
     //Inscription Check = Arcana Check + Caster Level + jeweler's tools proficiency bonus (0 if not proficient)
     //don't support multiclassing until it becomes relevant
@@ -307,6 +318,9 @@ async function handleInspirations(actor, dc) {
     }
 }
 
+/**
+ *
+ */
 function calculateDC(chosenGem, selectedSpellSlotLevel) {
     //DC = Material DC + (Spell Slot Level * mult)
     const mult = 7;

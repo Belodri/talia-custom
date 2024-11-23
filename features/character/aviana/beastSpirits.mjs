@@ -47,6 +47,9 @@ const blessingsDatabase = {
     },
 };
 
+/**
+ *
+ */
 async function chooseSpirit(item) {
     const {DialogV2} = foundry.applications.api;
     const {StringField} = foundry.data.fields;
@@ -81,6 +84,9 @@ async function chooseSpirit(item) {
 /*  ItemMacro for items of type "Spirit Beast's Blessing"
 
 */
+/**
+ *
+ */
 async function activateSpirit(actor, chosenSpirit) {
     const rollData = actor.getRollData();
     const barbLevel = rollData.classes?.barbarian?.levels || null;

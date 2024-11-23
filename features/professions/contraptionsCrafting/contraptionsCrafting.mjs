@@ -34,8 +34,8 @@ function openContraptionCrafting(actor, item = {}) {
 class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplication) {
     /**
      * Constructs a dialog window for crafting contraptions.
-     * @param {Object} actor - The actor whose inventory will be used.
-     * @param {Object} options - Additional options for the dialog window.
+     * @param {object} actor - The actor whose inventory will be used.
+     * @param {object} options - Additional options for the dialog window.
      */
     constructor(actor, options) {
         const object = {};
@@ -200,7 +200,7 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
         const id = event.currentTarget.closest(".material").dataset.id;
         const material = this.object.chosenMaterials.get(id);
         if(material.chosenAmount < material.item.system.quantity) {
-            material.chosenAmount ++;
+            material.chosenAmount++;
         } else return;
         return this.render();
     }
@@ -208,7 +208,7 @@ class ContraptionCraftingUI extends dnd5e.applications.DialogMixin(FormApplicati
     _onMinusButton(event) {
         const id = event.currentTarget.closest(".material").dataset.id;
         const material = this.object.chosenMaterials.get(id);
-        material.chosenAmount --;
+        material.chosenAmount--;
         if(material.chosenAmount <= 0) {
             this.object.chosenMaterials.delete(id);
         }

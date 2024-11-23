@@ -6,6 +6,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function skillEmpowerment(item) {
     const targetActor = game.user.targets.first()?.actor;
     const effect = item.effects?.contents[0];
@@ -34,6 +37,9 @@ async function skillEmpowerment(item) {
     return true;
 }
 
+/**
+ *
+ */
 async function chooseSkillDialog(actor) {
     //check skills and tools
 
@@ -42,10 +48,10 @@ async function chooseSkillDialog(actor) {
         ...Object.entries(actor.system.skills).filter(([key, value]) => value.proficient === 1),
         ...Object.entries(actor.system.tools).filter(([key, value]) => value.value === 1)
     ]
-    .reduce((acc, [key, value]) => {
-        const label =  CONFIG.DND5E.skills[key]?.label ?? dnd5e.documents.Trait.keyLabel(`tool:${key}`);
-        return acc += `<option value="${key}">${label}</option>`;
-    }, "");
+        .reduce((acc, [key, value]) => {
+            const label =  CONFIG.DND5E.skills[key]?.label ?? dnd5e.documents.Trait.keyLabel(`tool:${key}`);
+            return acc += `<option value="${key}">${label}</option>`;
+        }, "");
     const content = `<form>
         <div class="form-group">
             <label>Select a skill the target is proficient in.</label>

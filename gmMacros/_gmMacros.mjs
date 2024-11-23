@@ -44,6 +44,5 @@ async function displayGmMacrosChoices() {
         rejectClose: false,
     });
 
-    if(!chosen) return;
-    else return TaliaCustom.GmMacros[chosen.functionName](); 
+    if(chosen) TaliaCustom.GmMacros[chosen.functionName]();
 }

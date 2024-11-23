@@ -120,8 +120,8 @@ export class Adventurer {
      * }
      * ```
      * 
-     * @returns {Object} An object containing the adventurer's attributes with their total and modifier.
-     * @returns {Object.<string, {total: number, mod: number}>} The object maps attribute names (e.g., `brawn`, `cunning`) 
+     * @returns {object} An object containing the adventurer's attributes with their total and modifier.
+     * @returns {{[key: string]: {total: number, mod: number}}} The object maps attribute names (e.g., `brawn`, `cunning`) 
      * to an object containing the total value and the modifier for each attribute.
      */
     get attributes() {

@@ -43,7 +43,7 @@ class RestManager {
     restingActors = [];
 
     /**
-     * @type {Object | null}
+     * @type {object | null}
      * @property {boolean = false} isInstantRest   - Is this rest instant (= no time passing)
      * @property {string} restType                 - One of the keys of CONFIG.DND5E.restTypes
      */
@@ -104,7 +104,7 @@ class RestManager {
 
     /**
      * Rests each actor and passes time.
-     * @returns {Promise<Object[]>} An array of objects containing the results of the rest for each actor.
+     * @returns {Promise<object[]>} An array of objects containing the results of the rest for each actor.
      */
     async _rest() {
         //validate rest
@@ -136,7 +136,7 @@ class RestManager {
      * Rests a single actor.
      * @param {Actor5e} actor 
      * @param {import("../system/dnd5e/dnd5e.mjs").RestConfiguration} config 
-     * @returns {Promise<Object>}   Object containing Actor, Rest Result, and ChatMessage (only for normal rest variant setting).
+     * @returns {Promise<object>}   Object containing Actor, Rest Result, and ChatMessage (only for normal rest variant setting).
      */
     async _restSingleActor(actor, config) {
         let result;
@@ -198,6 +198,9 @@ class RestManager {
         const hdRecRes = actor._getRestHitDiceRecovery();
         ({ updates: hdItemUpdates, actorUpdates: hdActorUpdates, hitDiceRecovered } = hdRecRes);
 
+        /**
+         *
+         */
         async function getItemUsesRecovery(actor, rolls) {
             let recovery = ["sr", "lr", "day"]
             let _updates = [];
@@ -244,23 +247,22 @@ class RestManager {
         } 
 
 
-
         // Figure out the rest of the changes
         foundry.utils.mergeObject(result, {
-        dhd: (result.dhd ?? 0) + hitDiceRecovered,
-        dhp: (result.dhp ?? 0) + hitPointsRecovered,
-        updateData: {
-            ...(hdActorUpdates ?? {}),
-            ...hpActorUpdates,
-            ...actor._getRestResourceRecovery(),
-            ...actor._getRestSpellRecovery()
-        },
-        updateItems: [
-            ...(hdItemUpdates ?? []),
-            ...(await getItemUsesRecovery(actor, rolls))
-        ],
-        longRest: true,
-        newDay
+            dhd: (result.dhd ?? 0) + hitDiceRecovered,
+            dhp: (result.dhp ?? 0) + hitPointsRecovered,
+            updateData: {
+                ...(hdActorUpdates ?? {}),
+                ...hpActorUpdates,
+                ...actor._getRestResourceRecovery(),
+                ...actor._getRestSpellRecovery()
+            },
+            updateItems: [
+                ...(hdItemUpdates ?? []),
+                ...(await getItemUsesRecovery(actor, rolls))
+            ],
+            longRest: true,
+            newDay
         });
         result.rolls = rolls;
 

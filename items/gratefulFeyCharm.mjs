@@ -14,6 +14,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function gratefulFeyCharm(item) {
     const damageTypeKeys = Object.keys(CONFIG.DND5E.damageTypes);
     const choice = await userChosenTypes(damageTypeKeys);

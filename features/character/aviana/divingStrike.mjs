@@ -13,66 +13,73 @@ const ChatButtons_DivingStrike = {
 }
 
 
-
-
+/**
+ *
+ */
 async function startBorderSequence(token, maxJumpDistInFt, minSpacingInFt) {
     const ftInGrid = canvas.scene.grid.distance;
     const tWidthInGU = Math.max(1, token.document.width);   //token width in GU; minimum of 1;
-    const minDistInGU = tWidthInGU / 2 + Math.round(minSpacingInFt / ftInGrid);     //measured from token center
-    const maxDistInGU = tWidthInGU / 2 + Math.round(maxJumpDistInFt / ftInGrid);
+    const minDistInGU = ( tWidthInGU / 2 ) + Math.round(minSpacingInFt / ftInGrid);     //measured from token center
+    const maxDistInGU = ( tWidthInGU / 2 )+ Math.round(maxJumpDistInFt / ftInGrid);
 
     return await new Sequence()
-            .effect()
-                .persist()
-                .name("outerBorderEffect")
-                .atLocation(token)
-                .shape("roundedRect", {
-                    name: "outerRectShape",
-                    radius: 0.5,
-                    lineSize: 4,
-                    lineColor: game.user.color.toString(),
-                    gridUnits: true,
-                    fillAlpha: 0.15,
-                    //fillColor: "",
-                    height: 2 * maxDistInGU,
-                    width: 2 * maxDistInGU,
-                    offset: {
-                        x: - maxDistInGU,
-                        y: - maxDistInGU ,
-                        gridUnits: true
-                    }
-                })
-                .loopProperty("shapes.outerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-                .loopProperty("shapes.outerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-            .effect()
-                .persist()
-                .name("innerBorderEffect")
-                .atLocation(token)
-                .shape("roundedRect", {
-                    name: "innerRectShape",
-                    radius: 0.5,
-                    lineSize: 4,
-                    lineColor: game.user.color.toString(),
-                    gridUnits: true,
-                    fillAlpha: 0.3,
-                    fillColor: "#fa2511",
-                    height: 2 * minDistInGU,
-                    width: 2 * minDistInGU,
-                    offset: {
-                        x: - minDistInGU,
-                        y: - minDistInGU,
-                        gridUnits: true
-                    }
-                })
-                .loopProperty("shapes.innerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-                .loopProperty("shapes.innerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-            .play()
+        .effect()
+        .persist()
+        .name("outerBorderEffect")
+        .atLocation(token)
+        .shape("roundedRect", {
+            name: "outerRectShape",
+            radius: 0.5,
+            lineSize: 4,
+            lineColor: game.user.color.toString(),
+            gridUnits: true,
+            fillAlpha: 0.15,
+            //fillColor: "",
+            height: 2 * maxDistInGU,
+            width: 2 * maxDistInGU,
+            offset: {
+                x: -maxDistInGU,
+                y: -maxDistInGU ,
+                gridUnits: true
+            }
+        })
+        .loopProperty("shapes.outerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .loopProperty("shapes.outerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .effect()
+        .persist()
+        .name("innerBorderEffect")
+        .atLocation(token)
+        .shape("roundedRect", {
+            name: "innerRectShape",
+            radius: 0.5,
+            lineSize: 4,
+            lineColor: game.user.color.toString(),
+            gridUnits: true,
+            fillAlpha: 0.3,
+            fillColor: "#fa2511",
+            height: 2 * minDistInGU,
+            width: 2 * minDistInGU,
+            offset: {
+                x: -minDistInGU,
+                y: -minDistInGU,
+                gridUnits: true
+            }
+        })
+        .loopProperty("shapes.innerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .loopProperty("shapes.innerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .play()
 }
 
+/**
+ *
+ */
 async function endBorderSequence() {
     return await Sequencer.EffectManager.endEffects({ name: "*BorderEffect" });
 }
 
+/**
+ *
+ */
 async function getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt) {
     const tWidthInGU = Math.max(1, token.document.width);   //token width in GU; minimum of 1;
 
@@ -100,6 +107,9 @@ async function getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt) {
     return location;
 }
 
+/**
+ *
+ */
 async function updateBabonus(item, pointA, pointB) {
     //calculate damage
     const bonusDamageDiceSize = "d6";
@@ -118,6 +128,9 @@ async function updateBabonus(item, pointA, pointB) {
     return ui.notifications.info(`Your ${path.distance}ft leap adds ${damageDiceString} damage to the attack.`);
 }
 
+/**
+ *
+ */
 async function jump(token, item) {
     const maxJumpDistInFt = TaliaCustom.Other.getJumpDistance(token.actor);
     const minSpacingInFt = 5;
@@ -139,19 +152,22 @@ async function jump(token, item) {
     ]);
 }
 
+/**
+ *
+ */
 function adjustToTokenScale(token, dist) {
     const ftInGrid = canvas.scene.grid.distance;    //almost always = 5
     const tWidth = Math.max(1, token.document.width);    //token width in GU; minimum of 1
 
-    const distInGU =  tWidth / 2 + Math.round(dist / ftInGrid);    //measured from token center
+    const distInGU =  ( tWidth / 2 ) + Math.round(dist / ftInGrid);    //measured from token center
     return {
         distanceInGU: distInGU,
         shape: {
             height: 2 * distInGU,   //border width/height
             width: 2 * distInGU,
             offset: {
-                x: - distInGU,  //border offset
-                y: - distInGU,
+                x: -distInGU,  //border offset
+                y: -distInGU,
                 gridUnits: true
             }
         }
@@ -159,8 +175,9 @@ function adjustToTokenScale(token, dist) {
 }
 
 
-
-
+/**
+ *
+ */
 async function displayRange(token, config = {}) {
     const {
         maxDist = 20,
@@ -170,109 +187,110 @@ async function displayRange(token, config = {}) {
 
     new Sequence()
         .effect()
-            .duration(animDurationInMs)
-            .atLocation(token)
-            .shape("roundedRect", {
-                name: "outerRectShape",
-                radius: 0.5,
-                lineSize: 4,
-                lineColor: game.user.color.toString(),
-                gridUnits: true,
-                fillAlpha: 0.15,
-                //fillColor: "#fc8d83",
-                ...adjustToTokenScale(token, maxDist).shape
-            })
-            .loopProperty("shapes.outerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-            .loopProperty("shapes.outerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .duration(animDurationInMs)
+        .atLocation(token)
+        .shape("roundedRect", {
+            name: "outerRectShape",
+            radius: 0.5,
+            lineSize: 4,
+            lineColor: game.user.color.toString(),
+            gridUnits: true,
+            fillAlpha: 0.15,
+            //fillColor: "#fc8d83",
+            ...adjustToTokenScale(token, maxDist).shape
+        })
+        .loopProperty("shapes.outerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .loopProperty("shapes.outerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
         .effect()
-            .duration(animDurationInMs)
-            .atLocation(token)
-            .shape("roundedRect", {
-                name: "innerRectShape",
-                radius: 0.5,
-                lineSize: 4,
-                lineColor: game.user.color.toString(),
-                gridUnits: true,
-                fillAlpha: 0.3,
-                fillColor: "#fa2511",
-                ...adjustToTokenScale(token, minDist).shape
-            })
-            .loopProperty("shapes.innerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-            .loopProperty("shapes.innerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .duration(animDurationInMs)
+        .atLocation(token)
+        .shape("roundedRect", {
+            name: "innerRectShape",
+            radius: 0.5,
+            lineSize: 4,
+            lineColor: game.user.color.toString(),
+            gridUnits: true,
+            fillAlpha: 0.3,
+            fillColor: "#fa2511",
+            ...adjustToTokenScale(token, minDist).shape
+        })
+        .loopProperty("shapes.innerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
+        .loopProperty("shapes.innerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
         .play()
 }
 
 
-
-
+/**
+ *
+ */
 async function playJumpAnimation(token, position) {
     await new Sequence()
         .canvasPan()
-            .delay(100)
-            .shake({duration: 500, strength: 2, rotation: true, fadeOut:500})
+        .delay(100)
+        .shake({duration: 500, strength: 2, rotation: true, fadeOut:500})
 
         .effect()
-            .file("jb2a.impact.ground_crack.orange.01")
-            .startTime(300)
-            .scale(0.3)
-            .randomRotation()
-            .atLocation(token)
-            .belowTokens()
+        .file("jb2a.impact.ground_crack.orange.01")
+        .startTime(300)
+        .scale(0.3)
+        .randomRotation()
+        .atLocation(token)
+        .belowTokens()
 
         .effect()
-            .file("jb2a.smoke.puff.side.02.white.1")
-            .atLocation(token)
-            .rotateTowards(position)
-            .rotate(180)
-            .belowTokens()
+        .file("jb2a.smoke.puff.side.02.white.1")
+        .atLocation(token)
+        .rotateTowards(position)
+        .rotate(180)
+        .belowTokens()
 
         .animation()
-            .on(token)
-            .opacity(0)
+        .on(token)
+        .opacity(0)
 
         .effect()   //salto
-            .from(token)
-            .scaleOut(3, 1500, {ease: "easeOutQuint"})
-            .fadeOut(800, {ease: "easeOutQuint"})
-            .rotateTowards(position, { rotate: false })
-            .animateProperty("sprite", "position.x", { from: 0, to: 1, duration: 1250, gridUnits: true, ease: "easeOutQuint"})
-            .waitUntilFinished()
+        .from(token)
+        .scaleOut(3, 1500, {ease: "easeOutQuint"})
+        .fadeOut(800, {ease: "easeOutQuint"})
+        .rotateTowards(position, { rotate: false })
+        .animateProperty("sprite", "position.x", { from: 0, to: 1, duration: 1250, gridUnits: true, ease: "easeOutQuint"})
+        .waitUntilFinished()
 
         .animation()
-            .on(token)
-            .teleportTo(position)
-            .snapToGrid()
+        .on(token)
+        .teleportTo(position)
+        .snapToGrid()
 
         .effect()   //queda
-            .from(token)
-            .atLocation(position)
-            .scaleIn(3, 1200, {ease: "easeInCubic"})
-            .fadeIn(600, {ease: "easeInCubic"})
-            .rotateTowards(token, { rotate: false })
-            .animateProperty("sprite", "position.x", { from: 3, to: -0.5, duration: 1250, gridUnits: true, ease: "easeInCubic"})
-            .waitUntilFinished(-50)
+        .from(token)
+        .atLocation(position)
+        .scaleIn(3, 1200, {ease: "easeInCubic"})
+        .fadeIn(600, {ease: "easeInCubic"})
+        .rotateTowards(token, { rotate: false })
+        .animateProperty("sprite", "position.x", { from: 3, to: -0.5, duration: 1250, gridUnits: true, ease: "easeInCubic"})
+        .waitUntilFinished(-50)
 
         .effect()
-            .file("jb2a.smoke.puff.ring.01.white.1")
-            .randomRotation()
-            .atLocation(position)
-            .belowTokens()
+        .file("jb2a.smoke.puff.ring.01.white.1")
+        .randomRotation()
+        .atLocation(position)
+        .belowTokens()
 
         .effect()
-            .file("jb2a.impact.ground_crack.orange.01")
-            .startTime(300)
-            .randomRotation()
-            .atLocation(position)
-            .belowTokens()
+        .file("jb2a.impact.ground_crack.orange.01")
+        .startTime(300)
+        .randomRotation()
+        .atLocation(position)
+        .belowTokens()
 
         .canvasPan()
-            .delay(100)
-            .shake({duration: 1200, strength: 3, rotation: true, fadeOut:500})
+        .delay(100)
+        .shake({duration: 1200, strength: 3, rotation: true, fadeOut:500})
         
         .animation()
-            .delay(50)
-            .on(token)
-            .opacity(1)
+        .delay(50)
+        .on(token)
+        .opacity(1)
             
         .play()
 }

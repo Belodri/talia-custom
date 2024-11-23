@@ -37,14 +37,14 @@ export default {
 
 
 /**
- * @typedef {Object} TaliaDate
+ * @typedef {object} TaliaDate
  * @property {number} day       Day of the month, starting with 0. Total of 30 days in each month.
  * @property {number} month     Month of the year, starting with 0. Total of 12 months in each year.
  * @property {number} year      The year. Game start year is 1497.
  */
 
 /**
- * @typedef {Object} SettlementObject
+ * @typedef {object} SettlementObject
  * @property {string} name                                  The settlement's name
  * @property {TaliaDate} foundingDate                       The founding date in the Talian calender
  * @property {BuildingObject[]} constructedBuildings        An array of building objects that represent constructed buildings.
@@ -62,6 +62,7 @@ class Settlement {
         progress: 0,
         intrigue: 0,
     }
+
     static baseCapacity = 4;
 
     /*----------------------------------------------------------------------------
@@ -284,7 +285,7 @@ class Settlement {
          * @returns {number} The total day count from a base date (day 0, month 0, year 0).
          */
         function convertToDays(date) {
-            return date.year * 360 + date.month * 30 + date.day ?? 0;   
+            return ( date.year * 360 ) + ( date.month * 30 ) + date.day ?? 0;   
         }
 
         const currentDateInDays = convertToDays(this.currentDate);
@@ -308,11 +309,11 @@ class Settlement {
 
 
 /**
- * @typedef {Object} BuildingObject
+ * @typedef {object} BuildingObject
  * @property {string} id                            - The unique identifier for the building (same as the key in `allBuildings`).
  * @property {string} name                          - The name of the building.
  * @property {number} scale                         - The scale of the building, representing its size or impact level.
- * @property {Object} attributes                    - The attributes that this building affects.  
+ * @property {object} attributes                    - The attributes that this building affects.  
  * @property {number} attributes.authority          - How much does this building increase/decrease authority.
  * @property {number} attributes.economy            - How much does this building increase/decrease economy.
  * @property {number} attributes.community          - How much does this building increase/decrease community.
@@ -333,7 +334,7 @@ class Building {
     /**
      * An object of all buildings available in the game.
      * Each key in this object corresponds to the `id` property of its associated `BuildingObject`.
-     * @type {Object<string, BuildingObject>}
+     * @type {{[key: string]: BuildingObject}}
      */
     static allBuildings;
 
@@ -354,7 +355,7 @@ class Building {
 
     /**
      * Creates a Collection of Buildings from an array of building data
-     * @param {BuildingObject[]} buildingsArray - Array of building data objects
+     * @param {BuildingObject[]} buildingObjArray - Array of building data objects
      * @returns {Collection<string, Building>} A Collection of Buildings keyed by their IDs
      */
     static collectionFromArray(buildingObjArray) {
@@ -425,10 +426,10 @@ class Building {
 }
 
 /**
- * @typedef {Object} EffectObject
+ * @typedef {object} EffectObject
  * @property {string} id                    - The unique identifier for the effect (same as the key in `allEffects`).
  * @property {string} name                  - The name of the effect.
- * @property {Object} attributes            - The attributes that this effect affects.  
+ * @property {object} attributes            - The attributes that this effect affects.  
  * @property {number} attributes.authority  - How much does this effect increase/decrease authority.
  * @property {number} attributes.economy    - How much does this effect increase/decrease economy.
  * @property {number} attributes.community  - How much does this effect increase/decrease community.
@@ -447,7 +448,7 @@ class Effect {
     /**
      * An object of all effects available in the game.
      * Each key in this object corresponds to the `id` property of its associated `EffectObject`.
-     * @type {Object<string, EffectObject>}
+     * @type {{[key: string]: EffectObject}}
      */
     static allEffects;
 

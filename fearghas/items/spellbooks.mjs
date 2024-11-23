@@ -27,9 +27,9 @@ export default {
                 // The item is now unequipped
                 !item.system.equipped ||
                 // Or attunement is required and the item is no longer attuned
-                (item.system.attunement === "required" && !item.system.attuned) &&
+                ( (item.system.attunement === "required" && !item.system.attuned) &&
                 // And either the equipped status changed, or the attuned status changed
-                (data.system.equipped !== undefined || data.system.attuned !== undefined)
+                (data.system.equipped !== undefined || data.system.attuned !== undefined) )
             ) {
                 // Remove spells from the actor
                 Spellbooks.removeSpells(item)
@@ -40,7 +40,7 @@ export default {
 
 export class Spellbooks {
     /**
-     * @typedef {Object.<string, string[]>} SpellbookDatabase
+     * @typedef {{[key: string]: string[]}} SpellbookDatabase
      * @property {string[]} "Strength through suffering (of others)" - A list of spells.
      */
 
@@ -79,6 +79,7 @@ export class Spellbooks {
         }
         
     };
+
     static spellItemFlag = `grantedByUuid`;    //the flag to be added to each spell that's being added by a spellbook
 
     /**

@@ -9,6 +9,9 @@ export default {
 //script attached to region placed by the spell
 //called from region behavior, execute script
 
+/**
+ *
+ */
 async function arcaneGateRegionScript(region, scene) {
     if(!region.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)) return;
     const itemUuid = region.getFlag("region-attacher", "itemUuid");
