@@ -21,7 +21,7 @@ export class TaliaCustomAPI {
 
     /**
      * Retrieves the global API object.
-     * @returns {Object} The global API object.
+     * @returns {object} The global API object.
      */
     static get() {
         return globalThis[MODULE.globalThisName];
@@ -30,7 +30,7 @@ export class TaliaCustomAPI {
     /**
      * Adds methods to the global API object. The methods can be nested within objects.
      * Allowed categories are: "none", "ItemMacros", "EffectMacros", "GmMacros", "Macros", "RegionMacros", "Other"
-     * @param {Object} methodsObject - An object containing methods and nested objects with methods to add to the API.
+     * @param {object} methodsObject - An object containing methods and nested objects with methods to add to the API.
      * @param {string} [category="none"] - The category under which to add the methods. 
      *                                     If "none", methods are added to the root of the API object.
      * 

@@ -83,16 +83,16 @@ class Jump {
     static async jumpAnimation(token, targetLocation) {
         new Sequence()
             .animation()
-                .on(token)
-                .moveTowards(targetLocation, { ease: "easeInOutQuint"})
-                .duration(1200)
-                .waitUntilFinished()
-                .snapToGrid(true)
+            .on(token)
+            .moveTowards(targetLocation, { ease: "easeInOutQuint"})
+            .duration(1200)
+            .waitUntilFinished()
+            .snapToGrid(true)
             .effect()
-                .file("jb2a.impact.ground_crack.orange.02")
-                .atLocation(token)
-                .belowTokens()
-                .scale(.5 * token.document.width)
+            .file("jb2a.impact.ground_crack.orange.02")
+            .atLocation(token)
+            .belowTokens()
+            .scale(.5 * token.document.width)
             .play();
     }
 }

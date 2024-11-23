@@ -25,10 +25,13 @@ export default {
     - spell range
 */
 
+/**
+ *
+ */
 async function actorItemsToClipboard() {
     if(!game.user.isGM) return;
 
-    setTimeout(async()=> {
+    setTimeout(async() => {
         const pcNames = ["Aviana Winterwing", "Fearghas MacAllistar", "Plex", "Shalkoc Zornax"];
         const allowedItemTypes = ["consumable", "container", "equipment", "feat", "loot", "spell", "tool", "weapon"];
 
@@ -61,6 +64,7 @@ async function actorItemsToClipboard() {
 
         try {
             await navigator.clipboard.writeText(jsonString);
+            // eslint-disable-next-line no-alert
             alert("JSON copied to clipboard!");
         } catch (err) {
             console.error("Failed to copy: ", err);

@@ -12,6 +12,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function grappleItemMacro(item, actorToken) {
     if(actorToken.actor.effects.find(e => e.name === "Grappling")) {
         ui.notifications.warn("You can only grapple one target at a time.");

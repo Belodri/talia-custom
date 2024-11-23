@@ -10,6 +10,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function feyStepTeleportItemMacro(item) {
     const DIRECTIONS = {
         1: { degree: 270, cardinal: "North" },    
@@ -65,30 +68,33 @@ async function feyStepTeleportItemMacro(item) {
     return await teleportAnimation(token, shiftedPosition);
 }
 
+/**
+ *
+ */
 async function teleportAnimation(token, targetLocation) {
     const animFiles = ["jb2a.misty_step.01.blue", "jb2a.misty_step.02.blue"];
     
     return await new Sequence()
         .animation()
-            .delay(800)
-            .on(token)
-            .fadeOut(200) 
+        .delay(800)
+        .on(token)
+        .fadeOut(200) 
         .effect()
-            .file(animFiles[0])
-            .atLocation(token)
-            .scaleToObject(2)
-            .waitUntilFinished(-2000)
+        .file(animFiles[0])
+        .atLocation(token)
+        .scaleToObject(2)
+        .waitUntilFinished(-2000)
         .animation()
-            .on(token)
-            .teleportTo(targetLocation)
-            .waitUntilFinished()
+        .on(token)
+        .teleportTo(targetLocation)
+        .waitUntilFinished()
         .effect()
-            .file(animFiles[1])
-            .atLocation(token)
-            .scaleToObject(2)
+        .file(animFiles[1])
+        .atLocation(token)
+        .scaleToObject(2)
         .animation()
-            .delay(1400)
-            .on(token)
-            .fadeIn(200)     
-    .play();
+        .delay(1400)
+        .on(token)
+        .fadeIn(200)     
+        .play();
 }

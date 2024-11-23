@@ -65,6 +65,9 @@ Hooks.once("init", () => {
     registerRulePages();
 });
 
+/**
+ *
+ */
 function registerRulePages() {
     //  all of the keys have to be lowercase only for some reason!
     CONFIG.DND5E.rules.legres = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.y7XsmDawHmZdSTTR";

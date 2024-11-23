@@ -1,15 +1,24 @@
 export default {
     register() {
-        Hooks.on("renderChatMessage", (message, [html]) => {
-            html.querySelectorAll("[data-action^='macro-button']").forEach(button => {
-                button.addEventListener("click", macroButtonListener);
-            });
-        });
-
-        Hooks.once("setup", () => {
-            Item.prototype.useWithButtons = useWithButtons;
-        })
+        
+        
     }
+}
+
+
+/**
+ *
+ */
+function registerHooks() {
+    Hooks.on("renderChatMessage", (message, [html]) => {
+        html.querySelectorAll("[data-action^='macro-button']").forEach(button => {
+            button.addEventListener("click", macroButtonListener);
+        });
+    });
+
+    Hooks.once("setup", () => {
+        Item.prototype.useWithButtons = useWithButtons;
+    });
 }
 
 class ChatCardButtonManager {
@@ -32,18 +41,14 @@ class ChatCardButtonManager {
             //figure out how to make this play nice with ItemHookManager
             //maybe integrate it into that...?
             const buttonsData = this.#registered.get(item.name);
-            if(!buttonsData || options.skipItemMacro) {
-
-            }
+            if(!buttonsData || options.skipItemMacro) { /* empty */ }
         });
     }
 }
 
-
-Hooks.on("dnd5e.preUseItem", (item, config, options) => {
-    
-});
-
+/**
+ *
+ */
 async function useWithButtons(args, buttons) {
     if(args[0] && args[0].macroButton !== undefined) {
         await buttons[args[0].macroButton].callback();
@@ -55,16 +60,19 @@ async function useWithButtons(args, buttons) {
     }
 }
 
+/**
+ *
+ */
 async function macroButtonListener(event) {
-	event.preventDefault();
-	const button = event.currentTarget;
-	button.disabled = true;
-	const card = button.closest(".chat-card");
-	const actor = card.dataset.tokenId ?
-		(await fromUuid(card.dataset.tokenId)).actor :
-		game.actors.get(card.dataset.actorId);
+    event.preventDefault();
+    const button = event.currentTarget;
+    button.disabled = true;
+    const card = button.closest(".chat-card");
+    const actor = card.dataset.tokenId ?
+        (await fromUuid(card.dataset.tokenId)).actor :
+        game.actors.get(card.dataset.actorId);
 
-	const item = actor.items.get(card.dataset.itemId)
-	await item.executeMacro({macroButton: parseInt(button.dataset.macroButton)})
-	button.disabled = false
+    const item = actor.items.get(card.dataset.itemId)
+    await item.executeMacro({macroButton: parseInt(button.dataset.macroButton)})
+    button.disabled = false
 }

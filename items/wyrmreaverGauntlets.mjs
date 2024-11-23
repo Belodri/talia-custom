@@ -6,6 +6,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function longRestDialog(actor, result) {
     if(!result.longRest) return;
     //get item

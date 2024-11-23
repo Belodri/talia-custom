@@ -10,6 +10,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 function fixExhaustion() {
     const newExhaustionIconRef = "TaliaCampaignCustomAssets/c_Icons/svg/exhaustion/exhaustion.svg";
     const exhaustionJournalEntryPage = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.Wjki4nD4YAgKCtNl";
@@ -23,6 +26,9 @@ function fixExhaustion() {
     sE.img = newExhaustionIconRef;
 }
 
+/**
+ *
+ */
 function addChangesToStatusEffects() {
     // keys are id and values are changes arrays
     const changesList = {
@@ -121,6 +127,9 @@ function addChangesToStatusEffects() {
 }
 
 
+/**
+ *
+ */
 function addNewStatusEffects() {
     const effectsToAdd = {
         distracted: {

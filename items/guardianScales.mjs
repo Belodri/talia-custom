@@ -19,18 +19,20 @@ export default {
 }
 
 
-
 const allScaleItems = [
-"Guardian Scale of Abjuration",
-"Guardian Scale of Conjuration",
-"Guardian Scale of Divination",
-"Guardian Scale of Enchantment",
-"Guardian Scale of Evocation",
-"Guardian Scale of Illusion",
-"Guardian Scale of Necromancy",
-"Guardian Scale of Transmutation",
+    "Guardian Scale of Abjuration",
+    "Guardian Scale of Conjuration",
+    "Guardian Scale of Divination",
+    "Guardian Scale of Enchantment",
+    "Guardian Scale of Evocation",
+    "Guardian Scale of Illusion",
+    "Guardian Scale of Necromancy",
+    "Guardian Scale of Transmutation",
 ];
 
+/**
+ *
+ */
 async function guardianScalesDelete(item) {
     //if it's a different item, it should just return
     const spellNames = getSpellNames(item.name);
@@ -46,6 +48,9 @@ async function guardianScalesDelete(item) {
 
 }
 
+/**
+ *
+ */
 async function guardianScalesCreate(item) {
     //if it's a different item, it should just return
     const spellNames = getSpellNames(item.name);
@@ -63,7 +68,7 @@ async function guardianScalesCreate(item) {
 
     //alter each spell object
     for(const obj of spellObj) {
-        const isCantrip = obj.system.level === 0 ? true : false;
+        const isCantrip = obj.system.level === 0;
         const changes = {
             flags: {
                 "talia-custom": {
@@ -108,7 +113,9 @@ async function guardianScalesCreate(item) {
 }
 
 
-
+/**
+ *
+ */
 function getSpellNames(itemName) {
     const spellNames = {
         cantrip: "",

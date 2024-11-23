@@ -16,6 +16,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 function preDamageApplyHook(actor, amount, updates, options) {
     const updatesHpValue = updates["system.attributes.hp.value"] ?? 1;
 

@@ -30,8 +30,8 @@ export class Mission {
     }
 
     static MAJOR_ATTRIBUTE_KEYS = ["brawn", "cunning", "spellcraft", "influence"];
-    static RELIABILITY_KEY = "reliability";
 
+    static RELIABILITY_KEY = "reliability";
 
 
     /*----------------------------------------------------------------------------
@@ -51,8 +51,8 @@ export class Mission {
      * Initially set to `null`, and later populated with an object containing roll results.
      * 
      * @type {null | { 
-     *   major: Object<string, RollResult>, 
-     *   reliability: Object<string, RollResult>
+     *   major: {[key: string]: RollResult}, 
+     *   reliability: {[key: string]: RollResult}
      * }}
      */
     missionRolls = null;
@@ -78,8 +78,7 @@ export class Mission {
             this.attributeDCs[k] = dataObject.rawAttributeDCs[k] ?? 
                 (Helpers.getRandomInt(Mission.CONFIG.minDC, Mission.CONFIG.maxDC));
         }
-
-        for(let value of dataObject?.assignedAdventurers) {
+        for(let value of dataObject.assignedAdventurers) {
             const adventurer = new Adventurer(value);
             this._assignedAdventurers.set(adventurer.id, adventurer);
         }
@@ -148,12 +147,12 @@ export class Mission {
         const missionRolls = {
             /** 
              * RollResults for each major attribute, where the keys are attribute names (e.g., "brawn") and values are RollResult objects.
-             * @type {Object<string, RollResult>} 
+             * @type {{[key: string]: RollResult}} 
              */
             major: {},
             /**
              * Reliability RollResults for each adventurer, where the keys are adventurer IDs and values are RollResult objects. 
-             * @type {Object<string, RollResult>} 
+             * @type {{[key: string]: RollResult}} 
              */
             reliability: {},
         };

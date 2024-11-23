@@ -92,13 +92,13 @@ const INGREDIENTS = {
     }
 }
 /**
- * @typedef {Object} Ingredient
+ * @typedef {object} Ingredient
  * @property {string} name - The name of the ingredient.
  * @property {number} quantity - The quantity of the ingredient required.
  */
 
 /**
- * @typedef {Object} Recipe
+ * @typedef {object} Recipe
  * @property {string} name - The name of the potion.
  * @property {Ingredient[]} ingredients - The list of ingredients required for the potion.
  */
@@ -224,7 +224,9 @@ const RECIPES = {
 };
 
 
-
+/**
+ *
+ */
 async function createBrewUI(actor) {
     return new AlchemyBrewingUI(actor).render(true);
 }
@@ -329,7 +331,7 @@ async function createHarvestBodyParts(actor = null) {
 class Alchemy {
     /**
      * A mapping of ingredient rarity to its corresponding difficulty class.
-     * @type {Object<string, number>}
+     * @type {{[key: string]: number}}
      */
     static rarityToDC = {
         "common": 10,
@@ -381,15 +383,14 @@ class Alchemy {
         if((result.total >= result.options.targetValue && !result.isFumble) || result.isCritical) {
             result.isSuccess = true;
             return result;
-        } else {
-            if(fastForward || !await this.queryInspiration()) 
-            {
-                result.isSuccess = false;
-                return result;
-            }
-            else return await this.rollAlchemyCheck({rarity, name, itemYield, skipAnim});
+        } else if(fastForward || !await this.queryInspiration()) 
+        {
+            result.isSuccess = false;
+            return result;
         }
+        else return await this.rollAlchemyCheck({rarity, name, itemYield, skipAnim});
     }
+
     //TODO Refactor this to a helper function accessible by the rest of the module
     async queryInspiration() {
         const soInspired = {
@@ -519,7 +520,7 @@ class Harvest extends Alchemy {
      * Creates a requestor message with one button for each ingredient in the ingredientsArray
      * Each button looks like: "3x Fever Grass"
      * When a button is clicked, a new instance of Harvest is created and the actor will be able to harvest that ingredient.
-     * @param {Object[]} ingredientsArray   Array of ingredient objects to be harvested.
+     * @param {object[]} ingredientsArray   Array of ingredient objects to be harvested.
      * @param {Actor5e} actor               The actor who should receive the message and harvest the ingredients.      
      */
     static async whisperRequestorMessage(ingredientsArray, actor) {
@@ -560,9 +561,9 @@ class Harvest extends Alchemy {
      * Rolls itemYields for all ingredients in the array and plays roll animations simultaneously.
      * Returns an updated ingredientsArray by adding a itemYield property to each ingredient.
      * MUTATES THE OBJECTS INSIDE ingredientsArray
-     * @param {Object[]} ingredientsArray   Array of ingredient objects to roll itemYields for.
+     * @param {object[]} ingredientsArray   Array of ingredient objects to roll itemYields for.
      * @param {string} [formula="2d4"]      Formula string to determine the quantity.
-     * @returns {Promise<Object[]>}         Resolves to the updated ingredientsArray.
+     * @returns {Promise<object[]>}         Resolves to the updated ingredientsArray.
      */
     static async rollYields(ingredientsArray, formula = "2d4") {
         const promises = [];
@@ -589,7 +590,7 @@ class Brewing extends Alchemy {
     /**
      * Retrieves and combines working recipes from the brews found in the pack pack with the recipes in AlchemyAPI.
      * @static
-     * @returns {Object} An object containing the working recipes, where each recipe includes:
+     * @returns {object} An object containing the working recipes, where each recipe includes:
      *                   - All properties from the original RECIPES object
      *                   - uuid and img properties from matching entries inside the Brews folder of the pack
     */
@@ -600,7 +601,7 @@ class Brewing extends Alchemy {
         
         const availableMap = Object.fromEntries(
             availableRecipes.map(({ name, uuid, img }) => [name, { uuid, img }])
-            );
+        );
 
         const ret = Object.fromEntries(
             Object.entries(TaliaCustom.AlchemyAPI.RECIPES)
@@ -639,7 +640,7 @@ class Brewing extends Alchemy {
 
     /**
      * Calculates the craftable brews based on available ingredients.
-     * @returns {Object<string, number>} An object where keys are brew keys (shortened names) and values are the maximum quantity that can be crafted.
+     * @returns {{[key: string]: number}} An object where keys are brew keys (shortened names) and values are the maximum quantity that can be crafted.
      */
     get craftableBrewsAmount() {
         const craftableBrewsAmount = {};
@@ -757,7 +758,7 @@ class Brewing extends Alchemy {
                         <td style="width: 15%;">${curr.consumeQuant}/${curr.quantity}</td>
                         <td>${curr.name}</td>
                     </tr>`
-                ,"")}
+    ,"")}
             </tbody></table>
         `;
         msgData.speaker = ChatMessage.implementation.getSpeaker({actor: this.actor});

@@ -6,6 +6,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function rollPlayerInspirations() {
     const packFolder = game.packs.get("talia-custom.rollable-tables").folders.find(f => f.name === "Inspirations");
     const activePlayers = game.users.players.filter(p => p.active === true)
@@ -36,15 +39,18 @@ async function rollPlayerInspirations() {
         const tableSize = table.results.size;
         const rollFormula = `1d${tableSize}rr1d${tableSize}`;
 
+        /**
+         *
+         */
         function getUniqueRandomNumbers(x) {
             if (x < 2) {
-              return []; // Return an empty array if x is less than 2
+                return []; // Return an empty array if x is less than 2
             }
           
             let num1, num2;
             do {
-              num1 = Math.floor(Math.random() * x) + 1;
-              num2 = Math.floor(Math.random() * x) + 1;
+                num1 = Math.floor(Math.random() * x) + 1;
+                num2 = Math.floor(Math.random() * x) + 1;
             } while (num1 === num2);
           
             return [num1, num2];

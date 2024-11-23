@@ -7,6 +7,9 @@ export default {
     }
 }
 
+/**
+ *
+ */
 async function spellbookLichMain(item, config, options) {
     const bookName = "Strength through suffering (of others)";
     const addedSpellNames = Spellbooks.bookDatabase[bookName].spellList;

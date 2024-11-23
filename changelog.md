@@ -3,6 +3,8 @@
 <details>
 <summary><h2>Changed</h2></summary>
 
+- Removed rerolling of initiative at the start of every round in combat as it makes working with active effects about as pleasant as french kissing a cheese grater.
+
 -   <details>
     <summary>Chef Feat</summary>
 

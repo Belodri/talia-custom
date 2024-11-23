@@ -2,7 +2,7 @@
     - needs to return true if both the user and the target are isolated
     - needs to be fully synchronous
 */
-
+/*
 if(!token) return false;
 const targets = game.user.targets;
 if(targets.size !== 1) return false;    //require exactly 1 target
@@ -29,3 +29,4 @@ function isIsolated(token) {
     if(alliesInSight.length === 0) return true;
     else return false;
 }
+*/

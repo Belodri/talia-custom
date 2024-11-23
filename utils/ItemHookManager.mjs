@@ -3,7 +3,7 @@
 export class ItemHookManager {
     /**
      * A map of itemNames with their respective function
-     * @type {Map<string, function>}
+     * @type {Map<string, Function>}
      */
     static #registered = new Map();
 
@@ -33,7 +33,7 @@ export class ItemHookManager {
 
     /**
      * 
-     * @param {function} fn 
+     * @param {Function} fn 
      * @param {Item5e} item 
      * @param {*} config 
      * @param {*} options 

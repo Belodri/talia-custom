@@ -1,6 +1,7 @@
 import { MODULE } from "../scripts/constants.mjs";
 import restrictMovement from "./restrictMovement.mjs";
 
+/** registers all wrappers */
 export function registerWrappers() {
     libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", wrap_Actor_getRollData , "WRAPPER");
     libWrapper.register(MODULE.ID, 'dnd5e.applications.actor.ActorSheet5e.prototype.maximize', wrap_ActorSheet_maximize, "MIXED");
@@ -9,17 +10,19 @@ export function registerWrappers() {
     restrictMovement.registerWrapper();
 }
 
+/** Lets other parts of the module hook into talia_addToRollData and mutate the taliaObj which is then appended to rollData */
 function wrap_Actor_getRollData(wrapped, ...args) {
     const rollData = wrapped(...args);
     // add an object to the rolldata
-    const taliaObj = Hooks.call("talia_addToRollData", rollData);
+    const taliaObj = {};
+    Hooks.callAll("talia_addToRollData", rollData, taliaObj);
     rollData.talia = taliaObj;
     return rollData;
 }
 
 /** Prevents the character sheet from being maximised again after a template has been placed. */
 function wrap_ActorSheet_maximize(wrapped, ...args) {
-    if(game.user.getFlag(MODULE.ID, 'preventActorSheetMax')) return;
+    if(game.user.getFlag(MODULE.ID, 'preventActorSheetMax')) return undefined;
     else return wrapped(...args);
 }
 

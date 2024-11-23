@@ -20,6 +20,9 @@ export const TaliaUtils = {
     Helpers,
 }
 
+/**
+ *
+ */
 function extendStringClass() {
     String.prototype.toCamelCase = function() {
         return this

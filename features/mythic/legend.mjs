@@ -5,6 +5,31 @@ export default {
 }
 
 
+/*
+  Legendary Vigor
+
+  - Whenever you make a Strength or Constitution ability check or saving throw, you treat a d20 roll of 19 or lower as a 20.
+        check dnd5e d20 roll class and see if there's something to hook into there
+        nope, gotta wrap CONFIG.Dice.D20Roll.prototype.configureModifiers to add support for custom terms
+
+
+  - When using the Grapple action, you can grapple creatures of any size as if they were no more than one size larger than you.
+  - The damage of your melee weapon attacks against structures and objects increases by a factor of 10 per Mythic Rank.
+  - The maximum distance you can jump and the distance you can shove a creature when you use the Shove action both increase by a factor of 10 per mythic rank.
+  - Your carrying capacity and the weight you can push, drag, or lift increases by a factor of 10 per Mythic Rank.
+  
+  Immediately after this effect ends, the grappled condition ends on any creature grappled by you if its size exceeds the maximum size you can grapple.
+*/
+
+/**
+ *
+ */
+function legendaryVigor(requiredMythicRank = 1) {
+    /*
+
+    */
+}
+
 /**
  * Whenever you take damage from a critical hit, you immediately regain 2d12 hit points per mythic rank.
  */
@@ -40,7 +65,6 @@ function unflinching(requiredMythicRank = 2) {
             user: userAviana,
             releaseOthers: true
         });
-        
         
 
         /*

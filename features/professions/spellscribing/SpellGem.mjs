@@ -1,5 +1,5 @@
 /**
- * @typedef {Object} chosenArgs 
+ * @typedef {object} chosenArgs 
  * @property {Item5e} chosenSpell
  * @property {Item5e} chosenGem
  * @property {number} selectedSpellSlotLevel
@@ -7,6 +7,9 @@
  * @property {string} [triggerConditions]
  */
 
+/**
+ *
+ */
 export async function createSpellGem(actor, chosenArgs) {
     const changes = getChanges(actor, chosenArgs);
     
@@ -24,15 +27,18 @@ export async function createSpellGem(actor, chosenArgs) {
     return newItem;
 }
 
+/**
+ *
+ */
 function getChanges(actor, chosenArgs) {
     const rollData = actor.getRollData();
 
     //get spell level level for name (0th, 1st, 2nd,...9th)
     const titleSpellLevelString = 
         chosenArgs.selectedSpellSlotLevel === 1 ? " - 1st" :
-        chosenArgs.selectedSpellSlotLevel === 2 ? " - 2nd" :
-        chosenArgs.selectedSpellSlotLevel === 3 ? " - 3rd" :
-        ` - ${chosenArgs.selectedSpellSlotLevel}th`;
+            chosenArgs.selectedSpellSlotLevel === 2 ? " - 2nd" :
+                chosenArgs.selectedSpellSlotLevel === 3 ? " - 3rd" :
+                    ` - ${chosenArgs.selectedSpellSlotLevel}th`;
 
     //general changes first
     const name = chosenArgs.isTrigger ? `Triggered: ${chosenArgs.chosenSpell.name}${titleSpellLevelString}` : `Activated: ${chosenArgs.chosenSpell.name}${titleSpellLevelString}`;

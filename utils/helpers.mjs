@@ -15,9 +15,7 @@ export class Helpers {
      */
     static getUserIdsArray() {
         //get user _id from all active users
-        return game.users.players.map((user) => {
-            if(user.active) return user._id
-        });
+        return game.users.players.filter(user => user.active).map(user => user._id);
     }
 
     /**
@@ -40,10 +38,7 @@ export class Helpers {
     static getActiveUserCharacters() {
         //get active users
         /** @type {User5e[]} */
-        const users = game.users.players.filter(user => user.active);
-        return users.map((user) => {
-            if(user.character) return user.character;
-        });
+        return game.users.players.filter(user => user.active && user.character).map(user => user.character);
     }
 
     /**
@@ -76,7 +71,7 @@ export class Helpers {
             let usesValue = item.system.uses.value;
             let quant = quantity;
 
-            const maxPossibleUses = usesValue + usesMax * (quant - 1);  //how many uses are possible in total
+            const maxPossibleUses = usesValue + ( usesMax * (quant - 1) );  //how many uses are possible in total
             if(maxPossibleUses < actualConsume) return null;
 
             for(let i = 0; i < actualConsume; i++) {
@@ -157,7 +152,7 @@ export class Helpers {
      *
      * @param {Actor5e} actor - The actor to which the items will be granted.
      * @param {string} tableUuid - The UUID of the table to draw items from.
-     * @param {Object} [options] - Optional parameters.
+     * @param {object} [options] - Optional parameters.
      * @param {number} [options.drawsNum=1] - The number of draws to make. Will be overwritten if fractionOfTableSize is provided.
      * @param {number} [options.fractionOfTableSize] - A fraction (0 to 1) or a percentage (1 to 100) representing the portion of the table to draw from.
      * @returns {Promise<Array<Item5e>>} - A promise that resolves to the array of created items, or null if the table or actor is missing, or fractionOfTableSize is invalid.
@@ -196,14 +191,14 @@ export class Helpers {
 
         //'stack' items of the same name
         const combinedItemsArray = Object.values(itemData.reduce((acc, item) => {
-        if (acc[item.name]) {
+            if (acc[item.name]) {
             // If item with same name already exists, add the quantities
-            acc[item.name].system.quantity += item.system.quantity;
-        } else {
+                acc[item.name].system.quantity += item.system.quantity;
+            } else {
             // Otherwise, add new item to the accumulator
-            acc[item.name] = { ...item };
-        }
-        return acc;
+                acc[item.name] = { ...item };
+            }
+            return acc;
         }, {}));
 
         return actor.createEmbeddedDocuments("Item", combinedItemsArray);
@@ -228,7 +223,7 @@ export class Helpers {
         if (ulElement) {
             // Get existing labels
             const existingLabels = Array.from(ulElement.querySelectorAll('li span.label'))
-            .map(span => span.textContent.trim().toLowerCase());
+                .map(span => span.textContent.trim().toLowerCase());
 
             // Process each new label
             newLabels.forEach(label => {
@@ -264,15 +259,17 @@ export class Helpers {
     }
 
     /**
+     * Requests a roll to be made and sends the result as a chat message.
      * 
-     * @param {string} type             check, save, skill, tool 
-     * @param {string} ability
-     * @param {string} skill
-     * @param {string} tool             name of the tool type (e.g. "weaver"); requires ability to be set!
-     * @param {number} dc
-     * @param {boolean} hideDC  
-     * @param {object} messageOptions   object which is merged into the final message data
-     * @returns {Promise<ChatMessage>}  A promise which resolves when the chat message is created.
+     * @param {object} options              Options for the roll request.
+     * @param {string} options.type         The type of roll (e.g., "check", "save", "skill", "tool").
+     * @param {string} [options.ability]    The ability used for the roll.
+     * @param {string} [options.skill]      The skill used for the roll.
+     * @param {string} [options.tool]       The name of the tool type (e.g., "weaver"). Requires `ability` to be set.
+     * @param {number} [options.dc]         The difficulty class (DC) for the roll.
+     * @param {boolean} [options.hideDC=true] Whether the DC should be hidden.
+     * @param {object} [options.messageOptions] Additional options merged into the final message data.
+     * @returns {Promise<ChatMessage>}      A promise that resolves when the chat message is created.
      */
     static async requestRoll({
         type,      
@@ -324,7 +321,7 @@ export class Helpers {
     static getRandomInt(min, max) {
         const minCeiled = Math.ceil(min);
         const maxFloored = Math.floor(max);
-        return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); // The maximum is inclusive and the minimum is inclusive
+        return Math.floor( ( Math.random() * (maxFloored - minCeiled + 1) ) + minCeiled); // The maximum is inclusive and the minimum is inclusive
     }
 
     /**
