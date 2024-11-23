@@ -36,6 +36,11 @@
     }
 */
 
+/*
+    uses Hooks.callAll("talia_postCalculateShoveDistance", actor, distanceObj) to allow other scripts to mutate distanceObj.newValue after calculation.
+    See jump.mjs for details.
+*/
+
 export default {
     _onDAESetup() {
         const fields = [];

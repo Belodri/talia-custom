@@ -5,15 +5,24 @@
 */
 
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
+import { MODULE } from "../../../scripts/constants.mjs";
 
 export default {
     register() {
         TaliaCustomAPI.add({grapple: grappleItemMacro}, "ItemMacros");
+        Hooks.once("setup", () => {
+            const fields = [];
+            fields.push("flags.talia-custom.ignoreGrappleSizeLimit");
+            DAE.addAutoFields(fields);
+        });
     }
 }
 
 /**
- *
+ * 
+ * @param {Item} item 
+ * @param {Token} actorToken 
+ * @returns {void}
  */
 async function grappleItemMacro(item, actorToken) {
     if(actorToken.actor.effects.find(e => e.name === "Grappling")) {
@@ -49,7 +58,7 @@ async function grappleItemMacro(item, actorToken) {
     }
     const actorGrappleSizeIndex = grappleSizeIndex(actorRD);
     const targetGrappleSizeIndex = grappleSizeIndex(targetRD);
-    if(targetGrappleSizeIndex > actorGrappleSizeIndex + 1) {
+    if((targetGrappleSizeIndex > actorGrappleSizeIndex + 1) && actorRD.getFlag(MODULE.ID, "ignoreGrappleSizeLimit") !== 1) {
         ui.notifications.warn("This creature is too big for you to grapple.");
         return null;
     }

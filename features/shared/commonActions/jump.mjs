@@ -42,8 +42,17 @@ class Jump {
         const distMult = Math.clamp(Math.pow(2, distDouble - distHalf), 0.25, 4);
 
         const calculatedDistance = (baseDistance + distAdd) * distMult;
+
         //round that to the nearest interval of 5
-        return Math.round(calculatedDistance / 5) * 5;
+        let roundedDistance = Math.round(calculatedDistance / 5) * 5;
+
+        //lets other scripts modify the final calculated and rounded distance
+        const distanceObj = {
+            rounded: roundedDistance,
+            newValue: null
+        };
+        Hooks.callAll("talia_postCalculateJumpDistance", actor, distanceObj );
+        return distanceObj.newValue ?? distanceObj.rounded;
     }
 
     static async itemMacro(item) {

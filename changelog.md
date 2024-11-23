@@ -6,6 +6,25 @@
 - Removed rerolling of initiative at the start of every round in combat as it makes working with active effects about as pleasant as french kissing a cheese grater.
 
 -   <details>
+    <summary>Legendary Vigor</summary>
+
+    from
+    > Before making a Strength or Constitution ability check or saving throw, you can expend 1 Mythic Power to automatically succeed, treating the result as a critical success without rolling.
+    
+    to
+    > By expending 1 Mythic Power as a free action on your turn, you can achieve feats of strength and endurance that most would consider to lie firmly in the realm of myth and legend. Alternatively, while it is not your turn, you can use this feature as a reaction, which you take before making a Strength or Constitution ability check or saving throw.
+    > 
+    > For 1 round per Mythic Rank, you gain the following benefits:
+    > - Whenever you make a Strength or Constitution ability check or saving throw, you treat a d20 roll of 19 or lower as a 20.
+    > - When using the Grapple action, you can grapple creatures of any size as if they were no more than one size larger than you.
+    > - The damage of your melee weapon attacks against structures and objects increases by a factor of 10 per Mythic Rank.
+    > - The maximum distance you can jump and the distance you can shove a creature when you use the Shove action both increase by a factor of 10 per mythic rank.
+    > - Your carrying capacity and the weight you can push, drag, or lift increases by a factor of 10 per Mythic Rank.
+    > 
+    > Immediately after this effect ends, the grappled condition ends on any creature grappled by you if its size exceeds the maximum size you can grapple.
+    </details>
+
+-   <details>
     <summary>Chef Feat</summary>
 
     - Various UI/UX improvements
