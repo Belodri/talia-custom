@@ -37,13 +37,24 @@
         > This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8).
         </details>
     - Stinking Cloud
+    - Microscopic Proportions
 </details>
 
 <details>
 <summary><h2>Changed</h2></summary>
 
 - Removed rerolling of initiative at the start of every round in combat as it makes working with active effects about as pleasant as french kissing a cheese grater.
+-   <details>
+    <summary>Master of Chance</summary>
 
+    from 
+    > You have a bonus to skill checks with one skill equal to 5 times your Charisma modifier.
+    > This bonus changes to a different skill whenever you make a skill check, though it can apply to the same skill multiple times in a row.
+    > You are not aware of which skill this bonus currently affects.
+
+    to
+    > When you make any skill check, roll an additional d12. If it lands on a 12, you gain a bonus to that skill check equal to 5 times your Charisma modifier.
+    </details>
 -   <details>
     <summary>Cure Wounds</summary>
 
