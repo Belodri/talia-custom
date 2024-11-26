@@ -1,10 +1,62 @@
 # 1.11.0 - 2024/11/26
 
 <details>
+<summary><h2>Added</h2></summary>
+
+- Spells
+    - Anticipate Arcana
+    - Command
+    -   <details>
+        <summary>Ray of Sickness</summary>
+
+        from
+        > A ray of sickening greenish energy lashes out toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 2d8 poison damage and must make a Constitution saving throw. On a failed save, it is also poisoned until the end of your next turn.
+        > 
+        > At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d8 for each slot level above 1st.
+
+        to
+        > A ray of sickening greenish energy lashes out toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 2d8 poison damage and becomes poisoned until the end of your next turn.
+        > 
+        > At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d8 for each slot level above 1st.
+        </details>
+    -   <details>
+        <summary>Chill Touch</summary>
+
+        from
+        > You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave. On a hit, the target takes 1d8 necrotic damage, and it can't regain hit points until the start of your next turn. Until then, the hand clings to the target.
+        > 
+        > If you hit an undead target, it also has disadvantage on attack rolls against you until the end of your next turn.
+        > 
+        > This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8).
+
+        to
+        > You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave. On a hit, the target takes 1d8 necrotic damage, and it can't regain hit points until the start of your next turn. Until then, the hand clings to the target.
+        > 
+        > If you hit an undead target, it also has disadvantage on attack rolls against you until the start of your next turn.
+        > 
+        > This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8).
+        </details>
+    - Stinking Cloud
+</details>
+
+<details>
 <summary><h2>Changed</h2></summary>
 
 - Removed rerolling of initiative at the start of every round in combat as it makes working with active effects about as pleasant as french kissing a cheese grater.
 
+-   <details>
+    <summary>Cure Wounds</summary>
+
+    from
+    > A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier. This spell has no effect on undead or constructs.
+    >
+    > At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d8 for each slot level above 1st.
+
+    to
+    > A creature you touch regains a number of hit points equal to 2d8 + your spellcasting ability modifier. This spell has no effect on undead or constructs.
+    > 
+    > At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 2d8 for each slot level above 1st.
+    </details>
 -   <details>
     <summary>Legendary Vigor</summary>
 
