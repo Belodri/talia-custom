@@ -93,7 +93,7 @@ export default class ChatCardButtons {
         if(!config.itemName || typeof config.itemName !== "string") throw new Error("Invalid itemName argument.");
         if(!config.buttons || !(config.buttons instanceof Array) || !config.buttons.length) throw new Error("Invalid buttons argument.");
         for(const button of config.buttons) {
-            if(!button.label || typeof config.label !== "string") throw new Error("Invalid button label.");
+            if(!button.label || typeof button.label !== "string") throw new Error("Invalid button label.");
             if(!(button.callback instanceof Function)) throw new Error("Invalid button callback.");
         }
         if(displayFilter && typeof displayFilter !== "function") throw new Error("Invalid type: displayFilter has to be a function.");
@@ -167,7 +167,7 @@ export default class ChatCardButtons {
         const item = actor.items.get(card.dataset.itemId);
         const buttonIndex = parseInt(button.dataset.macroButton);
 
-        await ChatCardButtons.#activateButton({buttonIndex, item, card})
+        await ChatCardButtons.#activateButton(buttonIndex, item, card)
 
         button.disabled = false;
     }
