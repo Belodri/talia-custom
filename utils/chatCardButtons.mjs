@@ -167,7 +167,7 @@ export default class ChatCardButtons {
         const item = actor.items.get(card.dataset.itemId);
         const buttonIndex = parseInt(button.dataset.macroButton);
 
-        await ChatCardButtons.#activateButton({buttonIndex, item, card})
+        await ChatCardButtons.#activateButton(buttonIndex, item, card)
 
         button.disabled = false;
     }
