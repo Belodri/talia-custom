@@ -35,7 +35,7 @@ export default class ChatCardButtons {
      * @param {string} options.itemName                 The name of the item for which buttons are added
      * @param {boolean} [options.isPartialName=false]   If false, requires an exact item name match, otherwise matches all items containing `itemName` as a substring
      * @param {ChatCardButtonConfig[]} options.buttons  An array of button configurations
-     * @param {Function} [displayFilter]            Optional function to conditionally render buttons. Receives (item, chatData, options) and if it explicitly returns `false`, no buttons are added.
+     * @param {Function} [options.displayFilter]            Optional function to conditionally render buttons. Receives (item, chatData, options) and if it explicitly returns `false`, no buttons are added.
      * @throws {Error}                                  If `itemName` is invalid or if `buttons` are improperly defined.
      * @example
      * // Register buttons for a healing spell with exact name matching
