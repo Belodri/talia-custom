@@ -2,14 +2,15 @@
  * @typedef ChatCardButtonConfig
  * @property {string} label         The label displayed on the button.
  * @property {string} [icon]        An optional Font Awesome icon class to display alongside the label (e.g., 'fa-dice').
- * @property {Function} callback    A function to execute when the button is clicked.
+ * @property {Function} callback    A function to execute when the button is clicked. Receives (item, card) as arguments and can be asynchronous.
  */
 
 /**
  * @typedef ItemRegConfig
  * @property {string} itemName                          The name of the item associated with the buttons.
- * @property {boolean} isPartialName                    If true, matches items containing `itemName` as a substring.
+ * @property {boolean} [isPartialName = false]          If true, matches items containing `itemName` as a substring.
  * @property {ChatCardButtonConfig[]} buttons           An array of `ChatCardButtonConfig` objects defining the buttons.
+ * @property {Function} [displayFilter]             Optional function to conditionally render buttons. Receives (item, chatData, options) and if it returns `false`, the buttons are not added. 
  */
 
 /**
@@ -29,24 +30,12 @@ export default class ChatCardButtons {
 
     /**
      * Registers an array of buttons to a chat card for a specific item.
-     * Ensures no duplicate registrations for the same `itemName`.
-     *
-     * @param {object} options                          The registration options.
-     * @param {string} options.itemName                 The name of the item for which buttons are added.
-     * @param {boolean} [options.isPartialName=false]   Whether the `itemName` is a partial match.
-     * @param {ChatCardButtonConfig[]} options.buttons  An array of button configuration objects.
-     * 
-     * @throws {Error} If `itemName` is invalid or if `buttons` are improperly defined.
-     * @returns {void}
-     */
-
-    /**
-     * Registers an array of buttons to a chat card for a specific item.
      * 
      * @param {object} options                          The configuration options for button registration
      * @param {string} options.itemName                 The name of the item for which buttons are added
      * @param {boolean} [options.isPartialName=false]   If false, requires an exact item name match, otherwise matches all items containing `itemName` as a substring
      * @param {ChatCardButtonConfig[]} options.buttons  An array of button configurations
+     * @param {Function} [displayFilter]            Optional function to conditionally render buttons. Receives (item, chatData, options) and if it explicitly returns `false`, no buttons are added.
      * @throws {Error}                                  If `itemName` is invalid or if `buttons` are improperly defined.
      * @example
      * // Register buttons for a healing spell with exact name matching
@@ -56,14 +45,14 @@ export default class ChatCardButtons {
      *     {
      *       label: "Example 1",
      *       icon: "fa-healing",
-     *       callback: async (item) => {
+     *       callback: async (item, card) => {
      *         console.log("Example 1")
      *       }
      *     },
      *     {
      *       label: "Show Details",
      *       icon: "fa-info-circle",
-     *       callback: async (item) => {
+     *       callback: async (item, card) => {
      *         // Display detailed spell information
      *         item.sheet.render(true);
      *       }
@@ -71,7 +60,7 @@ export default class ChatCardButtons {
      *   ]
      * });
      * 
-     * // Register buttons for all healing-related items with partial matching
+     * // Register buttons for all healing-related items with partial matching and a filter function
      * ChatCardButtons.register({
      *   itemName: "Healing",
      *   isPartialName: true,
@@ -79,32 +68,40 @@ export default class ChatCardButtons {
      *     {
      *       label: "Log to console",
      *       icon: "fa-search-plus",
-     *       callback: async (item) => {
-     *         console.log(item);
+     *       callback: async (item, card) => {
+     *         console.log(item, card);
      *       }
      *     }
-     *   ]
+     *   ],
+     *   displayFilter: (item, chatData, options) => {
+     *      // Show button only for actors with the exact name "Aviana Winterwing"
+     *      return item.actor.name === "Aviana Winterwing";
+     *   }
      * });
      * 
      * @returns {void}
      */
-    static register({itemName, isPartialName = false, buttons}) {
+    static register({itemName, isPartialName = false, buttons, displayFilter = undefined}) {
         const config = {
-            itemName, isPartialName, buttons
+            itemName, 
+            isPartialName, 
+            buttons, 
+            displayFilter
         };
 
         // validate config;
         if(!config.itemName || typeof config.itemName !== "string") throw new Error("Invalid itemName argument.");
         if(!config.buttons || !(config.buttons instanceof Array) || !config.buttons.length) throw new Error("Invalid buttons argument.");
         for(const button of config.buttons) {
-            if(!button.label || typeof config.itemName !== "string") throw new Error("Invalid button label.");
+            if(!button.label || typeof config.label !== "string") throw new Error("Invalid button label.");
             if(!(button.callback instanceof Function)) throw new Error("Invalid button callback.");
         }
+        if(displayFilter && typeof displayFilter !== "function") throw new Error("Invalid type: displayFilter has to be a function.");
 
         // register item
         if(!this.#registered.has(itemName)) {
             this.#registered.set(itemName, {
-                itemName, isPartialName, buttons
+                itemName, isPartialName, buttons, displayFilter
             });
         } else {
             console.warn(`itemName: "${itemName}" already registered. Skipping button register.`);
@@ -112,17 +109,16 @@ export default class ChatCardButtons {
     }
 
     /**
-     * Retrieves the registered buttons for a given item.
+     * Retrieves the registered config for a given item.
      * Matches by full name or partial name depending on the registration configuration.
-     * 
      * @param {Item} item                               The item object to search for.
-     * @returns {ChatCardButtonConfig[] | null}         An array of button configuration objects or `null` if no match is found.
+     * @returns {ItemRegConfig | null}                  The ItemRegConfig of the item or null if none exists.
      * @private
      */
-    static #getButtonsForItem(item) {
-        for(const config of this.#registered.values()) {
-            if(config.isPartialName ? item.name.includes(config.itemName) : item.name === config.itemName) {
-                return config.buttons;
+    static #getItemRegConfigForItem(item) {
+        for(const itemRegConfig of this.#registered.values()) {
+            if(itemRegConfig.isPartialName ? item.name.includes(itemRegConfig.itemName) : item.name === itemRegConfig.itemName) {
+                return itemRegConfig;
             }
         }
         return null;
@@ -136,16 +132,17 @@ export default class ChatCardButtons {
      * @returns {Promise<void>}                         Resolves after the callback is executed.
      * @private 
      */
-    static async #activateButton(buttonIndex, item) {
-        const buttons = ChatCardButtons.#getButtonsForItem(item);
-        if(!buttons || !buttons.length) return console.warn("No buttons available for activation.");
+    static async #activateButton(buttonIndex, item, card) {
+        const itemRegConfig = ChatCardButtons.#getItemRegConfigForItem(item);
+        const buttons = itemRegConfig.buttons || null;
+        if(!itemRegConfig || !buttons || !buttons.length) return console.warn("No buttons available for activation.");
         
-        const config = buttons[buttonIndex];
-        const fn = config.callback ?? null;
+        const buttonConfig = buttons[buttonIndex];
+        const fn = buttonConfig.callback ?? null;
         if(!fn || typeof fn !== "function") return;
 
         try {
-            await fn(item)
+            await fn(item, card)
         } catch (err) {
             ui.notifications.error("Execute function error");
             console.error(err);
@@ -170,21 +167,10 @@ export default class ChatCardButtons {
         const item = actor.items.get(card.dataset.itemId);
         const buttonIndex = parseInt(button.dataset.macroButton);
 
-        await ChatCardButtons.#activateButton({buttonIndex, item})
+        await ChatCardButtons.#activateButton({buttonIndex, item, card})
 
         button.disabled = false;
     }
-    
-    /**
-     * Adds buttons to a chat card when an item is used by mutating chatData.
-     * Hooks into the `dnd5e.preDisplayCard` event.
-     *
-     * @param {Item} item                              The item being used.
-     * @param {object} chatData                        The data object for the chat card message.
-     * @param {ItemUseOptions} options                 Options configuring the display of the item chat card.
-     * @returns {void}
-     * @private
-     */
 
     /**
      * Create the buttons on a chat card when an item is used. Hooks on 'dnd5e.preDisplayCard'.
@@ -193,8 +179,17 @@ export default class ChatCardButtons {
      * @param {ItemUseOptions} options      Options which configure the display of the item chat card.
      */
     static #manageCardButtons(item, chatData, options) {
-        const buttons = ChatCardButtons.#getButtonsForItem(item);
+        const itemRegConfig = ChatCardButtons.#getItemRegConfigForItem(item);
+
+        // If no itemRegConfig found, or filter exists and returns false, abort button creation
+        if (!itemRegConfig || 
+            (itemRegConfig.displayFilter && itemRegConfig.displayFilter(item, chatData, options) === false)) {
+            return;
+        }
+
+        const buttons = itemRegConfig.buttons;
         if(!buttons) return;
+
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(chatData.content, "text/html");
