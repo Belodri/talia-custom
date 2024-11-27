@@ -1,11 +1,32 @@
 import { TaliaCustomAPI } from "../scripts/api.mjs"
+import ChatCardButtons from "../utils/chatCardButtons.mjs"
 export default {
     register() {
+        addChatCardButtons();
         TaliaCustomAPI.add({wardOfTheLitrRune_roundStart, wardOfTheLitrRune_effectCreation: wardOfTheLitrRune_roundStart}, "EffectMacros");
-        TaliaCustomAPI.add({armorOfTheLitrRune_activateWard_chatButton})
     }
 }
 
+function addChatCardButtons() {
+    ChatCardButtons.register({
+        itemName: "of the Litr Rune",
+        isPartialName: true,
+        buttons: [
+            {
+                label: "Flash of the Litr Rune (1 charge)",
+                callback: async (item, chatCard) => {
+                    
+                }
+            },
+            {
+                label: "Ward of the Litr Rune (8 charges)",
+                callback: async (item, chatCard) => {
+
+                }
+            }
+        ]
+    })
+}
 //chefFeat_chatButton
 /** itemButtonMacro */
 async function armorOfTheLitrRune_activateWard_chatButton(params) {

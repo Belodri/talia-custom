@@ -4,6 +4,7 @@ import mantleOfTheArcaneTrickster from "./mantleOfTheArcaneTrickster.mjs";
 import viceGrip from "./viceGrip.mjs";
 import wyrmreaverGauntlets from "./wyrmreaverGauntlets.mjs";
 import otherItemCategories from "./otherItemCategories.mjs";
+import armorOfTheLitrRune from "./armorOfTheLitrRune.mjs"
 
 export default {
     registerSection() {
@@ -13,6 +14,7 @@ export default {
         viceGrip.register();
         wyrmreaverGauntlets.register();
         otherItemCategories.register();
+        armorOfTheLitrRune.register();
     }
 }
 
