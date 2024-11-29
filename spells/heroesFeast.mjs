@@ -12,6 +12,8 @@ export default {
  * @returns {void}
  */
 async function heroesFeast(item) {
+    if(item.name !== "Heroes' Feast") return;
+    
     const formula = "2d10";
     const roll = await new Roll(formula).evaluate();
     if(!roll) return;
