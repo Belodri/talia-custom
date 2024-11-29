@@ -2,6 +2,7 @@ import arcaneGate from "./arcaneGate.mjs";
 import contingency from "./contingency.mjs";
 import revelationThroughBattle from "./revelationThroughBattle.mjs"
 import skillEmpowerment from "./skillEmpowerment.mjs";
+import heroesFeast from "./heroesFeast.mjs";
 
 
 export default {
@@ -10,5 +11,6 @@ export default {
         skillEmpowerment.register();
         arcaneGate.register();
         contingency.register();
+        heroesFeast.register();
     }
 }
