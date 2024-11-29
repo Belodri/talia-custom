@@ -4,6 +4,7 @@ import revelationThroughBattle from "./revelationThroughBattle.mjs"
 import skillEmpowerment from "./skillEmpowerment.mjs";
 import heroesFeast from "./heroesFeast.mjs";
 import bladeWard from "./bladeWard.mjs";
+import absorbElements from "./absorbElements.mjs";
 
 
 export default {
@@ -14,5 +15,6 @@ export default {
         contingency.register();
         heroesFeast.register();
         bladeWard.register();
+        absorbElements.register();
     }
 }
