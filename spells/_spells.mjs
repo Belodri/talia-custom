@@ -3,6 +3,7 @@ import contingency from "./contingency.mjs";
 import revelationThroughBattle from "./revelationThroughBattle.mjs"
 import skillEmpowerment from "./skillEmpowerment.mjs";
 import heroesFeast from "./heroesFeast.mjs";
+import bladeWard from "./bladeWard.mjs";
 
 
 export default {
@@ -12,5 +13,6 @@ export default {
         arcaneGate.register();
         contingency.register();
         heroesFeast.register();
+        bladeWard.register();
     }
 }
