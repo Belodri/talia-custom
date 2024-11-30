@@ -15,3 +15,5 @@ add:
 - Heroes' Feast
 - Blade Ward
 - Absorb Elements
+
+add: Armor of the Litr Rune

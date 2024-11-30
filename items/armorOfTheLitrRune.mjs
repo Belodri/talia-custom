@@ -4,33 +4,46 @@ export default {
     register() {
         addChatCardButtons();
         TaliaCustomAPI.add({wardOfTheLitrRune_roundStart, wardOfTheLitrRune_effectCreation: wardOfTheLitrRune_roundStart}, "EffectMacros");
+
+        //prevent usage config from showing
+        Hooks.on("dnd5e.preUseItem", (item, config, options) => {
+            if(!item.name.includes(" of the Litr Rune")) return;
+            if(!options.flags) {
+                options.flags = {};
+            }
+            foundry.utils.setProperty(options.flags, "dnd5e.use.consumedUsage", true);
+        })
     }
 }
-
+/** to handle consumption */
 function addChatCardButtons() {
     ChatCardButtons.register({
         itemName: "of the Litr Rune",
         isPartialName: true,
         buttons: [
             {
-                label: "Flash of the Litr Rune (1 charge)",
+                label: "Flash (consume 1 charge)",
                 callback: async (item, chatCard) => {
-                    
+                    let charges = item.system.uses.value;
+                    if(charges < 1) return ui.notifications.warn(`The armor doesn't have enough charges to activate this ability.`);
+
+                    await item.update({"system.uses.value": charges - 1});
+                    return ui.notifications.info(`1 charge consumed, ${item.system.uses.value} charges remaining.`);
                 }
             },
             {
-                label: "Ward of the Litr Rune (8 charges)",
+                label: "Ward (consume 8 charges)",
                 callback: async (item, chatCard) => {
+                    const actor = item.actor;
+                    let charges = item.system.uses.value;
+                    if(charges < 8) return ui.notifications.warn(`The armor doesn't have enough charges to activate this ability.`);
 
+                    await item.update({"system.uses.value": charges - 8});
+                    return ui.notifications.info(`8 charges consumed, ${item.system.uses.value} charges remaining.`);
                 }
             }
         ]
     })
-}
-//chefFeat_chatButton
-/** itemButtonMacro */
-async function armorOfTheLitrRune_activateWard_chatButton(params) {
-    
 }
 
 /** effect macro */
@@ -66,10 +79,13 @@ async function wardOfTheLitrRune_roundStart(effect) {
         });
     }
 
-    await effect.update({changes: newChanges});
+    const desc = `<p><strong>Resistances:</strong> ${resistances.join(', ')}</p><p><strong>Vulnerabilities:</strong> ${vulnerabilities.join(', ')}</p>`;
+
+    await effect.update({"changes": newChanges, "description": `${desc}<p>At the beginning of each round in combat, these damage types change randomly.</p>`});
 
     ChatMessage.create({
-        content: `<p>Resistances: ${resistances.join(', ')}</p><p>Vulnerabilities: ${vulnerabilities.join(', ')}</p>`,
+        flavor: effect.name,
+        content: `${desc}`,
         whisper: ChatMessage.getWhisperRecipients('GM'),
         type: CONST.CHAT_MESSAGE_TYPES.WHISPER
     });
