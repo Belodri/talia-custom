@@ -17,3 +17,4 @@ add:
 - Absorb Elements
 
 add: Armor of the Litr Rune
+add: A Series Of Unfortunate Events
