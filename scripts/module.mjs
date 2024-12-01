@@ -78,6 +78,7 @@ function registerRulePages() {
     CONFIG.DND5E.rules.undoingasurge = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.fXqW6yKBSh1Duwlw";
     CONFIG.DND5E.rules.spellscribing = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.RRUMkplfkv2jAr8s";
     CONFIG.DND5E.rules.alternateskillchecks = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.5Nvw1Iiz3p8iJcED";
+    CONFIG.DND5E.rules.reducedstatistics = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.BxBLKzrsTHH2fpqG";
 
     //settlement rules
     CONFIG.DND5E.rules.settlementauthority = "Compendium.talia-custom.rules.JournalEntry.SJAQXPyELYfOfRE4.JournalEntryPage.CuGAAat2fnLmTJ2i";
