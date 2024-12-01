@@ -482,7 +482,7 @@ export const surgesTable = {
         76: "For 1 week, you are surrounded by faint, ethereal music.",
         77: "Your hair permanently changes color. (1d8: 1=Red, 2=Green, 3=Blue, 4= Purple, 5= Yellow, 6=Grey, 7=White, 8=Black)",
         78: "For 1 hour, all spells  with a casting time of 1 action or 1 bonus action require 2 consecutive actions to cast.",
-        79: "For hour day, while you're speaking you gain the effect of the Light spell.",
+        79: "For one day, while you're speaking you gain the effect of the Light spell.",
         80: "All beverages within 30ft of you transform into lukewarm water when drunk.",
         81: "For 1 week, every time you say a word that begins with an 's', it sounds like you're hissing like a snake.",
         82: "Some god has taken issue with the last thing you said or did. You immediately take 5d10 radiant damage.",
