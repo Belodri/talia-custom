@@ -18,3 +18,4 @@ add:
 
 add: Armor of the Litr Rune
 add: A Series Of Unfortunate Events
+add: Rule: Reduced Statistics
