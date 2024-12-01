@@ -1,7 +1,12 @@
+import { MODULE } from "../../scripts/constants.mjs";
+import ChatCardButtons from "../../utils/chatCardButtons.mjs";
+import { Helpers } from "../../utils/helpers.mjs";
+
 export default {
     register() {
         register_masterOfChance();
         register_aSeriesOfUnfortunateEvents();
+        register_convincingArguments();
     }
 }
 
@@ -68,5 +73,80 @@ function register_aSeriesOfUnfortunateEvents() {
     Hooks.once("setup", () => {
         if(!game.user.isGM) return;     //trigger only on GM client
         Hooks.on("createChatMessage", chatMessageRenderHook);
+    });
+}
+
+/**
+ * Registers a ChatCardButton of the item "Convincing Arguments".
+ */
+function register_convincingArguments() {
+    /** Handles the deception roll and all following logic */
+    async function rollDeception(item, card) {
+        const target = game.user.targets.first();
+        if(game.user.targets.size > 1 || !target?.actor) return ui.notifications.warn("Please target a single token.");
+        
+        //get conditions
+        const conditionTypeKeys = Object.keys(CONFIG.DND5E.conditionTypes);
+        const filteredStatuses = target.actor.statuses.intersection(new Set(conditionTypeKeys));
+
+        //create the rolls and roll them
+        const targetRD = target.actor.getRollData();
+        const dc = targetRD.skills.ins.passive ?? 10;
+        const rollResults = await Promise.all(
+            filteredStatuses.map(async status => ({
+                status,
+                roll: await item.actor.rollSkill("dec", {
+                    chooseModifier: false, 
+                    targetValue: dc,
+                    messageData: {
+                        flavor: `Deception Skill Check (DC ${dc}): ${CONFIG.DND5E.conditionTypes[status].label}`
+                    }
+                })
+            }))
+        );
+
+        // determine which status can get removed
+        let hasNat20;
+        const sortedStatuses = {
+            toRemove: [], 
+            toKeep: [], 
+            invalid: []
+        };
+
+        for(let r of rollResults) {
+            if(r === null) {
+                sortedStatuses.invalid.push(r.status);
+            }
+            else if(r.roll.isCritical) {
+                hasNat20 = true;
+                break;
+            }
+            else if(Helpers.isRollSuccess(r.roll)) {
+                sortedStatuses.toRemove.push(r.status);
+            } else {
+                sortedStatuses.toKeep.push(r.status);
+            }
+        }
+
+        const messageContent = hasNat20 ? `<p><strong>Can be removed: ANY</strong> (${rollResults.map(r => r.status).join(", ")})</p>`
+            : ` <p><strong>Can be removed:</strong> ${sortedStatuses.toRemove.join(", ") || "None"}</p>
+                <p><strong>Cannot be removed:</strong> ${sortedStatuses.toKeep.join(", ") || "None"}</p>
+                ${sortedStatuses.invalid.length ? `<p><strong>Cancelled Rolls (please resolve manually):</strong> ${sortedStatuses.invalid.join(", ")}</p>` : ""}
+                `;
+        
+        await ChatMessage.implementation.create({
+            content: messageContent,
+            speaker: ChatMessage.implementation.getSpeaker({actor: item.actor}),
+        });
+    }
+
+    ChatCardButtons.register({
+        itemName: "Convincing Arguments",
+        buttons: [
+            {
+                label: "Roll Deception",
+                callback: (item, card) => rollDeception(item, card)
+            }
+        ]
     });
 }
