@@ -20,3 +20,4 @@ add: Armor of the Litr Rune
 add: A Series Of Unfortunate Events
 add: Rule: Reduced Statistics
 add: Mythic Trickster 2 - Active
+add: Chat messages now display critical successes and fumbles for skill checks, tool checks, ability checks, and saving throws, in addition to the default attack rolls and death saves.
