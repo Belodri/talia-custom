@@ -1,3 +1,44 @@
+# 1.12.0 - 2024/12/03
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- Spells
+    - Longstrider
+    - See Invisibility
+    -   <details>
+        <summary>Revivify</summary>
+
+        from
+        > Components: V, S, M (diamonds worth 300 gp, which the spell consumes)
+
+        to
+        > Components: V, S, M (a diamond worth 5000 gp, which the spell consumes)
+        </details>
+    - Steel Wind Strike
+    - Protection from Poison
+    - Silence
+    - Heroes' Feast
+    - Blade Ward
+    - Absorb Elements
+
+- Items
+    - Armor of the Litr Rune
+
+- Features
+    - Mythic Trickster 2 - Active
+    - Mythic Trickster 2 - Passive
+
+- Rules
+    - Reduced Statistics
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- Chat messages now display critical successes and fumbles for skill checks, tool checks, ability checks, and saving throws, in addition to the default attack rolls and death saves.
+</details>
+
 # 1.11.0 - 2024/11/26
 
 <details>
