@@ -81,7 +81,7 @@ function register_aSeriesOfUnfortunateEvents() {
  */
 function register_convincingArguments() {
     /** Handles the deception roll and all following logic */
-    async function rollDeception(item, card) {
+    async function rollDeception(item) {
         const target = game.user.targets.first();
         if(game.user.targets.size > 1 || !target?.actor) return ui.notifications.warn("Please target a single token.");
         
@@ -145,7 +145,7 @@ function register_convincingArguments() {
         buttons: [
             {
                 label: "Roll Deception",
-                callback: (item, card) => rollDeception(item, card)
+                callback: ({item}) => rollDeception(item)
             }
         ]
     });
