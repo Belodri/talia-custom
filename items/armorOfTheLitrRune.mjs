@@ -23,7 +23,7 @@ function addChatCardButtons() {
         buttons: [
             {
                 label: "Flash (consume 1 charge)",
-                callback: async (item, chatCard) => {
+                callback: async ({item}) => {
                     let charges = item.system.uses.value;
                     if(charges < 1) return ui.notifications.warn(`The armor doesn't have enough charges to activate this ability.`);
 
@@ -33,7 +33,7 @@ function addChatCardButtons() {
             },
             {
                 label: "Ward (consume 8 charges)",
-                callback: async (item, chatCard) => {
+                callback: async ({item}) => {
                     const actor = item.actor;
                     let charges = item.system.uses.value;
                     if(charges < 8) return ui.notifications.warn(`The armor doesn't have enough charges to activate this ability.`);

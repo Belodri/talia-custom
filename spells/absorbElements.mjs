@@ -9,7 +9,7 @@ export default {
                     const label = CONFIG.DND5E.damageTypes[curr].label;
                     acc.push({
                         label: CONFIG.DND5E.damageTypes[curr].label,
-                        callback: (item, card) => absorbElements(item, card, curr)
+                        callback: ({item, message}) => absorbElements(item, message, curr)
                     });
                     return acc;
                 }, []),
@@ -19,8 +19,8 @@ export default {
 }
 
 /** */
-async function absorbElements(item, card, type) {
-    const spellLevel = Number(card.dataset.spellLevel)
+async function absorbElements(item, message, type) {
+    const spellLevel = message.flags.dnd5e?.use?.spellLevel;
     const typeLabel = CONFIG.DND5E.damageTypes[type].label;
     const formula = `${spellLevel}d6`;
     const target = game.user.targets.first();
