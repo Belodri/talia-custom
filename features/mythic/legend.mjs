@@ -1,9 +1,11 @@
 import { MODULE } from "../../scripts/constants.mjs";
+import ChatCardButtons from "../../utils/chatCardButtons.mjs";
 
 export default {
     register() {
         unflinching();
         legendaryVigor();
+        godbreaker();
     }
 }
 
@@ -154,3 +156,67 @@ function unflinching(requiredMythicRank = 2) {
     })
 }
 
+/**
+While you're grappling a creature, you can expend 1 Mythic Power as an action to hurl the creature 20 feet into the air, following behind it with a powerful jump, and then make an unarmed attack.
+
+If the attack hits, you can repeat this process up to 4 more times, moving the creature an additional 20 feet directly up into the air with each hit.
+
+If any of the attacks miss, both you and the grappled creature fall, taking falling damage as normal for the total height.
+
+After hitting the fifth attack, you immediately seize the creature and drive it into the ground as you land on top of it and make a sixth unarmed attack, which is a guaranteed critical hit.
+
+Upon impact, the grappled creature takes falling damage as if it fell from twice the total height and falls prone, while you take no damage from this impact.
+*/
+function godbreaker() {
+    /*
+        register chat card buttons
+        - Attacks
+        - Fall damage
+    */
+
+    ChatCardButtons.register({
+        itemName: "Godbreaker",
+        buttons: [
+            {
+                label: "Fall Damage",
+                callback: async() => {
+                    const {DialogV2} = foundry.applications.api;
+                    const {NumberField} = foundry.data.fields;
+
+                    const selectFallDistanceField = new NumberField({
+                        label: "Fall Distance (in ft)",
+                        required: true,
+                        min: 1,
+                        integer: true,
+                    }).toFormGroup({},{name: "fallDistance"}).outerHTML;
+
+                    const result = await DialogV2.prompt({
+                        window: { title: "Fall Damage" },
+                        content: selectFallDistanceField,
+                        rejectClose: false,
+                        ok: {
+                            callback: (event, button) => new FormDataExtended(button.form).object,
+                        }
+                    });
+                    if(!result?.fallDistance || result.fallDistance < 10) return;
+
+                    //round down to nearest multiple of 10
+                    const roundedDist = Math.floor(result.fallDistance / 10) * 10;
+                    
+                    // fall damage = 1d6 bludgeoning damage for each 10ft fall distance
+                    const diceNum = roundedDist / 10;
+
+                    const damageRoll = await dnd5e.dice.damageRoll({
+                        rollConfigs: [{
+                            parts: [`${diceNum}d6`],
+                            type: "bludgeoning",
+                        }],
+                        fastForward: true,
+                        rollMode: CONST.DICE_ROLL_MODES.PUBLIC,
+                        flavor: `Fall Distance: ${result.fallDistance}`
+                    });
+                }
+            }
+        ]
+    })
+}
