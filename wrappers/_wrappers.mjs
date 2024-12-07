@@ -17,7 +17,7 @@ function wrap_Actor_getRollData(wrapped, ...args) {
     const rollData = wrapped(...args);
     // add an object to the rolldata
     const taliaObj = {};
-    Hooks.callAll("talia_addToRollData", rollData, taliaObj);
+    Hooks.callAll("talia_addToRollData", this, rollData, taliaObj);
     rollData.talia = taliaObj;
     return rollData;
 }

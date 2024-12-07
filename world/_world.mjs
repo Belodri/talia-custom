@@ -1,5 +1,5 @@
 import changesToConditions from "./changesToConditions.mjs";
-import soulBoundItemProperty from "./soulBoundItemProperty.mjs";
+import itemProperties from "./itemProperties.mjs";
 import spellFailureChance from "./spellFailureChance.mjs";
 import wildMagic from "./wildMagic/wildMagic.mjs";
 import customLimitedUsePeriods from "./customLimitedUsePeriods.mjs";
@@ -11,7 +11,7 @@ import _guildmanager from "./guildmanager/_guildmanager.mjs";
 export default {
     registerSection() {
         wildMagic.register();
-        soulBoundItemProperty.register();
+        itemProperties.register();
         changesToConditions.register();
         spellFailureChance.register();
         customLimitedUsePeriods.register();

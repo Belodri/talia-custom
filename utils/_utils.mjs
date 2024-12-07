@@ -5,6 +5,7 @@ import sizeChange from "./sizeChange.mjs";
 import spellbookManager from "./spellbookManager.mjs";
 import utilHooks from "./utilHooks.mjs";
 import ChatCardButtons from "./chatCardButtons.mjs";
+import _methodAdditions from "./methodAdditions/_methodAdditions.mjs";
 
 export default {
     registerSection() {
@@ -15,6 +16,7 @@ export default {
         sizeChange.regsiter();
         extendStringClass();
         ChatCardButtons.registerHooks();
+        _methodAdditions.registerSection();
     }
 }
 
