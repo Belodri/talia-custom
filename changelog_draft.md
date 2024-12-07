@@ -14,3 +14,4 @@ todo: rewrite other features of shalkoc to use this property as identifier
 - added: "Shalkoc's Hoard" actor
 todo: add graphics for the hoard
 - added: Actor5e.prototype.getWealth() method
+- added: spell: Withering Touch

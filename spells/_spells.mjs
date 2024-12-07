@@ -5,6 +5,7 @@ import skillEmpowerment from "./skillEmpowerment.mjs";
 import heroesFeast from "./heroesFeast.mjs";
 import bladeWard from "./bladeWard.mjs";
 import absorbElements from "./absorbElements.mjs";
+import witheringTouch from "./witheringTouch.mjs";
 
 
 export default {
@@ -16,5 +17,6 @@ export default {
         heroesFeast.register();
         bladeWard.register();
         absorbElements.register();
+        witheringTouch.register();
     }
 }
