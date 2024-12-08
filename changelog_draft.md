@@ -16,3 +16,4 @@ todo: add graphics for the hoard
 - added: Actor5e.prototype.getWealth() method
 - added: spell: Withering Touch
 - added: Mythic Lich 2 passive feature
+- added: Mythic Lich 2 active feature

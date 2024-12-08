@@ -6,6 +6,7 @@ import customLimitedUsePeriods from "./customLimitedUsePeriods.mjs";
 import _settlement from "./settlement/_settlement.mjs";
 import damageAbsorption from "./damageAbsorption.mjs";
 import _guildmanager from "./guildmanager/_guildmanager.mjs";
+import addActiveEffectFields from "./addActiveEffectFields.mjs";
 
 
 export default {
@@ -17,5 +18,6 @@ export default {
         customLimitedUsePeriods.register();
         _settlement.registerSubsection();
         damageAbsorption.register();
+        addActiveEffectFields.register();
     }
 }
