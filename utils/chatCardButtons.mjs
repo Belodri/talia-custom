@@ -1,8 +1,23 @@
 /**
+ * @typedef {object} Variables
+ * @property {Event} event
+ * @property {ChatMessage} message                  The message that was clicked.
+ * @property {object} speaker                       The usual message.speaker object
+ * @property {string} speaker.actor
+ * @property {string} speaker.alias
+ * @property {string | undefined} speaker.scene
+ * @property {string | undefined} speaker.token
+ * @property {Item} item                            The item associated with the message.
+ * @property {Actor} actor                          The actor which is the author of the chat card.
+ * @property {Scene} [scene]                        The scene specified in message.speaker
+ * @property {Token} [token]                        The token specified in message.speaker
+ */
+
+/**
  * @typedef ChatCardButtonConfig
- * @property {string} label         The label displayed on the button.
- * @property {string} [icon]        An optional Font Awesome icon class to display alongside the label (e.g., 'fa-dice').
- * @property {Function} callback    A function to execute when the button is clicked. Receives (item, card) as arguments and can be asynchronous.
+ * @property {string} label                         The label displayed on the button.
+ * @property {string} [icon]                        An optional Font Awesome icon class to display alongside the label (e.g., 'fa-dice').
+ * @property {(args: Variables) => void} callback   A function to execute when the button is clicked. Can be asynchronous. Receives a {@link Variables} object as its argument.                            
  */
 
 /**
@@ -10,7 +25,7 @@
  * @property {string} itemName                          The name of the item associated with the buttons.
  * @property {boolean} [isPartialName = false]          If true, matches items containing `itemName` as a substring.
  * @property {ChatCardButtonConfig[]} buttons           An array of `ChatCardButtonConfig` objects defining the buttons.
- * @property {Function} [displayFilter]             Optional function to conditionally render buttons. Receives (item, chatData, options) and if it returns `false`, the buttons are not added. 
+ * @property {Function} [displayFilter]                 Optional function to conditionally render buttons. Receives (item, chatData, options) and if it returns `false`, the buttons are not added. 
  */
 
 /**
@@ -141,21 +156,6 @@ export default class ChatCardButtons {
         }
         return null;
     }
-
-    /**
-     * @typedef {object} Variables
-     * @property {Event} event
-     * @property {ChatMessage} message                  The message that was clicked.
-     * @property {object} speaker                       The usual message.speaker object
-     * @property {string} speaker.actor
-     * @property {string} speaker.alias
-     * @property {string | undefined} speaker.scene
-     * @property {string | undefined} speaker.token
-     * @property {Item} item                            The item associated with the message.
-     * @property {Actor} actor                          The actor which is the author of the chat card.
-     * @property {Scene} [scene]                        The scene specified in message.speaker
-     * @property {Token} [token]                        The token specified in message.speaker
-     */
 
     /**
      * 
