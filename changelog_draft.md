@@ -15,3 +15,4 @@ todo: rewrite other features of shalkoc to use this property as identifier
 todo: add graphics for the hoard
 - added: Actor5e.prototype.getWealth() method
 - added: spell: Withering Touch
+- added: Mythic Lich 2 passive feature
