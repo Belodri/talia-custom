@@ -17,3 +17,4 @@ todo: add graphics for the hoard
 - added: spell: Withering Touch
 - added: Mythic Lich 2 passive feature
 - added: Mythic Lich 2 active feature
+- added: Mythic Dragon active feature
