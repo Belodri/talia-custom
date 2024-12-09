@@ -1,9 +1,11 @@
 import { MODULE } from "../../scripts/constants.mjs";
+import ChatCardButtons from "../../utils/chatCardButtons.mjs";
 
 export default {
     register() {
         unflinching();
         legendaryVigor();
+        godbreaker();
     }
 }
 
@@ -154,3 +156,15 @@ function unflinching(requiredMythicRank = 2) {
     })
 }
 
+/** Registers the chat card button for the Godbreaker feature */
+function godbreaker() {
+    ChatCardButtons.register({
+        itemName: "Godbreaker",
+        buttons: [
+            {
+                label: "Fall Damage",
+                callback: async() => await TaliaCustom.Helpers.fallDamageDialog()
+            }
+        ]
+    })
+}

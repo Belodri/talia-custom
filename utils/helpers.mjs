@@ -334,6 +334,48 @@ export class Helpers {
             return true;
         } else return false;
     }
-}
 
+    static async fallDamageDialog() {
+        const {DialogV2} = foundry.applications.api;
+        const {NumberField} = foundry.data.fields;
+
+        const selectFallDistanceField = new NumberField({
+            label: "Fall Distance (in ft)",
+            required: true,
+            min: 1,
+            integer: true,
+        }).toFormGroup({},{name: "fallDistance"}).outerHTML;
+
+        const result = await DialogV2.prompt({
+            window: { title: "Fall Damage" },
+            content: selectFallDistanceField,
+            rejectClose: false,
+            ok: {
+                callback: (event, button) => new FormDataExtended(button.form).object,
+            }
+        });
+        if(!result?.fallDistance || result.fallDistance < 10) return;
+
+        //round down to nearest multiple of 10
+        const roundedDist = Math.floor(result.fallDistance / 10) * 10;
+        
+        // fall damage = 1d6 bludgeoning damage for each 10ft fall distance
+        const diceNum = roundedDist / 10;
+
+        const damageRoll = await dnd5e.dice.damageRoll({
+            rollConfigs: [{
+                parts: [`${diceNum}d6`],
+                type: "bludgeoning",
+            }],
+            fastForward: true,
+            rollMode: CONST.DICE_ROLL_MODES.PUBLIC,
+            messageData: {
+                speaker: {
+                    alias: "Environment"
+                }
+            },
+            flavor: `Fall Distance: ${result.fallDistance}ft`
+        });
+    }
+}
 
