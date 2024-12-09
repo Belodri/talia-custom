@@ -19,3 +19,10 @@ todo: add graphics for the hoard
 - added: Mythic Lich 2 active feature
 - added: Mythic Dragon 2 active feature
 - added: Mythic Legend 2 active feature
+- added: Item: Tiny Silver Cage
+- added: Item: Soul in a Cage
+- added: Spell: Soul Cage (changed from the version in Xanathar's)
+- added: Spell: Gravecraft
+- added: Spell: Speak with Dead
+- added: Spell: Life Leech
+- added: Item: Unholy Grimoire of Profanation
