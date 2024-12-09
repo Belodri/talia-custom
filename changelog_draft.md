@@ -26,3 +26,4 @@ todo: add graphics for the hoard
 - added: Spell: Speak with Dead
 - added: Spell: Life Leech
 - added: Item: Unholy Grimoire of Profanation
+- changed: Mythic Legend 2 passive
