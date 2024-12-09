@@ -1,6 +1,9 @@
+import ChatCardButtons from "../../utils/chatCardButtons.mjs";
+
 export default {
     register() {
         instinctiveGreed();
+        mystifyingMiasma();
     }
 }
 
@@ -109,4 +112,46 @@ function instinctiveGreed() {
     });
 }
 
+/** Registers the chat card buttons for the Mystifying Miasma feature */
+function mystifyingMiasma() {
+    const MAIN_NAME = "Mystifying Miasma";
+    const CLOUD_NAME = "Mystifying Miasma Cloud";
+    const SKILL_DC = 30;
 
+    ChatCardButtons.register({
+        itemName: "Mystifying Miasma",
+        buttons: [
+            {
+                label: "Apply Cloud Effects",
+                callback: async({actor, item}) => {
+                    // applies the main effect to the actor
+                    // applies the cloud effect to all creatures on the scene
+
+                    //check if actor has main effect already, don't reapply the main effect;
+                    let mainEffectOnActor = actor.appliedEffects.find(e => e.name === MAIN_NAME);
+                    if(!mainEffectOnActor) {
+                        [mainEffectOnActor] = await game.dfreds.effectInterface.addEffect({ effectName: MAIN_NAME, uuid: actor.uuid });
+                    }
+
+                    //if not on active scene return;
+                    if(!canvas.scene?.active) return;
+
+                    //add the cloudeffect to all other actors that are not the main actor and that don't already have it
+                    const createdCloudEffects = [];
+                    for(let token of canvas.scene.tokens) {
+                        // avoid main actor
+                        if(!token.actor?.uuid || token.actor.uuid === actor.uuid) continue;
+                        //avoid duplicates
+                        if(token.actor.appliedEffects.some(e => e.name === CLOUD_NAME)) continue;
+                        
+                        createdCloudEffects.push(game.dfreds.effectInterface.addEffect({effectName: CLOUD_NAME, uuid: token.actor.uuid}));
+                    }
+                    const resolved = (await Promise.all(createdCloudEffects)).flatMap(res => res);
+
+                    //add created cloud effects as dependents
+                    await mainEffectOnActor.addDependent(...resolved);
+                }
+            }
+        ]
+    })
+}
