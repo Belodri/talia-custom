@@ -1,3 +1,44 @@
+# 1.13.0 - 2024/12/10
+
+<details>
+<summary><h2>Added</h2></summary>
+
+- Features
+    - Mythic Dragon 2 Passive
+    - Mythic Dragon 2 Active
+    - Mythic Lich 2 Passive
+    - Mythic Lich 2 Active
+    - Mythic Legend 2 Passive (changed)
+    - Mythic Legend 2 Active
+
+- Spells
+    - Withering Touch
+    - Gravecraft
+    - Soul Cage
+    - Speak with Dead
+    - Life Leech
+
+- Items
+    - Unholy Grimoire of Profanation
+    - Soul in a Cage
+    - Tiny Silver Cage
+
+- Actors
+    - Shalkoc's Hoard
+
+</details>
+
+<details>
+<summary><h2>Changed</h2></summary>
+
+- API
+    - added actor (this) to Hooks.callAll("talia_addToRollData", this, rollData, taliaObj)
+    - refactored itemProperties
+    - added "Breath" item property to types: "consumable", "equipment", "weapon", "feat", "spell"
+    - added "Breath" item property to items: "Breath of the Dragon" (Shalkoc & Compendium)
+    - added Actor5e.prototype.getWealth() method
+</details>
+
 # 1.12.0 - 2024/12/03
 
 <details>
