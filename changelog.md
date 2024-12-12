@@ -1,3 +1,18 @@
+# 1.13.1
+
+- Updated each player character to mythic rank 2.
+- Changed the wording of Mythic Lich's 'Essence Tithe' feature to clarify the order of events:
+
+    from
+    > Your mastery of forbidden magic allows you to replace costly material components with the essence of life itself. When casting a spell that consumes a material component with a specified gold piece cost, you may forgo the component and instead offer a tithe of life essence equal to 1d10 hit points per 25 gp of the component’s cost (minimum 1d10).
+    > 
+    > To pay the tithe, choose any number of willing creatures within 60 feet and divide the hit point damage among them as you choose. A creature's tithe cannot be higher than the amount of hit points than it has remaining and this damage cannot be reduced or mitigated in any way. If the sum of hit points lost this way does not meet or exceed the required cost, the spell fails, but the spell slot is not expended.
+
+    to
+    > Your mastery of forbidden magic allows you to replace costly material components with the essence of life itself. When casting a spell that consumes a material component with a specified gold piece cost, you may forgo the component and instead offer a tithe of life essence equal to 1d10 hit points per 25 gp of the component’s cost (minimum 1d10).
+    > 
+    > To pay the tithe, you must first choose any number of willing creatures within 60 feet. After rolling the tithe, divide the hit point damage among the willing  creatures as you choose. A creature's tithe cannot be higher than the amount of hit points than it has remaining and this damage cannot be reduced or mitigated in any way. If the sum of hit points lost this way does not meet or exceed the required cost, the spell fails, but the spell slot is not expended.
+
 # 1.13.0 - 2024/12/10
 
 <details>
