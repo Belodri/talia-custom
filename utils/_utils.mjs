@@ -6,6 +6,7 @@ import spellbookManager from "./spellbookManager.mjs";
 import utilHooks from "./utilHooks.mjs";
 import ChatCardButtons from "./chatCardButtons.mjs";
 import _methodAdditions from "./methodAdditions/_methodAdditions.mjs";
+import sceneEffects from "./sceneEffects.mjs";
 
 export default {
     registerSection() {
@@ -17,6 +18,7 @@ export default {
         extendStringClass();
         ChatCardButtons.registerHooks();
         _methodAdditions.registerSection();
+        sceneEffects.register();
     }
 }
 
