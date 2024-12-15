@@ -6,3 +6,4 @@
 # Drafts
 - add: Scene Effects
 - fix: Skill Empowerment failing without notification if no target was available.
+- add: Realm Effect: Muspelheim
