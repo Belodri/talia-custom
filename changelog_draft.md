@@ -5,3 +5,4 @@
 - During release preparation, entries from this file are reviewed, organized, and moved into the main `changelog.md`.
 # Drafts
 - add: Scene Effects
+- fix: Skill Empowerment failing without notification if no target was available.

@@ -12,7 +12,10 @@ export default {
 async function skillEmpowerment(item) {
     const targetActor = game.user.targets.first()?.actor;
     const effect = item.effects?.contents[0];
-    if(!targetActor || !effect) return false;
+    if(!targetActor || !effect) {
+        ui.notifications.warn("You need to target a creature first.");
+        return false;
+    }
 
     const chosenSkillId = await chooseSkillDialog(targetActor);
     if(!chosenSkillId) return false;
