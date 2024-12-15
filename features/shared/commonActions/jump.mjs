@@ -8,73 +8,31 @@ import { TaliaCustomAPI } from "../../../scripts/api.mjs";
 
 export default {
     register() {
-        Hooks.once("setup", () => {
-            const fields = [];
-            fields.push("flags.talia-custom.jumpDist.bonus");
-            fields.push("flags.talia-custom.jumpDist.countDoubled");
-            fields.push("flags.talia-custom.jumpDist.countHalved");
-            DAE.addAutoFields(fields);
-        });
         TaliaCustomAPI.add({jump: Jump.itemMacro}, "ItemMacros");
-        TaliaCustomAPI.add({getJumpDistance: Jump.getDistance}, "Other");
     }
 }
 
-class Jump {
-    static getDistance(actor) {
-        const rollData = actor.getRollData();
-        const acr = Math.max(foundry.utils.getProperty(rollData, "skills.acr.total") ?? 0, 0);
-        const ath = Math.max(foundry.utils.getProperty(rollData, "skills.ath.total") ?? 0, 0);
-
-        //the distance is based off either Athletics or Acrobatics skill, whichever one is higher
-        const higherSkill = acr > ath ? acr : ath;
-
-        //(Base (+0) = 5ft; +5ft per +2) (i.e. Athletics 8 = 25ft)
-        //round to next lower even number if odd
-        const workingSkillValue = higherSkill - (higherSkill % 2);
-        const baseDistance =  5 + ((workingSkillValue / 2) * 5);
-
-        const distAdd = foundry.utils.getProperty(rollData, "flags.talia-custom.jumpDist.bonus") ?? 0;
-        const distDouble = foundry.utils.getProperty(rollData, "flags.talia-custom.jumpDist.countDoubled") ?? 0;
-        const distHalf = foundry.utils.getProperty(rollData, "flags.talia-custom.jumpDist.countHalved") ?? 0;
-
-        //caps the multiplier at 0.25 and 4.
-        const distMult = Math.clamp(Math.pow(2, distDouble - distHalf), 0.25, 4);
-
-        const calculatedDistance = (baseDistance + distAdd) * distMult;
-
-        //round that to the nearest interval of 5
-        let roundedDistance = Math.round(calculatedDistance / 5) * 5;
-
-        //lets other scripts modify the final calculated and rounded distance
-        const distanceObj = {
-            rounded: roundedDistance,
-            newValue: null
-        };
-        Hooks.callAll("talia_postCalculateJumpDistance", actor, distanceObj );
-        return distanceObj.newValue ?? distanceObj.rounded;
-    }
+export class Jump {
 
     static async itemMacro(item) {
         const rollData = item.actor.getRollData();
         const sourceToken = rollData.token;
+        const maxJumpDistInFt = rollData.talia.jumpDistance;
 
-        const location = await Jump.selectLocation(sourceToken);
+        const location = await Jump.selectLocation(sourceToken, maxJumpDistInFt);
         if(!location) return;
 
         await Jump.jumpAnimation(sourceToken, {x: location.x, y: location.y});
         return true;
     }
 
-    static async selectLocation(token) {
-        const maxJumpDistInFt = Jump.getDistance(token.actor);
-
+    static async selectLocation(token, maxJumpDistInFt = 5) {
         const location = await Sequencer.Crosshair.show({
             location: {
                 obj: token,
                 limitMaxRange: maxJumpDistInFt,
                 showRange: true,
-                wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.NO_COLLIDABLES,
+                wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.ANYWHERE,
                 displayRangePoly: true,
                 rangePolyLineColor: 0o000000,
                 rangePolyLineAlpha: 1,
@@ -82,6 +40,11 @@ class Jump {
             gridHighlight: true,
             snap: {
                 position: Math.max(1, token.document.width) % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER
+            }
+        }, {
+            [Sequencer.Crosshair.CALLBACKS.INVALID_PLACEMENT]: async (crosshair) => {
+                await Sequencer.Helpers.wait(100);
+                token.control();
             }
         });
         await Sequencer.Helpers.wait(500);  //wait a little so the control works properly

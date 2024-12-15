@@ -96,6 +96,7 @@ async function getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt) {
             position: tWidthInGU % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER
         }    
     });
+    await Sequencer.Helpers.wait(500);  //wait a little so the control works properly
     token.control();
     if(location === false) return null; // false means it's been cancelled so we need to break the loop.
 
@@ -132,7 +133,7 @@ async function updateBabonus(item, pointA, pointB) {
  *
  */
 async function jump(token, item) {
-    const maxJumpDistInFt = TaliaCustom.Other.getJumpDistance(token.actor);
+    const maxJumpDistInFt = item.actor.getRollData().talia.jumpDistance;
     const minSpacingInFt = 5;
 
     //get location 

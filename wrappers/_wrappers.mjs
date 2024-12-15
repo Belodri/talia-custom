@@ -1,16 +1,18 @@
 import { MODULE } from "../scripts/constants.mjs";
 import restrictMovement from "./restrictMovement.mjs";
 import { Helpers } from "../utils/helpers.mjs";
+import getRollDataWrapper from "./getRollDataWrapper.mjs";
 
 /** registers all wrappers */
 export function registerWrappers() {
-    libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", wrap_Actor_getRollData , "WRAPPER");
+    //libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", wrap_Actor_getRollData , "WRAPPER");
     libWrapper.register(MODULE.ID, 'dnd5e.applications.actor.ActorSheet5e.prototype.maximize', wrap_ActorSheet_maximize, "MIXED");
     libWrapper.register(MODULE.ID, 'dnd5e.canvas.AbilityTemplate.prototype._finishPlacement', wrap_AbilityTemplate_finishPlacement, "WRAPPER");
     libWrapper.register(MODULE.ID, "dnd5e.applications.components.DamageApplicationElement.prototype.getTargetOptions", wrap_DamageApplicationElement_getTargetOptions, "WRAPPER");
     libWrapper.register(MODULE.ID, "CONFIG.Dice.D20Roll.prototype.configureModifiers", wrap_CONFIG_Dice_D20Roll_prototype_configureModifiers, "WRAPPER");
     libWrapper.register(MODULE.ID, "dnd5e.documents.ChatMessage5e.prototype._highlightCriticalSuccessFailure", wrap_dnd5e_documents_ChatMessage5e_prototype__highlightCriticalSuccessFailure, 'OVERRIDE');
     restrictMovement.registerWrapper();
+    getRollDataWrapper.registerWrapper();
 }
 
 /** Lets other parts of the module hook into talia_addToRollData and mutate the taliaObj which is then appended to rollData */
@@ -18,6 +20,9 @@ function wrap_Actor_getRollData(wrapped, ...args) {
     const rollData = wrapped(...args);
     // add an object to the rolldata
     const taliaObj = {};
+
+    // add jump distance to rollData
+    taliaObj.jumpDistance = 
 
     // add magical bonuses from armor and shield to rollData
     taliaObj.magicalArmorBonus = ( rollData?.attributes?.ac?.equippedArmor && Helpers.checkAttunement(rollData.attributes.ac.equippedArmor) ) 

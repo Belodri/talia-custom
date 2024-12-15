@@ -7,3 +7,6 @@
 - add: Scene Effects
 - fix: Skill Empowerment failing without notification if no target was available.
 - add: Realm Effect: Muspelheim
+- fix: Jump no longer restricts target destination. (Please don't start jumping out of the map...)
+- add: Jump now displays the maximum distance you can jump.
+Refactored Jump, divingStrike, mythicLegend(legendaryVigor) to implement the addition of jumpDistance to rollData.

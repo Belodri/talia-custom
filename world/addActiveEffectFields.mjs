@@ -18,4 +18,13 @@ function getDaeAutoFields(fields) {
         ...Object.keys(CONFIG.DND5E.spellSchools)
             .map(k => `flags.talia-custom.modifySpellLevel.spellSchools.${k}`)
     );
+
+    //add jump dist fields
+    const jumpDistFields = [
+        "flags.talia-custom.jumpDist.bonus",
+        "flags.talia-custom.jumpDist.countDoubled",
+        "flags.talia-custom.jumpDist.countHalved",
+        "flags.talia-custom.jumpDist.distMult"
+    ];
+    fields.push(...jumpDistFields);
 }
