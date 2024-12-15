@@ -1,5 +1,6 @@
 import { MODULE } from "../scripts/constants.mjs";
 import restrictMovement from "./restrictMovement.mjs";
+import { Helpers } from "../utils/helpers.mjs";
 
 /** registers all wrappers */
 export function registerWrappers() {
@@ -17,6 +18,13 @@ function wrap_Actor_getRollData(wrapped, ...args) {
     const rollData = wrapped(...args);
     // add an object to the rolldata
     const taliaObj = {};
+
+    // add magical bonuses from armor and shield to rollData
+    taliaObj.magicalArmorBonus = ( rollData?.attributes?.ac?.equippedArmor && Helpers.checkAttunement(rollData.attributes.ac.equippedArmor) ) 
+        ? rollData.attributes.ac.equippedArmor.system.armor.magicalBonus : 0;
+    taliaObj.magicalShieldBonus = ( rollData?.attributes?.ac?.equippedShield && Helpers.checkAttunement(rollData.attributes.ac.equippedShield) )
+        ? rollData.attributes.ac.equippedShield.system.armor.magicalBonus : 0;
+
     Hooks.callAll("talia_addToRollData", this, rollData, taliaObj);
     rollData.talia = taliaObj;
     return rollData;
