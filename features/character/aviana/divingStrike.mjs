@@ -1,6 +1,7 @@
 // functions are called via item macro chat buttons
 
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
+import { Jump } from "../../shared/commonActions/jump.mjs";
 
 export default {
     register() {
@@ -10,71 +11,6 @@ export default {
 
 const ChatButtons_DivingStrike = {
     jump
-}
-
-
-/**
- *
- */
-async function startBorderSequence(token, maxJumpDistInFt, minSpacingInFt) {
-    const ftInGrid = canvas.scene.grid.distance;
-    const tWidthInGU = Math.max(1, token.document.width);   //token width in GU; minimum of 1;
-    const minDistInGU = ( tWidthInGU / 2 ) + Math.round(minSpacingInFt / ftInGrid);     //measured from token center
-    const maxDistInGU = ( tWidthInGU / 2 )+ Math.round(maxJumpDistInFt / ftInGrid);
-
-    return await new Sequence()
-        .effect()
-        .persist()
-        .name("outerBorderEffect")
-        .atLocation(token)
-        .shape("roundedRect", {
-            name: "outerRectShape",
-            radius: 0.5,
-            lineSize: 4,
-            lineColor: game.user.color.toString(),
-            gridUnits: true,
-            fillAlpha: 0.15,
-            //fillColor: "",
-            height: 2 * maxDistInGU,
-            width: 2 * maxDistInGU,
-            offset: {
-                x: -maxDistInGU,
-                y: -maxDistInGU ,
-                gridUnits: true
-            }
-        })
-        .loopProperty("shapes.outerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .loopProperty("shapes.outerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .effect()
-        .persist()
-        .name("innerBorderEffect")
-        .atLocation(token)
-        .shape("roundedRect", {
-            name: "innerRectShape",
-            radius: 0.5,
-            lineSize: 4,
-            lineColor: game.user.color.toString(),
-            gridUnits: true,
-            fillAlpha: 0.3,
-            fillColor: "#fa2511",
-            height: 2 * minDistInGU,
-            width: 2 * minDistInGU,
-            offset: {
-                x: -minDistInGU,
-                y: -minDistInGU,
-                gridUnits: true
-            }
-        })
-        .loopProperty("shapes.innerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .loopProperty("shapes.innerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .play()
-}
-
-/**
- *
- */
-async function endBorderSequence() {
-    return await Sequencer.EffectManager.endEffects({ name: "*BorderEffect" });
 }
 
 /**
@@ -89,7 +25,10 @@ async function getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt) {
             limitMaxRange: maxJumpDistInFt - 1,
             limitMinRange: minSpacingInFt + 6,
             showRange: true,
-            wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.LINE_OF_SIGHT
+            wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.ANYWHERE,
+            displayRangePoly: true,
+            rangePolyLineColor: 0o000000,
+            rangePolyLineAlpha: 1,
         },
         gridHighlight: true,
         snap: {
@@ -137,9 +76,7 @@ async function jump(token, item) {
     const minSpacingInFt = 5;
 
     //get location 
-    startBorderSequence(token, maxJumpDistInFt, minSpacingInFt);    //display the range until a location is chosen or until it's aborted
     const location = await getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt);
-    await endBorderSequence();
 
     if(!location) return;   //if jump is cancelled
     const targetPosition = {
@@ -147,79 +84,13 @@ async function jump(token, item) {
         y: location.y
     };
 
-    return await Promise.all([
+    await Promise.all([
         updateBabonus(item, token.center, targetPosition),
         playJumpAnimation(token, targetPosition)
     ]);
+
+    await Jump.setElevationToGround(token, targetPosition);
 }
-
-/**
- *
- */
-function adjustToTokenScale(token, dist) {
-    const ftInGrid = canvas.scene.grid.distance;    //almost always = 5
-    const tWidth = Math.max(1, token.document.width);    //token width in GU; minimum of 1
-
-    const distInGU =  ( tWidth / 2 ) + Math.round(dist / ftInGrid);    //measured from token center
-    return {
-        distanceInGU: distInGU,
-        shape: {
-            height: 2 * distInGU,   //border width/height
-            width: 2 * distInGU,
-            offset: {
-                x: -distInGU,  //border offset
-                y: -distInGU,
-                gridUnits: true
-            }
-        }
-    }
-}
-
-
-/**
- *
- */
-async function displayRange(token, config = {}) {
-    const {
-        maxDist = 20,
-        minDist = 10,
-        animDurationInMs = 10000
-    } = config;
-
-    new Sequence()
-        .effect()
-        .duration(animDurationInMs)
-        .atLocation(token)
-        .shape("roundedRect", {
-            name: "outerRectShape",
-            radius: 0.5,
-            lineSize: 4,
-            lineColor: game.user.color.toString(),
-            gridUnits: true,
-            fillAlpha: 0.15,
-            //fillColor: "#fc8d83",
-            ...adjustToTokenScale(token, maxDist).shape
-        })
-        .loopProperty("shapes.outerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .loopProperty("shapes.outerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .effect()
-        .duration(animDurationInMs)
-        .atLocation(token)
-        .shape("roundedRect", {
-            name: "innerRectShape",
-            radius: 0.5,
-            lineSize: 4,
-            lineColor: game.user.color.toString(),
-            gridUnits: true,
-            fillAlpha: 0.3,
-            fillColor: "#fa2511",
-            ...adjustToTokenScale(token, minDist).shape
-        })
-        .loopProperty("shapes.innerRectShape", "scale.x", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .loopProperty("shapes.innerRectShape", "scale.y", {from: 0.995, to: 1.005, duration: 1500, pingPong: true, ease: "easeInOutSine"})
-        .play()
-}
-
 
 /**
  *
@@ -229,6 +100,12 @@ async function playJumpAnimation(token, position) {
         .canvasPan()
         .delay(100)
         .shake({duration: 500, strength: 2, rotation: true, fadeOut:500})
+
+        .sound()
+        .file("TaliaCampaignCustomAssets/c_sounds/DivingStrike.mp3")
+        .atLocation(token)
+        .radius(120)    //can hear within 120ft
+        .distanceEasing(true)
 
         .effect()
         .file("jb2a.impact.ground_crack.orange.01")

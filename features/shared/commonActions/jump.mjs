@@ -1,29 +1,41 @@
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
-
-/*  API
-
-    TaliaCustom.Other.getJumpDistance(actor);
-    TaliaCustom.ItemMacros.jump(item);
-*/
+import ChatCardButtons from "../../../utils/chatCardButtons.mjs";
 
 export default {
     register() {
-        TaliaCustomAPI.add({jump: Jump.itemMacro}, "ItemMacros");
+        TaliaCustomAPI.add({Jump})
+        ChatCardButtons.register({
+            itemName: "Jump",
+            buttons: [{
+                label: "Jump",
+                callback: async({token}) => {
+                    if(!token) {
+                        ui.notifications.warn("You need to select a token to jump.");
+                        return;
+                    }
+                    await Jump.jump(token);
+                }
+            }]
+        });
     }
 }
 
 export class Jump {
-
-    static async itemMacro(item) {
-        const rollData = item.actor.getRollData();
+    static async jump(token) {
+        const rollData = token.actor.getRollData();
         const sourceToken = rollData.token;
         const maxJumpDistInFt = rollData.talia.jumpDistance;
 
         const location = await Jump.selectLocation(sourceToken, maxJumpDistInFt);
         if(!location) return;
 
-        await Jump.jumpAnimation(sourceToken, {x: location.x, y: location.y});
-        return true;
+        const targetLocation = {
+            x: location.x,
+            y: location.y
+        };
+
+        await Jump.jumpAnimation(sourceToken, targetLocation);
+        return await Jump.setElevationToGround(sourceToken, targetLocation);
     }
 
     static async selectLocation(token, maxJumpDistInFt = 5) {
@@ -52,19 +64,38 @@ export class Jump {
         return location;    //can be false if cancelled
     }
 
+    /**
+     * Updates a given token's elevation to equal that of the ground elevation closest to the targetLocation.
+     * @param {Token} token                                                 The token to update
+     * @param {{[key: "x"]: number, [key: "y"]: number }} targetLocation    The x and y coordinates of the targetLocation
+     * @returns {Promise<Token>}                                            The updated? token
+     */
+    static async setElevationToGround(token, targetLocation) {
+        const groundElevation = game.modules.get("terrainmapper")?.api?.ElevationHandler?.nearestGroundElevation(targetLocation) ?? 0;
+        if(token.document.elevation !== groundElevation) {
+            await token.document.update({"elevation": groundElevation});
+        }
+        return token;
+    }
+
     static async jumpAnimation(token, targetLocation) {
-        new Sequence()
+        await new Sequence()
+            .canvasPan()
+            .delay(100)
+
             .animation()
             .on(token)
             .moveTowards(targetLocation, { ease: "easeInOutQuint"})
             .duration(1200)
-            .waitUntilFinished()
             .snapToGrid(true)
+            .waitUntilFinished()
+
             .effect()
             .file("jb2a.impact.ground_crack.orange.02")
             .atLocation(token)
             .belowTokens()
             .scale(.5 * token.document.width)
+
             .play();
     }
 }
