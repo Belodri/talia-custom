@@ -1,80 +1,50 @@
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
-
-/*  API
-
-    TaliaCustom.Other.getJumpDistance(actor);
-    TaliaCustom.ItemMacros.jump(item);
-*/
+import ChatCardButtons from "../../../utils/chatCardButtons.mjs";
 
 export default {
     register() {
-        Hooks.once("setup", () => {
-            const fields = [];
-            fields.push("flags.talia-custom.jumpDist.bonus");
-            fields.push("flags.talia-custom.jumpDist.countDoubled");
-            fields.push("flags.talia-custom.jumpDist.countHalved");
-            DAE.addAutoFields(fields);
+        TaliaCustomAPI.add({Jump})
+        ChatCardButtons.register({
+            itemName: "Jump",
+            buttons: [{
+                label: "Jump",
+                callback: async({token}) => {
+                    if(!token) {
+                        ui.notifications.warn("You need to select a token to jump.");
+                        return;
+                    }
+                    await Jump.jump(token);
+                }
+            }]
         });
-        TaliaCustomAPI.add({jump: Jump.itemMacro}, "ItemMacros");
-        TaliaCustomAPI.add({getJumpDistance: Jump.getDistance}, "Other");
     }
 }
 
-class Jump {
-    static getDistance(actor) {
-        const rollData = actor.getRollData();
-        const acr = Math.max(foundry.utils.getProperty(rollData, "skills.acr.total") ?? 0, 0);
-        const ath = Math.max(foundry.utils.getProperty(rollData, "skills.ath.total") ?? 0, 0);
-
-        //the distance is based off either Athletics or Acrobatics skill, whichever one is higher
-        const higherSkill = acr > ath ? acr : ath;
-
-        //(Base (+0) = 5ft; +5ft per +2) (i.e. Athletics 8 = 25ft)
-        //round to next lower even number if odd
-        const workingSkillValue = higherSkill - (higherSkill % 2);
-        const baseDistance =  5 + ((workingSkillValue / 2) * 5);
-
-        const distAdd = foundry.utils.getProperty(rollData, "flags.talia-custom.jumpDist.bonus") ?? 0;
-        const distDouble = foundry.utils.getProperty(rollData, "flags.talia-custom.jumpDist.countDoubled") ?? 0;
-        const distHalf = foundry.utils.getProperty(rollData, "flags.talia-custom.jumpDist.countHalved") ?? 0;
-
-        //caps the multiplier at 0.25 and 4.
-        const distMult = Math.clamp(Math.pow(2, distDouble - distHalf), 0.25, 4);
-
-        const calculatedDistance = (baseDistance + distAdd) * distMult;
-
-        //round that to the nearest interval of 5
-        let roundedDistance = Math.round(calculatedDistance / 5) * 5;
-
-        //lets other scripts modify the final calculated and rounded distance
-        const distanceObj = {
-            rounded: roundedDistance,
-            newValue: null
-        };
-        Hooks.callAll("talia_postCalculateJumpDistance", actor, distanceObj );
-        return distanceObj.newValue ?? distanceObj.rounded;
-    }
-
-    static async itemMacro(item) {
-        const rollData = item.actor.getRollData();
+export class Jump {
+    static async jump(token) {
+        const rollData = token.actor.getRollData();
         const sourceToken = rollData.token;
+        const maxJumpDistInFt = rollData.talia.jumpDistance;
 
-        const location = await Jump.selectLocation(sourceToken);
+        const location = await Jump.selectLocation(sourceToken, maxJumpDistInFt);
         if(!location) return;
 
-        await Jump.jumpAnimation(sourceToken, {x: location.x, y: location.y});
-        return true;
+        const targetLocation = {
+            x: location.x,
+            y: location.y
+        };
+
+        await Jump.jumpAnimation(sourceToken, targetLocation);
+        return await Jump.setElevationToGround(sourceToken, targetLocation);
     }
 
-    static async selectLocation(token) {
-        const maxJumpDistInFt = Jump.getDistance(token.actor);
-
+    static async selectLocation(token, maxJumpDistInFt = 5) {
         const location = await Sequencer.Crosshair.show({
             location: {
                 obj: token,
                 limitMaxRange: maxJumpDistInFt,
                 showRange: true,
-                wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.NO_COLLIDABLES,
+                wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.ANYWHERE,
                 displayRangePoly: true,
                 rangePolyLineColor: 0o000000,
                 rangePolyLineAlpha: 1,
@@ -83,25 +53,49 @@ class Jump {
             snap: {
                 position: Math.max(1, token.document.width) % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER
             }
+        }, {
+            [Sequencer.Crosshair.CALLBACKS.INVALID_PLACEMENT]: async (crosshair) => {
+                await Sequencer.Helpers.wait(100);
+                token.control();
+            }
         });
         await Sequencer.Helpers.wait(500);  //wait a little so the control works properly
         token.control();
         return location;    //can be false if cancelled
     }
 
+    /**
+     * Updates a given token's elevation to equal that of the ground elevation closest to the targetLocation.
+     * @param {Token} token                                                 The token to update
+     * @param {{[key: "x"]: number, [key: "y"]: number }} targetLocation    The x and y coordinates of the targetLocation
+     * @returns {Promise<Token>}                                            The updated? token
+     */
+    static async setElevationToGround(token, targetLocation) {
+        const groundElevation = game.modules.get("terrainmapper")?.api?.ElevationHandler?.nearestGroundElevation(targetLocation) ?? 0;
+        if(token.document.elevation !== groundElevation) {
+            await token.document.update({"elevation": groundElevation});
+        }
+        return token;
+    }
+
     static async jumpAnimation(token, targetLocation) {
-        new Sequence()
+        await new Sequence()
+            .canvasPan()
+            .delay(100)
+
             .animation()
             .on(token)
             .moveTowards(targetLocation, { ease: "easeInOutQuint"})
             .duration(1200)
-            .waitUntilFinished()
             .snapToGrid(true)
+            .waitUntilFinished()
+
             .effect()
             .file("jb2a.impact.ground_crack.orange.02")
             .atLocation(token)
             .belowTokens()
             .scale(.5 * token.document.width)
+
             .play();
     }
 }

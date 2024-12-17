@@ -69,12 +69,6 @@ function legendaryVigor(requiredMythicRank = 1) {
     /*
         - The maximum distance you can jump and the distance you can shove a creature when you use the Shove action both increase by a factor of 10 per mythic rank.
     */
-    Hooks.on("talia_postCalculateJumpDistance", (actor, distanceObj) => {
-        if(passesFilter(actor)) {
-            const mr = getMythicRank(actor);
-            if(mr) distanceObj.newValue = distanceObj.rounded * 10 * mr;
-        }
-    });
     // note: Not yet implemented.
     Hooks.on("talia_postCalculateShoveDistance", (actor, distanceObj) => {
         if(passesFilter(actor)) {
