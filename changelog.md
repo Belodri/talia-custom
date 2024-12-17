@@ -1,3 +1,31 @@
+# 1.14.0 - 2024/12/17
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Realm Effect: Muspelheim
+    - Item: Bag of Scolding
+    </details>
+
+-   <details>
+    <summary><h2>Fixed/Changed</h2></summary>
+
+    - Skill Empowerment no longer fails without displaying a notification if no token was targetted.
+    - Jump
+        - No longer restricts target destination (please don't jump out of the map or into walls...)
+        - Maximum jump distance is now displayed in the item card.
+        - The elevation of the jumping token now automatically updates to match the elevation of the target location.
+    - Fixed missing sound effect for Diving Strike
+    </details>
+
+-   <details>
+    <summary>Code</summary>
+
+    - Added jumpDistance to rollData.
+    - Refactored jump, divingStrike, mythicLegend#legendaryVigor to implement the addition of jumpDistance to rollData.
+    - Added Scene Effects utility class and UI integration.
+    </details>
+
 # 1.13.1
 
 - Updated each player character to mythic rank 2.
