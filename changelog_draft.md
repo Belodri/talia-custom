@@ -19,3 +19,9 @@ add:
 fix: 
 - Mystifying Miasma Cloud 1h duration [#221](https://github.com/Belodri/talia-custom/issues/221)
 - Diving Strike can now target tokens of any size.
+- Critical hits & misses now display correctly, even if the total roll is lower/higher than target value.
+
+change:
+- Grapple
+    - removed automated token dragging
+    - removed automated size limitation

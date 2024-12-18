@@ -120,13 +120,21 @@ function wrap_dnd5e_documents_ChatMessage5e_prototype__highlightCriticalSuccessF
 
         const isAttack = this.getFlag("dnd5e", "roll.type") === "attack";
         const showResult = isAttack ? displayAttackResult : displayChallenge;
+
+        if ( canCrit && d20Roll.isCritical ) total.classList.add("critical");
+        else if ( canCrit && d20Roll.isFumble ) total.classList.add("fumble");
+        else if ( d.options.target && showResult ) {
+            if ( d20Roll.total >= d.options.target ) total.classList.add("success");
+            else total.classList.add("failure");
+        }
+        /* 
         if ( d.options.target && showResult ) {
             if ( d20Roll.total >= d.options.target ) total.classList.add("success");
             else total.classList.add("failure");
         }
         if ( canCrit && d20Roll.isCritical ) total.classList.add("critical");
         if ( canCrit && d20Roll.isFumble ) total.classList.add("fumble");
-
+        */
         const icons = document.createElement("div");
         icons.classList.add("icons");
         if ( total.classList.contains("critical") ) icons.append(makeIcon("fa-check"), makeIcon("fa-check"));
