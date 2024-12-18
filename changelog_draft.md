@@ -4,13 +4,17 @@
 - In case of merge conflicts, **retain all entries** to ensure no changes are lost.
 - During release preparation, entries from this file are reviewed, organized, and moved into the main `changelog.md`.
 # Drafts
-- add: Sound effects for:
+add: 
+- Sound effects for:
     - Toll the Dead
     - Fire Bolt
     - Ray of Frost
     - Mind Sliver
     - Shocking Grasp
 
-- add: Animation effects for:
+- Animation effects for:
     - Mind Sliver
     - Stunned Condition
+
+fix: 
+- Mystifying Miasma Cloud 1h duration [#221](https://github.com/Belodri/talia-custom/issues/221)
