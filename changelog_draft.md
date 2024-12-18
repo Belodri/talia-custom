@@ -18,3 +18,4 @@ add:
 
 fix: 
 - Mystifying Miasma Cloud 1h duration [#221](https://github.com/Belodri/talia-custom/issues/221)
+- Diving Strike can now target tokens of any size.

@@ -14,6 +14,33 @@ const ChatButtons_DivingStrike = {
 }
 
 /**
+ * Is rectA fully contained within, or equal to, rectB? 
+ * @param {PIXI.Rectangle} rectA 
+ * @param {PIXI.Rectangle} rectB 
+ * @returns {boolean}
+ */
+function _fits(rectA, rectB) {
+    return ( rectA.bottom <= rectB.bottom 
+        && rectA.left <= rectB.left
+        && rectA.right <= rectB.right
+        && rectA.top <= rectB.top
+    )
+}
+
+/**
+ * Checks if the crosshair shape is fully contained, or equals, the placeable object
+ * or the other way around.
+ * @param {PlaceableObject} placeable       The token object
+ * @param {CrosshairsDocument} crosshair 
+ * @param {PIXI.Graphics} shape 
+ * @returns {boolean}
+ */
+function _filterMethod(placeable, crosshair, shape) {
+    const shapeBounds = shape.getBounds() ?? null;
+    return shapeBounds ? ( _fits(placeable.bounds, shapeBounds) || _fits(shapeBounds, placeable.bounds) ) : false
+}
+
+/**
  *
  */
 async function getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt) {
@@ -39,7 +66,7 @@ async function getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt) {
     token.control();
     if(location === false) return null; // false means it's been cancelled so we need to break the loop.
 
-    const col = Sequencer.Crosshair.collect(location);
+    const col = Sequencer.Crosshair.collect(location, "Token", _filterMethod);
     if(!col.length || col[0]._id === token._id) {
         ui.notifications.info("You need to select a location which is occupied by a token.");
         return await getAndVerifyLocation(token, maxJumpDistInFt, minSpacingInFt);
