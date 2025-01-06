@@ -36,3 +36,6 @@ change:
     > Guarding Runes
     > 
     > You have resistance to one of the following damage types of your choice: acid, cold, fire, lightning, or poison. You can change the chosen type when you finish a long rest.
+
+add:
+    optional disable of "consume" buttons in item cards

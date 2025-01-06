@@ -1,8 +1,11 @@
+import { MODULE } from "../scripts/constants.mjs";
+
 export default {
     register() {
         registerEquipAttuneHook();
         registerHideChatMessageHook();
         registerModifySpellLevelHook(); 
+        registerHideConsumeButtonsHook();
     }
 }
 
@@ -92,5 +95,99 @@ function registerModifySpellLevelHook() {
             await item.use(config, options);
         })();
         return false;
+    });
+}
+
+/**
+ * Registers hooks to hide 'Consume' buttons in item cards.
+ * This function adds checkboxes to item sheets to allow users to hide the 'Consume' button in chat messages of that item.
+ */
+function registerHideConsumeButtonsHook() {
+    const FLAGS = {
+        USES: "hideChatCardButtons.consumeUses",
+        RESOURCES: "hideChatCardButtons.consumeResources"
+    };
+
+    /**
+     * Generates the HTML for a checkbox to hide the 'Consume' button.
+     * @param {object} item - The item object.
+     * @param {string} flagKey - The flag key to check.
+     * @returns {string} - The HTML string for the checkbox.
+     */
+    function checkboxesHTML(item, flagKey) {
+        const flagValue = item.getFlag(MODULE.ID, flagKey) ?? false;
+
+        const checkbox = `<label class="checkbox" data-tooltip="Hide the 'Consume' button from the chat card?" style="min-width: 8ch; flex-grow: 0;">
+            <input type="checkbox" name="flags.${MODULE.ID}.${flagKey}" ${flagValue ? "checked" : ""}>
+            Hide
+        </label>`;
+
+        return checkbox;
+    }
+
+    Hooks.on("renderItemSheet5e", (app, html, {item} = {}) => {
+        if (app.options.classes.includes("tidy5e-sheet")) return;
+
+        
+        const usesElem = html.find(".form-group.uses-per .form-fields")?.[0];
+        if(usesElem && item.hasLimitedUses) {
+            $(checkboxesHTML(item, FLAGS.USES)).insertAfter(usesElem);
+        }
+
+        const resourcesElem = html.find(".form-group.consumption .form-fields")?.[0];
+        if(resourcesElem && item.hasResource) {
+            $(checkboxesHTML(item, FLAGS.RESOURCES)).insertAfter(resourcesElem);
+        }
+    });
+
+    Hooks.on("tidy5e-sheet.renderItemSheet", (app, element, {item}, forced) => {
+        //change item sheet
+        const html = $(element);
+
+        const usesElem = html.find(".form-group.uses-per .form-fields")?.[0];
+        if(usesElem && item.hasLimitedUses) {
+            const markupToInject = `
+                <div style="display: contents;" data-tidy-render-scheme="handlebars">
+                    ${checkboxesHTML(item, FLAGS.USES)}
+                </div>
+            `;
+            $(markupToInject).insertAfter(usesElem);
+        }
+
+        const resourcesElem = html.find(".form-group.consumption .form-fields")?.[0];
+        if(resourcesElem && item.hasResource) {
+            const markupToInject = `
+                <div style="display: contents;" data-tidy-render-scheme="handlebars">
+                    ${checkboxesHTML(item, FLAGS.RESOURCES)}
+                </div>
+            `;
+            $(markupToInject).insertAfter(resourcesElem);
+        }
+    });
+
+    Hooks.on("renderChatMessage", (msg, html, msgData) => {
+
+        const consumeUsageButton = html.find('[data-action="consumeUsage"]')?.[0];
+        const consumeResourceButton = html.find('[data-action="consumeResource"]')?.[0];
+        if(!consumeResourceButton && !consumeUsageButton) return;
+
+        const itemUuid = msg.getFlag("dnd5e", "use.itemUuid");
+        if(!itemUuid) return;
+
+        let item = null;
+        try {
+            item = fromUuidSync(itemUuid, { strict: true });
+        } catch {};
+        if(!item) return;
+
+        const hideConsumeUsesButton = item.getFlag(MODULE.ID, FLAGS.USES);
+        const hideConsumeResourcesButton = item.getFlag(MODULE.ID, FLAGS.RESOURCES);
+
+        if(hideConsumeUsesButton && consumeUsageButton) {
+            consumeUsageButton.style.display = 'none';
+        }
+        if(hideConsumeResourcesButton && consumeResourceButton) {
+            consumeResourceButton.style.display = 'none';
+        }
     });
 }
