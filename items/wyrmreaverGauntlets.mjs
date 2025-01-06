@@ -1,19 +1,57 @@
-import { TaliaUtils } from "../utils/_utils.mjs";
+import ChatCardButtons from "../utils/chatCardButtons.mjs";
 
 export default {
     register() {
-        Hooks.on("dnd5e.restCompleted", longRestDialog);
+        ChatCardButtons.register({
+            itemName: "Wyrmreaver Gauntlets",
+            buttons: [{
+                label: "Guarding Runes",
+                callback: ({item}) => guardingRunesButton(item)
+            }, {
+                label: "Invoking the Runes",
+                callback: ({item, actor}) => invokingTheRunesButton(item, actor)
+            }]
+        });
     }
 }
 
 /**
- *
+ * Applies the effect and updates the remaining uses.
+ * @param {Item} item 
+ * @param {Actor} actor 
  */
-async function longRestDialog(actor, result) {
-    if(!result.longRest) return;
-    //get item
-    const item = actor.itemTypes.equipment.find(i => i.name === "Wyrmreaver Gauntlets" && i.system?.equipped && TaliaUtils.Helpers.checkAttunement(i));
-    if(!item) return;
+async function invokingTheRunesButton(item, actor) {
+    const effectName = "Invoking the Runes";
+
+    const hasEffectApplied = game.dfreds.effectInterface.hasEffectApplied({ effectName, uuid: actor.uuid });
+    if(hasEffectApplied) {
+        ui.notifications.warn("The runes are already invoked.");
+        return;
+    }
+
+    const uses = item.system.uses.value;
+    if(newUses < 1) {
+        ui.notifications.warn("No uses remaining.");
+        return;
+    }
+
+    const effect = game.dfreds.effectInterface.findEffect({ effectName});
+    if(!effect) {
+        ui.notifications.error(`Effect "${effectName}" not found.`);
+        return;
+    }
+
+    await game.dfreds.effectInterface.addEffect({ effectName, uuid: actor.uuid });
+    await item.update({"system.uses.value": uses - 1});
+}
+
+/**
+ * Lets the user choose a different resistance type.
+ * @param {Item} item 
+ */
+async function guardingRunesButton(item) {
+    const {DialogV2} = foundry.applications.api;
+    const {StringField} = foundry.data.fields;
 
     const damageTypes = ['acid','cold','fire','lightning','poison'];
 
@@ -22,18 +60,18 @@ async function longRestDialog(actor, result) {
         return acc;
     }, {});
 
-    const selectGroupDamageType = new foundry.data.fields.StringField({
+    const selectDamageTypeGroup = new StringField({
         label: "Select damage type",
-        hint: "You gain resistance to the chosen damage type until the end of your next long rest.",
+        hint: "You gain resistance to the chosen damage type.",
         required: true,
         choices: typeChoices,
     }).toFormGroup({},{name: "damageType", typeChoices}).outerHTML;
-    const content = `<fieldset>${selectGroupDamageType}</fieldset>`
+
     const selected = await foundry.applications.api.DialogV2.prompt({
         window: {
             title: item.name,
         },
-        content,
+        content: selectDamageTypeGroup,
         modal: true,
         rejectClose: false,
         ok: {
@@ -42,10 +80,11 @@ async function longRestDialog(actor, result) {
         },
     });
 
-    const existingEffect = item.effects.find(e => e.name === `${item.name} - Guarding Runes`);
+    const existingEffect = item.effects.find(e => e.name === `Guarding Runes`);
     if(!selected || !existingEffect) return;
+
     const effectData = {
-        description: `<p>Until the end of your next long rest, you have resistance to ${selected.damageType} damage.</p>`,
+        description: `<p>You have resistance to ${selected.damageType} damage.</p>`,
         changes: [{
             key: "system.traits.dr.value",
             mode: 2,
