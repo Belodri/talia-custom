@@ -1,3 +1,54 @@
+# 1.15.0 - 2025/01/07
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    Sound effects:
+    - Toll the Dead
+    - Fire Bolt
+    - Ray of Frost
+    - Mind Sliver
+    - Shocking Grasp
+
+    Animation effects:
+    - Mind Sliver
+    - Stunned Condition
+
+    - 'Consume Usage' and 'Consume Resource' buttons can now be hidden from item cards if the respective checkboxes on item sheets are ticked.  
+    </details>
+
+-   <details>
+    <summary><h2>Fixed/Changed</h2></summary>
+
+    - Restored actor link for Find Familiar spell 
+    - Fixed missing duration of Mystifying Miasma Cloud
+    - Diving Strike can now target tokens of any size.
+    - Critical hits & misses now display correctly, even if the total roll is lower/higher than target value.
+    - Grapple
+        - removed automated token dragging
+        - removed automated size limitation
+        - Grappled effect is automatically applied if the target of the grapple fails the contest.
+    -   <details>
+        <summary>Wyrmreaver Gauntlets (Guarding Runes)</summary>
+        
+        Refactored implementation and rewrorded the item description to clarify that the resistance buff does not automatically end. No mechanical changes.
+
+        from
+        > Additionally, whenever you finish a long rest, choose one of the following damage types: acid, cold, fire, lightning, or poison. You have resistance to the chosen damage type until you finish another long rest.
+
+        to
+        > You have resistance to one of the following damage types of your choice: acid, cold, fire, lightning, or poison. You can change the chosen type when you finish a long rest.
+        </details>
+    </details>
+
+-   <details>
+    <summary><h2>Known Issues</h2></summary>
+
+    - Legendary Vigor's effect duration incorrectly displays as 'expired' under certain circumstances. This is a visual bug only; the effect duration is handled correctly. This is a bug with another module (see issue https://github.com/DFreds/dfreds-effects-panel/issues/56)
+    </details>
+
+
+
 # 1.14.0 - 2024/12/17
 
 -   <details>
