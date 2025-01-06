@@ -25,3 +25,14 @@ change:
 - Grapple
     - removed automated token dragging
     - removed automated size limitation
+
+- changed: Wyrmreaver Gauntlets: Guarding Runes
+    from
+    > Guarding Runes
+    > 
+    > Additionally, whenever you finish a long rest, choose one of the following damage types: acid, cold, fire, lightning, or poison. You have resistance to the chosen damage type until you finish another long rest.
+
+    to
+    > Guarding Runes
+    > 
+    > You have resistance to one of the following damage types of your choice: acid, cold, fire, lightning, or poison. You can change the chosen type when you finish a long rest.
