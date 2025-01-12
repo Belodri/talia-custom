@@ -1,17 +1,193 @@
-import { TaliaCustomAPI } from "../../scripts/api.mjs";
 import { MODULE } from "../../scripts/constants.mjs";
+import Building from "./building.mjs"
+import Effect from "./effect.mjs"
+import { MappingField } from "../../utils/fields.mjs";
+import { _defineAttributesSchema, _defineDateSchema } from "./shared.mjs";
 
-export default {
-    register() {
-        (async () => {
-            await Effect.init();
-            await Building.init();
-            TaliaCustomAPI.add({Settlement}, "none");
+const {
+    StringField, EmbeddedDataField, SetField, SchemaField, ObjectField
+} = foundry.data.fields;
 
-            //TaliaCustomAPI.add({SettlementJournalEntry}, "none");
-        })();
+export default class Settlement extends foundry.abstract.DataModel {
+    static SETTINGS_KEY = "settlementsDatabase";
+
+    static defineSchema() {
+        return {
+            name: new StringField({ required: true, blank: false }),
+            founding: new SchemaField(_defineDateSchema(), { required: true }),
+            _buildings: new SetField( new EmbeddedDataField( Building )),
+            _effects: new SetField( new EmbeddedDataField( Effect ))
+        }
     }
+
+    static init() {
+        game.settings.register(MODULE.ID, Settlement.SETTINGS_KEY, {
+            name: "Settlements",
+            scope: "world",
+            config: false,
+            requiresReload: false,
+            type: Object,
+            default: {},
+        });
+    }
+
+    constructor(data, options = {}) {
+        super(data, options);
+    }
+
+    //#region Database Operations
+
+    /**
+     * @typedef {{[key: string]: object}} SettingsData
+     * An object where the keys are the names of settlements, and the values are their corresponding data.
+     */
+
+    /** @returns {SettingsData} */
+    static #getSettingData() {
+        return game.settings.get(MODULE.ID, Settlement.SETTINGS_KEY, {strict: false});
+    }
+
+    /** @returns {Promise<SettingsData>} */
+    static async #setSettingData(data) {
+        return game.settings.set(MODULE.ID, Settlement.SETTINGS_KEY, data);
+    }
+
+    /**
+     * Saves the Settlement to the database.
+     * @param {boolean} [overwrite=true]    If false, an error will be thrown if trying to overwrite an existing settlement. 
+     */
+    async save(overwrite = true) {
+        const data = Settlement.#getSettingData();
+        if(!overwrite && data[this.name]) throw new Error(`Disallowed overwrite of settlement "${this.name}".`);
+        
+        data[this.name] = this.toObject(false);
+        return Settlement.#setSettingData(data);
+    }
+
+    /**
+     * Deletes an existing Settlement from the database.
+     * @param {string} settlementName 
+     */
+    static async delete(settlementName) {
+        const data = Settlement.#getSettingData();
+        if(!data[settlementName]) throw new Error(`No settlement named "${settlementName}" found.`);
+
+        delete data[settlementName];
+        return Settlement.#setSettingData(data);
+    }
+
+    /**
+     * Gets an existing Settlement from the database.
+     * @param {string} settlementName 
+     */
+    static get(settlementName) {
+        const data = Settlement.#getSettingData();
+        const obj = data[settlementName];
+        if(!obj) throw new Error(`No settlement named "${settlementName}" found.`);
+
+        return Settlement.fromSource(obj, {strict: true});
+    }
+
+    //#endregion
+
+    //#region Derived Data
+
+    get attributes() {
+        const attr = {
+            authority: 0,
+            economy: 0,
+            community: 0,
+            progress: 0,
+            intrigue: 0,
+        };
+    
+        for(const building of this.buildings) {
+            attr.authority += building.attributes.authority;
+            attr.economy += building.attributes.economy;
+            attr.community += building.attributes.community;
+            attr.progress += building.attributes.progress;
+            attr.intrigue += building.attributes.intrigue;
+        }
+
+        for(const effect of this.effects) {
+            if(!effect.isActive) continue;
+            attr.authority += effect.attributes.authority;
+            attr.economy += effect.attributes.economy;
+            attr.community += effect.attributes.community;
+            attr.progress += effect.attributes.progress;
+            attr.intrigue += effect.attributes.intrigue;
+        }
+    
+        return attr;
+    }
+
+    /**
+     * The sum of scale of buildings constructed within the last 30 days.
+     * @returns {number}
+     */
+    get constructionScale() {
+        return this.buildings.reduce((acc, curr) => acc += curr.occupiedCapacity, 0);
+    }
+
+    /**
+     * The total capacity of the settlement.
+     * @returns {number}
+     */
+    get capacity() {
+        const base = 4;
+        const buildingCapacity = this.buildings.reduce((acc, curr) => acc += curr.capacity, 0);
+        const effectCapacity = this.effects.reduce((acc, curr) => acc += curr.capacity, 0);
+
+        return base + buildingCapacity + effectCapacity;
+    }
+
+    //#endregion
+
+    //#region Buildings
+
+    get buildings() {
+        const mapping = this._buildings.map(b => [b.sId, b]);
+        return new foundry.utils.Collection(mapping);
+    }
+
+    addBuilding(building) {
+        return this.updateSource({_buildings: this._buildings.add(building)});
+    }
+
+    removeBuilding(building) {
+        const buildings = this.buildings;
+        buildings.delete(building.sId);
+        const setAfterDeletion = new Set(buildings);
+        return this.updateSource({_buildings: setAfterDeletion});
+    }
+
+    //#endregion
+
+    //#region Effects
+
+    get effects() {
+        const mapping = this._effects   //todo sort by remaining duration
+            .map(e => [e.sId, e]);
+        return new foundry.utils.Collection(mapping);
+    }
+
+    addEffect(effect) {
+        return this.updateSource({_effects: this._effects.add(effect)});
+    }
+
+    removeEffect(effect) {
+        const effects = this.effects;
+        effects.delete(effect.sId);
+        const setAfterDeletion = new Set(buildings);
+        return this.updateSource({_effects: setAfterDeletion});
+    }
+
+    //#endregion
 }
+
+
+let ALL_BUILDINGS;
+let ALL_EFFECTS;
 
 /*
     What data does the settlement UI need?
@@ -43,18 +219,25 @@ export default {
  * @property {number} year      The year. Game start year is 1497.
  */
 
+const buildings = new foundry.utils.Collection();
+
+
 /**
  * @typedef {object} SettlementObject
- * @property {string} name                                  The settlement's name
- * @property {TaliaDate} foundingDate                       The founding date in the Talian calender
- * @property {BuildingObject[]} constructedBuildings        An array of building objects that represent constructed buildings.
- * @property {EffectObject[]} currentEffects                An array of effect objects that represent the currently active effects.
+ * @property {string} name                                      The settlement's name
+ * @property {TaliaDate} foundingDate                           The founding date in the Talian calender
+ * @property {string[]} buildingIds                             An array of building ids that represent constructed buildings.
+ * @property {string[]} effectIds                               An array of effect ids that represent the currently active effects.
+ * @property {Map<[key: string], TaliaDate>} constructionLog    A map of buildingIds with a corresponding date.
+ * @property {Map<[key: string], TaliaDate>} 
  */
 
-class Settlement {
+class _Settlement {
     /*----------------------------------------------------------------------------
                     Static Properties            
     ----------------------------------------------------------------------------*/
+    static SETTINGS_KEY = "settlementsJSONData";
+
     static baseAttributes = {
         authority: 0,
         economy: 0,
@@ -66,7 +249,41 @@ class Settlement {
     static baseCapacity = 4;
 
     /*----------------------------------------------------------------------------
-                    Static Methods            
+                    Instance Properties            
+    ----------------------------------------------------------------------------*/
+
+    #buildingIds = new Set();
+    #effectIds = new Set();
+
+    /*----------------------------------------------------------------------------
+                    Instance Methods            
+    ----------------------------------------------------------------------------*/
+
+    /** @param {SettlementObject} settlementObject  */
+    constructor(settlementObject) {
+        this.name = settlementObject.name;
+        this.foundingDate = settlementObject.foundingDate;
+
+        this.#buildingIds = new Set(settlementObject.buildingIds ?? []);
+        this.#effectIds = new Set(settlementObject.effectIds ?? []);
+    }
+
+    /**
+     * Returns a plain object representation of the settlement instance for JSON serialization.
+     * This method is automatically called by JSON.stringify().
+     * @returns {SettlementObject} A plain object containing the settlement's properties.
+     */
+    toJSON() {
+        return {
+            name: this.name,
+            foundingDate: this.foundingDate,
+            buildingIds: this.#buildingIds,
+            effectIds: this.#effectIds,
+        }
+    }
+
+    /*----------------------------------------------------------------------------
+                    Testing          
     ----------------------------------------------------------------------------*/
 
     static getTestData() {
@@ -79,117 +296,120 @@ class Settlement {
             },
         };
     }
+
+    /*----------------------------------------------------------------------------
+                    Database Operations            
+    ----------------------------------------------------------------------------*/
+    //#region Database Operations
     
+
     /**
-     * Creates a journal entry for a new settlement.
-     * @argument {string} settlementName    - The name of the settlement (and the journal).
-     * @returns {Promise<JournalEntry>}     - The journal entry with the settlement flag.
+     * @typedef {{[key: string]: SettlementObject}} SettingsData
+     * An object where the keys are the names of settlements, and the values are their corresponding data.
      */
-    static async createNewSettlement(settlementName) {
+
+    /** @returns {SettingsData} */
+    static #getSettingData() {
+        return game.settings.get(MODULE.ID, _Settlement.SETTINGS_KEY);
+    }
+
+    /** @returns {Promise<SettingsData>} */
+    static async #setSettingData(data) {
+        return game.settings.set(MODULE.ID, _Settlement.SETTINGS_KEY, data);
+    }
+
+    /**
+     * Creates a new Settlement on the database.
+     * @param {{name: string, foundingDate: TaliaDate}} creationData 
+     */
+    static async create({name, foundingDate}) {
         if(!game.user.isGM) throw new Error("Only GM users can create new settlements.");
-        if(typeof settlementName !== "string") throw new Error("The settlement's name has to be a string.")
-
-        // make sure the settlement doesn't already exist
-        const existingJournal = game.journal.getName(settlementName);
-        if(existingJournal) throw new Error("A settlement journal with this name already exists. Each settlement must have a unique name.");
-
-        //create a new journal entry for this settlement
-        const documentData = {
-            name: settlementName,
-            ownership: {
-                'default': CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
-            }
+        if(typeof name !== "string" || Object.values(foundingDate).every(v => typeof v === "number")) {
+            throw new Error(`Invalid arguments.`);
         }
-        const createdJournal = await JournalEntry.create(documentData);
 
-        // create a new settlement
-        const settlement = new Settlement({name: settlementName});
-        const flagData = settlement.toJSON();
+        const data = _Settlement.#getSettingData();
+        if(data[name]) throw new Error(`A settlement with the name "${name}" already exists.`);
+        data[name] = new _Settlement({name, foundingDate});
+        await _Settlement.#setSettingData(data);
+
+        return _Settlement.get(name);
+    }
+
+    /**
+     * Updates an existing Settlement on the database.
+     */
+    async update() {
+        const data = _Settlement.#getSettingData();
+        if(!data[this.name]) throw new Error(`No settlement named "${this.name}" found.`);
+
+        data[this.name] = this;
+        return _Settlement.#setSettingData(data);
+    }
+
+    /**
+     * Deletes an existing Settlement from the database.
+     * @param {string} settlementName 
+     */
+    static async delete(settlementName) {
+        const data = _Settlement.#getSettingData();
+        if(!data[settlementName]) throw new Error(`No settlement named "${settlementName}" found.`);
+
+        delete data[settlementName];
+        return _Settlement.#setSettingData(data);
+    }
+
+    /**
+     * Gets an existing Settlement from the database.
+     * @param {string} settlementName 
+     */
+    static get(settlementName) {
+        const data = _Settlement.#getSettingData();
+        if(!data[settlementName]) throw new Error(`No settlement named "${settlementName}" found.`);
+        return new _Settlement(data[settlementName]);
+    }
+
+    //#endregion
+    
+
+    /*----------------------------------------------------------------------------
+                    Building Handling         
+    ----------------------------------------------------------------------------*/
+    //#region 
+
+    get buildings() {
+        return 
+    }
+
+    get constructableBuildings() {
+        return Building.database.filter(b => !this.buildings.has(b.id))
+    }
+
+    #canBeConstructed(building) {
         
-        //store the settlement on the document's flag and return it
-        return await createdJournal.setFlag(MODULE.ID, "settlementData", flagData);
+    }
+
+    addBuilding(id, constructionDate = {}) {
 
     }
 
-    /**
-     * Gets the journal entry document with the settlement.
-     * @param {string} settlementName   - The name of the settlement (and the journal).
-     * @returns {Promise<JournalEntry>} - The journal entry with the settlement flag.
-     */
-    static async getSettlementDoc(settlementName) {
-        const journalDoc = game.journal.getName(settlementName);
-        if(!journalDoc) throw new Error(`Couldn't find journal entry: ${settlementName}.`);
-
-        return journalDoc;
-    }
-
-    /**
-     * 
-     * @param {JournalEntry} journalEntryDocument   - The journal entry with the settlement flag.
-     * @returns {Settlement | undefined}            - The settlement instance or undefined.
-     */
-    static settlementFromDoc(journalEntryDocument) {
-        const flagData = journalEntryDocument?.flags?.[MODULE.ID]?.["settlementData"];
-        if(!flagData) return undefined;
-
-        return new Settlement(flagData);
-    }
-
-    /*----------------------------------------------------------------------------
-                    Instance Properties            
-    ----------------------------------------------------------------------------*/
-
-
-    /*----------------------------------------------------------------------------
-                    Instance Methods            
-    ----------------------------------------------------------------------------*/
-
-    /** @param {SettlementObject} settlementData  */
-    constructor(settlementData) {
-        this.name = settlementData.name;
-        this.foundingDate = settlementData.foundingDate ?? {day: 0, month: 0, year: 0};
-
-        /** @type {Collection<string, Building>} */
-        this.constructedBuildings = Building.collectionFromArray(settlementData.constructedBuildings ?? []);
-        /** @type {Collection<string, Effect>} */
-        this.currentEffects = Effect.collectionFromArray(settlementData.currentEffects ?? []);
-    }
-
-    /**
-     * Returns a plain object representation of the settlement instance for JSON serialization.
-     * This method is automatically called by JSON.stringify().
-     * @returns {SettlementObject} A plain object containing the settlement's properties.
-     */
-    toJSON() {
-        return {
-            name: this.name,
-            foundingDate: this.foundingDate,
-            constructedBuildings: this.constructedBuildings.toJSON(),
-            currentEffects: this.currentEffects.toJSON(),
-        }
-    }
 
     /**
      * Adds a building to the settlement's constructed buildings.
-     * @param {string} buildingId The building's id as found in Building.allBuildings
-     * @throws {Error} Will throw an error if buildingId is not a key of Building.allBuildings
+     * @param {string} buildingId
      * @returns {this}
      */
-    constructBuilding(buildingId) {
+    constructBuilding(buildingId, constructionDate = undefined) {
         //check if the building is already constructed
         if(this.constructedBuildings.has(buildingId)) {
             ui.notifications.warn(`Building ID: ${buildingId} is already constructed.`);
             return this;
         }
 
-        const buildingObj = Building.allBuildings[buildingId];
-        if(!buildingObj) throw new Error(`Building ID: ${buildingId} was not found in Building.allBuildings.`);
-
-        const building = new Building(buildingObj)
-            .setConstructionDate(this.currentDate);
-        this.constructedBuildings.set(building.id, building);
-        return this;
+        
     }
+
+    //#endregion
 
     /**
      * Adds an effect to the settlement's current effects.
@@ -204,47 +424,19 @@ class Settlement {
             return this;
         }
 
-        const effectObj = Effect.allEffects[effectId];
+        const effectObj = _Effect.allEffects[effectId];
         if(!effectObj) throw new Error(`Effect ID: ${effectId} was not found in Effect.allEffects.`);
 
-        const effect = new Effect(effectObj)
+        const effect = new _Effect(effectObj)
             .setBeginDate(this.currentDate);
         this.currentEffects.set(effect.id, effect);
         return this;
     }
 
-    async saveToFlag() {
-
-    }
 
     /*----------------------------------------------------------------------------
                     Getters            
     ----------------------------------------------------------------------------*/
-
-    /**
-     * Calculates the total attributes for the settlement by summing up the base attributes,
-     * attributes from all constructed buildings, and attributes from current effects.
-     */
-    get attributes() {
-        // Start with a copy of baseAttributes to avoid mutating the static object
-        const attributes = {...Settlement.baseAttributes};
-
-        // sum up the attributes from each constructed building
-        for(let building of this.constructedBuildings) {
-            for( let key in building.attributes) {
-                attributes[key] += building.attributes[key];
-            }
-        }
-
-        //sum up the attributes from each current effect
-        for(let effect of this.currentEffects) {
-            for( let key in effect.attributes) {
-                attributes[key] += effect.attributes[key]
-            }
-        }
-
-        return attributes;
-    }
 
     /**
      * Gets the current date from simple calendar.
@@ -263,8 +455,12 @@ class Settlement {
      * Calculates the total capacity of the settlement by summing up the base capacity and all capacityEffects from current effects.
      * @returns {number}    The total capacity of the settlement
      */
-    get capacity() {
-        return Settlement.baseCapacity + this.currentEffects.reduce((acc, curr) => acc += curr.capacityEffect ?? 0, 0)
+    get maxCapacity() {
+        
+    }
+
+    get currentCapacity() {
+
     }
 
     /**
@@ -297,194 +493,364 @@ class Settlement {
         return filteredBuildings;
     }
 
-    /**
-     * @returns {Building[]}    An array of buildings that have not yet been constructed in this settlement.
-     */
-    get constructableBuildings() {
-        return Object.entries(Building.allBuildings)
-            .filter(([id, buildingObj]) => !this.constructedBuildings.has(id))
-            .map(([id, buildingObj]) => buildingObj);
-    }
+
 }
 
+/**
+ * @typedef {object} SettlementAttributes
+ * @property {number} authority
+ * @property {number} economy
+ * @property {number} community
+ * @property {number} progress
+ * @property {number} intrigue
+ */
+
+/**
+ * @typedef {object} BuildingRequirements
+ * @property {SettlementAttributes} attributes      What are the minimum attributes the settlement must have to construct this building?
+ * @property {string[]} buildingIds                 What buildings must already be constructed in the settlement to construct this building?
+ * @property {string[]} specialistIds               What specialists must already be in the settlement to construct this building?
+ * @property {string[]} effectIds                   What effects need to be active in the settlement to construct this building?
+ */
 
 /**
  * @typedef {object} BuildingObject
- * @property {string} id                            - The unique identifier for the building (same as the key in `allBuildings`).
- * @property {string} name                          - The name of the building.
- * @property {number} scale                         - The scale of the building, representing its size or impact level.
- * @property {object} attributes                    - The attributes that this building affects.  
- * @property {number} attributes.authority          - How much does this building increase/decrease authority.
- * @property {number} attributes.economy            - How much does this building increase/decrease economy.
- * @property {number} attributes.community          - How much does this building increase/decrease community.
- * @property {number} attributes.progress           - How much does this building increase/decrease progress.
- * @property {number} attributes.intrigue           - How much does this building increase/decrease intrigue.
- * @property {string} requirements                  - A description of requirements needed to construct the building.
- * @property {string} description                   - A detailed description of the building.
- * @property {string} buildingEffectDescription     - The building's persistent effect.
- * @property {TaliaDate | null} constructionDate    - The date the building was constructed. Null if the building hasn't been constructed yet.
+ * @property {string} id                                - The unique identifier for the building (same as the key in `allBuildings`).
+ * @property {string} name                              - The name of the building.
+ * @property {number} scale                             - The scale of the building, representing its size or impact level.
+ * @property {number} capacity                          - By how much does this building incrase the capacity of the settlement? 
+ * @property {SettlementAttributes} attributes          - The attributes that this building affects.  
+ * @property {BuildingRequirements} requirements        - What is required to construct the building?
+ * @property {string} flavorText                        - Thematic flavor text.
+ * @property {string[]} buildingEffectIds               - Which effects does the settlement gain once the building is constructed?
+ * @property {TaliaDate | undefined} constructionDate    - The date the building was constructed. Null if the building hasn't been constructed yet.
  */
 
-class Building {
+
+
+/**
+ * The structure of the raw json 
+ * @typedef {object} BuildingSourceData
+ * @property {string} id
+ * @property {string} name
+ * @property {number} scale
+ * @property {number} capacity
+ * @property {object} attributes
+ * @property {number} [attributes.authority]
+ * @property {number} [attributes.economy]
+ * @property {number} [attributes.community]
+ * @property {number} [attributes.progress]
+ * @property {number} [attributes.intrigue]
+ * @property {object} [requirements]
+ * @property {object} [requirements.attributes]
+ * @property {number} [requirements.attributes.authority]
+ * @property {number} [requirements.attributes.economy]
+ * @property {number} [requirements.attributes.community]
+ * @property {number} [requirements.attributes.progress]
+ * @property {number} [requirements.attributes.intrigue]
+ * @property {string[]} [requirements.buildingIds]
+ * @property {string[]} [requirements.specialists]
+ * @property {string[]} [requirements.effectIds]
+ * @property {string} flavorText
+ * @property {string[]} buildingEffectIds
+ */
+
+
+class _Building {
 
     /*----------------------------------------------------------------------------
                     Static Properties            
     ----------------------------------------------------------------------------*/
 
     /**
-     * An object of all buildings available in the game.
-     * Each key in this object corresponds to the `id` property of its associated `BuildingObject`.
-     * @type {{[key: string]: BuildingObject}}
+     * A collection of all buildings available in the game.
+     * @type {foundry.utils.Collection<[key: string], Building>}
      */
-    static allBuildings;
+    static #allBuildings = new foundry.utils.Collection();
+
+    /*----------------------------------------------------------------------------
+                    Instance Properties            
+    ----------------------------------------------------------------------------*/
+
+    /**
+     * @type {_Settlement} The settlement this building is constructed in.
+     */
+    settlement;
+
+    /** @type {TaliaDate} The date of this building's construction. */
+    constructionDate;
 
     /*----------------------------------------------------------------------------
                     Static Methods            
     ----------------------------------------------------------------------------*/
 
     /**
-     * Initializes the class by asynchronously loading JSON data for static property `allBuildings`
-     * @returns {Promise<void>}  A promise that resolves when both `allBuildings` property is fully loaded.
+     * Initializes the class
+     * @param {BuildingSourceData[]} buildingsData 
      */
-    static async init() {
-        const fileName = "buildingData";
-        const path = `modules/${MODULE.ID}/world/settlement/${fileName}.json`;
-        const response = await fetch(path);
-        Building.allBuildings = await response.json();
+    static init(buildingsData) {
+        Building.#allFromSource(buildingsData);
     }
 
     /**
-     * Creates a Collection of Buildings from an array of building data
-     * @param {BuildingObject[]} buildingObjArray - Array of building data objects
-     * @returns {Collection<string, Building>} A Collection of Buildings keyed by their IDs
+     * Populates Building.#allBuildings with Buildings from given source data.
+     * @param {BuildingSourceData[]} sourceData 
      */
-    static collectionFromArray(buildingObjArray) {
-        const collection = new foundry.utils.Collection();
-        for(let buildingObj of buildingObjArray) {
-            const building = new Building(buildingObj);
-            collection.set(building.id, building);
+    static #allFromSource(sourceData) {
+        const getDataObj = (raw) => {
+            return {
+                id: raw.id,
+                name: raw.name,
+                scale: raw.scale,
+                capacity: raw.capacity ?? 0,
+                attributes: {
+                    authority: raw.attributes.authority ?? 0,
+                    economy: raw.attributes.economy ?? 0,
+                    community: raw.attributes.community ?? 0,
+                    progress: raw.attributes.progress ?? 0,
+                    intrigue: raw.attributes.intrigue ?? 0
+                },
+                requirements: {
+                    attributes: {
+                        authority: raw.requirements.attributes.authority ?? 0,
+                        economy: raw.requirements.attributes.economy ?? 0,
+                        community: raw.requirements.attributes.community ?? 0,
+                        progress: raw.requirements.attributes.progress ?? 0,
+                        intrigue: raw.requirements.attributes.intrigue ?? 0
+                    },
+                    buildingIds: raw.requirements.buildingIds ?? [],
+                    specialistIds: raw.requirements.specialistIds ?? [],
+                    effectIds: raw.requirements.effectIds ?? [],
+                },
+                flavorText: raw.flavorText,
+                buildingEffectIds: raw.buildingEffectIds ?? [],
+            };
         }
-        return collection;
+
+        const isValid = (obj) => {
+            return obj.id && typeof obj.id === "string"
+                && obj.name && typeof obj.name === "string"
+                && typeof obj.scale === "number"
+                && typeof obj.capacity === "number"
+                && typeof obj.attributes?.authority === "number"
+                && typeof obj.attributes?.economy === "number"
+                && typeof obj.attributes?.community === "number"
+                && typeof obj.attributes?.progress === "number"
+                && typeof obj.attributes?.intrigue === "number"
+                && typeof obj.requirements?.attributes?.authority === "number"
+                && typeof obj.requirements?.attributes?.economy === "number"
+                && typeof obj.requirements?.attributes?.community === "number"
+                && typeof obj.requirements?.attributes?.progress === "number"
+                && typeof obj.requirements?.attributes?.intrigue === "number"
+                && obj.requirements?.buildingIds.every(id => typeof id === "string")
+                && obj.requirements?.specialistIds.every(id => typeof id === "string")
+                && obj.requirements?.effectIds.every(id => typeof id === "string")
+                && obj.flavorText && typeof obj.flavorText === "string"
+                && obj.buildingEffectIds.every(id => typeof id === "string")
+        }
+
+        const seen = new Set();
+        for(const rawObj of sourceData) {
+            if(seen.has(rawObj.id)) continue;
+            seen.add(rawObj.id);
+
+            const buildingObj = getDataObj(rawObj);
+            if(!isValid(buildingObj)) {
+                console.error(`Invalid building object: `, buildingObj);
+                continue;
+            }
+
+            const building = new Building(buildingObj);
+            Building.#allBuildings.set(building.id, building);
+        }
+    }
+
+    static get allBuildings() {
+        return Building.#allBuildings;
     }
 
     /*----------------------------------------------------------------------------
                     Instance Methods            
     ----------------------------------------------------------------------------*/
 
-    /** @param {BuildingObject} buildingObject */
-    constructor(buildingObject) {
-        //required properties
-        this.id = buildingObject.id;
-        this.name = buildingObject.name;
-        this.scale = buildingObject.scale;
+    /**
+     * 
+     * @param {BuildingObject} data 
+     */
+    constructor(data) {
+        this.id = data.id;
+        this.name = data.name;
+        this.scale = data.scale;
+        this.capacity = data.capacity;
         this.attributes = {
-            authority: buildingObject.attributes.authority,
-            economy: buildingObject.attributes.economy,
-            community: buildingObject.attributes.community,
-            progress: buildingObject.attributes.progress,
-            intrigue: buildingObject.attributes.intrigue,
+            authority: data.attributes.authority,
+            economy: data.attributes.economy,
+            community: data.attributes.community,
+            progress: data.attributes.progress,
+            intrigue: data.attributes.intrigue,
         };
-        this.requirements = buildingObject.requirements;
-        this.description = buildingObject.description;
-        this.buildingEffectDescription = buildingObject.buildingEffectDescription;
+        this.requirements = data.requirements;
+        this.flavorText = data.flavorText;
+        this.buildingEffectIds = data.buildingEffectIds;
 
-        //optional properties
-        this.constructionDate = buildingObject.constructionDate ?? null;
+        this.settlement = data.settlement;
+        this.constructionDate = data.constructionDate;
+
     }
 
-    /**
-     * Returns a plain object representation of the building instance for JSON serialization.
-     * This method is automatically called by JSON.stringify().
-     * @returns {BuildingObject} A plain object containing the building's properties.
-     */
     toJSON() {
         return {
             id: this.id,
             name: this.name,
             scale: this.scale,
-            attributes: this.attributes,
+            capacity: this.capacity,
+            attributes: {
+                authority: this.attributes.authority,
+                economy: this.attributes.economy,
+                community: this.attributes.community,
+                progress: this.attributes.progress,
+                intrigue: this.attributes.intrigue,
+            },
             requirements: this.requirements,
-            description: this.description,
-            buildingEffectDescription: this.buildingEffectDescription,
-            constructionDate: this.constructionDate,
-        };
+            flavorText: this.flavorText,
+            buildingEffectIds: this.buildingEffectIds,
+
+        }
     }
 
+
+
     /**
-     * Sets the construction date of the building.
-     * @argument {TaliaDate} date   - The date of the building's construction.
-     * @returns {this}
+     * Can this buildng be constructed in a given settlement?
+     * @param {_Settlement} settlement 
      */
-    setConstructionDate(date) {
-        this.constructionDate = {
-            day: date.day, 
-            month: date.month, 
-            year: date.year
-        }
-        return this;
+    canBeConstructed(settlement) {
+        if(settlement.buildings.has(this.id)) return false;
+
+        
     }
+
+    construct(settlement, constructionDate) {
+
+        const building = new Building()
+        this.settlement = settlement;
+        this.constructionDate = constructionDate;
+    }
+
+
 }
 
 /**
  * @typedef {object} EffectObject
- * @property {string} id                    - The unique identifier for the effect (same as the key in `allEffects`).
- * @property {string} name                  - The name of the effect.
- * @property {object} attributes            - The attributes that this effect affects.  
- * @property {number} attributes.authority  - How much does this effect increase/decrease authority.
- * @property {number} attributes.economy    - How much does this effect increase/decrease economy.
- * @property {number} attributes.community  - How much does this effect increase/decrease community.
- * @property {number} attributes.progress   - How much does this effect increase/decrease progress.
- * @property {number} attributes.intrigue   - How much does this effect increase/decrease intrigue.
- * @property {number} capacityEffect        - How much does this effect increase/decrease the settlement's capacity.
- * @property {string} description           - A detailed description of the effect.
- * @property {TaliaDate | null} beginDate   - The date the effect started. Null if the effect hasn't started yet.
+ * @property {string} id                        - The unique identifier for the effect (same as the key in `allEffects`).
+ * @property {number} durationInDays            - How many days does this effect last? If 0, the effect is permanent.
+ * @property {number} capacity                  - How much does this effect increase/decrease the settlement's capacity.
+ * @property {object} attributes                - The attributes that this effect affects.  
+ * @property {number} attributes.authority      - How much does this effect increase/decrease authority.
+ * @property {number} attributes.economy        - How much does this effect increase/decrease economy.
+ * @property {number} attributes.community      - How much does this effect increase/decrease community.
+ * @property {number} attributes.progress       - How much does this effect increase/decrease progress.
+ * @property {number} attributes.intrigue       - How much does this effect increase/decrease intrigue.
+ * @property {string} description               - A description of the effect.
+ * @property {TaliaDate | undefined} beginDate   - The date the effect started. Undefined for effects have have not started.
  */
-class Effect {
+class _Effect {
 
     /*----------------------------------------------------------------------------
                     Static Properties            
     ----------------------------------------------------------------------------*/
 
     /**
-     * An object of all effects available in the game.
-     * Each key in this object corresponds to the `id` property of its associated `EffectObject`.
-     * @type {{[key: string]: EffectObject}}
+     * A collection of all effects available in the game.
+     * @type {foundry.utils.Collection<[key: string], EffectObject>}
      */
-    static allEffects;
+    static effectsDatabase = new foundry.utils.Collection();
+
+    /*----------------------------------------------------------------------------
+                    Instance Properties            
+    ----------------------------------------------------------------------------*/
 
     /*----------------------------------------------------------------------------
                     Static Methods            
     ----------------------------------------------------------------------------*/
 
     /**
-     * Initializes the class by asynchronously loading JSON data for static property `allEffects`
-     * @returns {Promise<void>}  A promise that resolves when both `allEffects` property is fully loaded.
+     * @typedef {object} EffectsSourceData
+     * @property {string} id
+     * @property {number} durationInDays
+     * @property {number} attributes.authority      
+     * @property {number} attributes.economy        
+     * @property {number} attributes.community      
+     * @property {number} attributes.progress 
+     * @property {number} attributes.intrigue 
+     * @property {string} effectDescription
      */
-    static async init() {
-        const fileName = "effectData";
-        const path = `modules/${MODULE.ID}/world/settlement/${fileName}.json`;
-        const response = await fetch(path);
-        Effect.allEffects = await response.json();
+
+    /**
+     * Initializes the class
+     * @param {EffectsSourceData} effectsSourceData 
+     */
+    static init(effectsSourceData) {
+        _Effect.#addObjectsToEffectsDatabase(effectsSourceData);
     }
 
-    static collectionFromArray(effectObjArray) {
-        const collection = new foundry.utils.Collection();
-        for(let effectObj of effectObjArray) {
-            const effect = new Effect(effectObj);
-            collection.set(effect.id, effect);
+    static #addObjectsToEffectsDatabase(sourceData) {
+        const getDataObj = (raw) => {
+            return {
+                id: raw.id,
+                durationInDays: raw.durationInDays ?? 0,
+                capacity: raw.capacity ?? 0,
+                attributes: {
+                    authority: raw.attributes.authority ?? 0,
+                    economy: raw.attributes.economy ?? 0,
+                    community: raw.attributes.community ?? 0,
+                    progress: raw.attributes.progress ?? 0,
+                    intrigue: raw.attributes.intrigue ?? 0
+                },
+                effectDescription: raw.effectDescription,
+            };
         }
-        return collection;
+
+        const isValid = (obj) => {
+            return obj.id && typeof obj.id === "string"
+                && typeof obj.durationInDays === "number"
+                && typeof obj.capacity === "number"
+                && typeof obj.attributes?.authority === "number"
+                && typeof obj.attributes?.economy === "number"
+                && typeof obj.attributes?.community === "number"
+                && typeof obj.attributes?.progress === "number"
+                && typeof obj.attributes?.intrigue === "number"
+                && obj.effectDescription && typeof obj.effectDescription === "string"
+        }
+
+        const seen = new Set();
+        for(const rawObj of sourceData) {
+            if(seen.has(rawObj.id)) continue;
+            seen.add(rawObj.id);
+
+            const effectObj = getDataObj(rawObj);
+            if(!isValid(effectObj)) {
+                console.error(`Invalid effect object: `, effectObj);
+                continue;
+            }
+
+            //Building.#buildingsDatabase.set(effectObj.id, effectObj);
+        }
     }
 
     /*----------------------------------------------------------------------------
                     Instance Methods            
     ----------------------------------------------------------------------------*/
 
-    /** @param {EffectObject} effectObject */
-    constructor(effectObject) {
+    /** 
+     * @param {EffectObject} effectObject 
+     * @param {_Settlement} settlement
+     */
+    constructor(effectObject, settlement) {
         //required properties
+        this.settlement = settlement
         this.id = effectObject.id;
-        this.name = effectObject.name;
+        this.durationInDays = effectObject.durationInDays;
         this.attributes = {
             authority: effectObject.attributes.authority,
             economy: effectObject.attributes.economy,
@@ -492,8 +858,8 @@ class Effect {
             progress: effectObject.attributes.progress,
             intrigue: effectObject.attributes.intrigue,
         };
-        this.capacityEffect = effectObject.capacityEffect;
-        this.description = effectObject.description;
+        this.capacity = effectObject.capacity;
+        this.effectDescription = effectObject.effectDescription;
 
         //optional properties
         this.beginDate = effectObject.beginDate ?? null;
@@ -507,25 +873,11 @@ class Effect {
     toJSON() {
         return {
             id: this.id,
-            name: this.name,
+            durationInDays: this.durationInDays,
             attributes: this.attributes,
-            capacityEffect: this.capacityEffect,
+            capacity: this.capacity,
             description: this.description,
             beginDate: this.beginDate,
         };
-    }
-
-    /**
-     * Sets the begin date of the effect.
-     * @argument {TaliaDate} date   - The date of the effects's begin.
-     * @returns {this}
-     */
-    setBeginDate(date) {
-        this.beginDate = {
-            day: date.day, 
-            month: date.month, 
-            year: date.year
-        }
-        return this;
     }
 }
