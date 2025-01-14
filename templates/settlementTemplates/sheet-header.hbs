@@ -1,0 +1,16 @@
+<div class="header name-stacked">
+    {{log "header" this}}
+    <h1 class="settlement-name">{{settlementName}}</h1>
+    <div class="attributes">
+        {{#each attributes}}
+        <div class="attribute-container container-stacked">
+            <span class="attribute-number">{{this}}</span>
+            <span class="attribute-name">{{@key}}</span>
+        </div>
+        {{/each}}
+        <div class="attribute-container container-stacked">
+            <span class="attribute-number">{{capacityAvailable}}/{{capacityMax}}</span>
+            <span class="attribute-name">Capacity</span>
+        </div>
+    </div>
+</div>

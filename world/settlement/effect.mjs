@@ -81,7 +81,7 @@ export default class Effect extends foundry.abstract.DataModel {
     }
 
     get isExpired() {
-        const expiryDate = this.expiryDate();
+        const expiryDate = this.expiryDate;
         if(expiryDate === null) return false;
 
         const nowInDays = TaliaDate.now().inDays();
@@ -92,4 +92,19 @@ export default class Effect extends foundry.abstract.DataModel {
         return this.hasBegun && !this.isExpired;
     }
 
+    /** Returns null if the the effect is not active or is already expired */
+    get remainingDays() {
+        if(!this.isActive || this.isExpired) return null;
+        const nowInDays = TaliaDate.now().inDays();
+        return nowInDays - this.expiryDate.inDays();
+    }
+
+    get beginDateDisplay() {
+        return TaliaDate.fromDate(this.beginDate).displayString();
+    }
+
+    get expiryDateDisplay() {
+        const expiryDate = this.expiryDate;
+        return expiryDate ? TaliaDate.fromDate(expiryDate).displayString() : "";
+    }
 }

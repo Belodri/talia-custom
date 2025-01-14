@@ -25,11 +25,7 @@ export default class Building extends foundry.abstract.DataModel {
                 specialists: new SetField(
                     new StringField({ required: false, blank: false}),
                     { required: true, initial: [] }
-                ),
-                effectIds: new SetField(
-                    new StringField({ required: false, blank: false}),
-                    { required: true, initial: [] }
-                ),
+                )
             }),
             flavorText: new StringField({ required: true, blank: false}),
             specialEffectText: new StringField({ required: true, blank: true, initial: ""}),
@@ -47,6 +43,14 @@ export default class Building extends foundry.abstract.DataModel {
         }
     }
 
+    static get allBuildingInstances() {
+        return new foundry.utils.Collection(
+            Building.database.map(dataObj => 
+                [dataObj.sId, new Building(dataObj)]
+            )
+        );
+    }
+
     constructor(data, options = {}) {
         super(data, options);
     }
@@ -55,7 +59,7 @@ export default class Building extends foundry.abstract.DataModel {
      * @param {Settlement} settlement 
      * @param {string} sId 
      */
-    static build(settlement, sId) {
+    static async build(settlement, sId) {
         const databaseEntry = Building.database.get(sId);
         if(!databaseEntry) throw new Error(`Building not found | sId: "${sId}".`);
         if(settlement.buildings.has(sId)) throw new Error(`Building already constructed | sId: "${sId}"`);
@@ -66,8 +70,8 @@ export default class Building extends foundry.abstract.DataModel {
         return settlement.addBuilding(building);
     }
 
-    destroy() {
-        this.settlement.removeBuilding(this);
+    async destroy() {
+        await this.settlement.removeBuilding(this);
         return this.updateSource({}, {parent: null});  //No idea if it'll get garbage collected otherwise.
     }
 
@@ -75,15 +79,16 @@ export default class Building extends foundry.abstract.DataModel {
      * Sets the building's construction date.
      * @param {import("./TaliaDate.mjs").DateObject} date
      */
-    modifyConstructionDate(date) {
+    async modifyConstructionDate(date) {
         this.updateSource({constructionDate: date});
-        return this;
+        return this.parent.save();
     }
 
     /**
      * Has this building been constructed within the last 30 days?
      */
     get recentlyConstructed() {
+        if(!this.isConstructed) return false;
         const nowInDays = TaliaDate.now().inDays();
         const constructionDateInDays = TaliaDate.fromDate(this.constructionDate).inDays();
         const diff = nowInDays - constructionDateInDays;
@@ -102,5 +107,73 @@ export default class Building extends foundry.abstract.DataModel {
 
     get settlement() {
         return this.parent;
+    }
+
+    get isConstructed() {
+        return !!this.parent;
+    }
+
+    get constructionDateDisplay() {
+        return this.isConstructed ? TaliaDate.fromDate(this.constructionDate).displayString() : "";
+    }
+
+    get hasBuildingRequirements() {
+        return !!this.requirements.buildingIds.size;
+    }
+
+    get hasSpecialistRequirements() {
+        return !!this.requirements.specialists.size;
+    }
+
+    get hasAttributeRequirements() {
+        return Object.values(this.requirements.attributes).some(v => v !== 0);
+    }
+
+    get hasRequirements() {
+        return this.hasAttributeRequirements
+            || this.hasSpecialistRequirements
+            || this.hasBuildingRequirement;
+    }
+
+    meetsAttributeRequirements(settlement) {
+        return Object.entries(this.requirements.attributes)
+            .every(([k, v]) => v === 0 || settlement.attributes[k] >= v);
+    }
+
+    meetsBuildingRequirements(settlement) {
+        const buildings = settlement.buildings;
+        return [...this.requirements.buildingIds]
+            .every(sId => buildings.has(sId));
+    }
+
+    meetsSpecialistRequirements(settlement) {
+        return [...this.requirements.specialists]
+            .every(specialist => settlement.specialists.has(specialist));
+    }
+
+    meetsScale(settlement) {
+        return this.scale <= settlement.capacityAvailable;
+    }
+
+    /**
+     * Checks whether a given settlement meets this building's requirements.
+     * Does NOT check scale/capacity!
+     * @param {Settlement} settlement 
+     */
+    meetsRequirements(settlement) {
+        return this.meetsAttributeRequirements(settlement)
+            && this.meetsBuildingRequirements(settlement)
+            && this.meetsSpecialistRequirements(settlement);
+    }
+
+    /**
+     * Checks whether this building can be constructed in a given settlement.
+     * Checks both requirements and scale/capacity!
+     * @param {Settlement} settlement 
+     */
+    canBeConstructed(settlement) {
+        return this.meetsRequirements(settlement) 
+            && this.meetsScale(settlement) 
+            && !settlement.buildings.has(this.sId);
     }
 }

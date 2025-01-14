@@ -3,6 +3,7 @@ import Building from "./building.mjs"
 import Effect from "./effect.mjs"
 import { MappingField } from "../../utils/fields.mjs";
 import { _defineAttributesSchema, _defineDateSchema } from "./shared.mjs";
+import SettlementApp from "./settlementApp.mjs";
 
 const {
     StringField, EmbeddedDataField, SetField, SchemaField, ObjectField
@@ -15,6 +16,7 @@ export default class Settlement extends foundry.abstract.DataModel {
         return {
             name: new StringField({ required: true, blank: false }),
             founding: new SchemaField(_defineDateSchema(), { required: true }),
+            specialists: new SetField( new StringField(), {required: true, nullable: false, initial: []}),
             _buildings: new SetField( new EmbeddedDataField( Building )),
             _effects: new SetField( new EmbeddedDataField( Effect ))
         }
@@ -121,12 +123,20 @@ export default class Settlement extends foundry.abstract.DataModel {
         return attr;
     }
 
+    get app() {
+        return new SettlementApp(this);
+    }
+
     /**
      * The sum of scale of buildings constructed within the last 30 days.
      * @returns {number}
      */
     get constructionScale() {
         return this.buildings.reduce((acc, curr) => acc += curr.occupiedCapacity, 0);
+    }
+
+    get capacityAvailable() {
+        return this.capacity - this.constructionScale;
     }
 
     /**
@@ -150,15 +160,18 @@ export default class Settlement extends foundry.abstract.DataModel {
         return new foundry.utils.Collection(mapping);
     }
 
-    addBuilding(building) {
-        return this.updateSource({_buildings: this._buildings.add(building)});
+    async addBuilding(building) {
+        if(this.buildings.has(building.sId)) return;    //no duplicate buildings
+        this.updateSource({_buildings: this._buildings.add(building)});
+        return await this.save();
     }
 
-    removeBuilding(building) {
+    async removeBuilding(building) {
         const buildings = this.buildings;
         buildings.delete(building.sId);
         const setAfterDeletion = new Set(buildings);
-        return this.updateSource({_buildings: setAfterDeletion});
+        this.updateSource({_buildings: setAfterDeletion});
+        return await this.save();
     }
 
     //#endregion
@@ -166,7 +179,21 @@ export default class Settlement extends foundry.abstract.DataModel {
     //#region Effects
 
     get effects() {
-        const mapping = this._effects   //todo sort by remaining duration
+        const mapping = this._effects   
+            .map(e => [e.sId, e]);
+        return new foundry.utils.Collection(mapping);
+    }
+
+    get activeEffects() {
+        const mapping = this._effects
+            .filter(e => e.isActive)
+            .map(e => [e.sId, e]);
+        return new foundry.utils.Collection(mapping);
+    }
+
+    get expiredEffects() {
+        const mapping = this._effects
+            .filter(e => e.isExpired)
             .map(e => [e.sId, e]);
         return new foundry.utils.Collection(mapping);
     }
@@ -183,6 +210,30 @@ export default class Settlement extends foundry.abstract.DataModel {
     }
 
     //#endregion
+
+    //#region Specialists
+
+    /*
+        Specialists are represented by simple strings;
+        Can be anything a building could require that's not otherwise part of the settlement's data.
+    */
+
+    /**
+     * @param {string} specialist   
+     */
+    addSpecialist(specialist) {
+        return this.updateSource({specialists: this.specialists.add(specialist)});
+    }
+
+    /**
+     * @param {string} specialist 
+     */
+    removeSpecialist(specialist) {
+        return this.updateSource({specialists: this.specialists.delete(specialist)});
+    }
+
+    //#endregion
+
 }
 
 

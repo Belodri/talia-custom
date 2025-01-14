@@ -77,7 +77,7 @@ export default class TaliaDate {
 
     /** @returns {string} */
     displayString() {
-        const { date } = SimpleCalendar.api.formatDateTime(this.dateObject);
+        const { date } = SimpleCalendar.api.formatDateTime(this.toObject());
         return date;
     }
 

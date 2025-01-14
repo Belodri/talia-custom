@@ -1,0 +1,115 @@
+.talia-custom.settlement {
+    .container-stacked {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        align-items: center;
+    }
+
+    .header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+        .settlement-name {
+            border: none;
+        }
+
+        .attributes {
+            align-self: flex-start;
+
+            display: flex;
+            flex-direction: row;
+
+            .attribute-container {
+                margin-inline: 1em;
+
+                .attribute-number {
+                    font-size: 2rem;
+                    font-weight: bold;
+                }
+
+                .attribute-name {
+                    text-transform: uppercase;
+                    font-weight: bold;
+                }
+            }
+        }
+    }
+
+    .sheet-tabs {
+        border-bottom: 2px solid var(--color-underline-header);
+
+        .item {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+    }
+
+    .building-card {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--color-cool-5-90);
+        padding-left: 1em;
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
+        padding-right: 1em;
+
+        .card-header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            border-bottom: 1px solid white;
+
+            .name {
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+
+            .scale-label {
+                font-size: small;
+                margin-right: 1ch;
+            }
+
+            .scale-number {
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+        }
+
+        .flavor-text {
+            font-style: italic;
+            font-family: Calibri;
+            font-size: var(--font-size-15)
+        }
+
+        .grant-req-split {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            width: 100%;
+
+            .column {
+                display: flex;
+                flex-direction: column;
+                flex-basis: 100%;
+                flex: 1;
+            }
+
+
+            .split-title {
+                font-weight: bold;
+            }
+        }
+
+        .list {
+            margin-top: 0.3rem;
+            margin-bottom: 0.3rem;
+        }
+    }
+
+    .building-card.already-built {
+        background-color: rgba(8, 26, 18, 0.9);
+    }
+}

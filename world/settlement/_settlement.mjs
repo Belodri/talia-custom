@@ -5,6 +5,8 @@ import Building from "./building.mjs"
 import Effect from "./effect.mjs"
 import Settlement   from "./settlement.mjs"
 
+import SettlementApp from "./settlementApp.mjs";
+
 export default {
     registerSubsection() {
         Settlement.init();
@@ -19,10 +21,9 @@ export default {
             Building.initDatabase(sourceData.buildingsData);
 
             //testing only
-            globalThis.setl = { Settlement, Effect, Building };
+            globalThis.setl = { Settlement, Effect, Building, SettlementApp };
         })();
     }
 }
 
-//todo handle Construction requirements
 //todo rewrite GAS to reflect the new data structure (no longer passing effectIds, instead just specialEffectText)

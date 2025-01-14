@@ -28,7 +28,8 @@
   },
   "styles": [
     "styles/contraptionsCraftingUi.css",
-    "styles/alchemyBrewingUi.css"
+    "styles/alchemyBrewingUi.css",
+    "styles/settlement.css"
   ],
   "description": "A module to handle anything custom made for the Talia campaign.",
   "packs": [
