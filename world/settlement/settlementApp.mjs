@@ -1,97 +1,160 @@
 import { MODULE } from "../../scripts/constants.mjs";
-import Building from "../../world/settlement/building.mjs";
+import Building from "./building.mjs";
+import TaliaDate from "../../utils/TaliaDate.mjs";
 
-const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api
+const {HandlebarsApplicationMixin, DocumentSheetV2} = foundry.applications.api;
+export default class SettlementApp extends HandlebarsApplicationMixin(DocumentSheetV2) {
 
-/**
- * @typedef {object} BuildingDisplayData
- * @property {string} sId
- * @property {string} name
- * @property {boolean} isConstructed                Is this building constructed in this settlement?
- * @property {boolean} canBeConstructed             Can this building be constructed in this settlement?
- * @property {string} constructionDate              Construction date or "-" if not constructed
- * @property {number} scale
- * @property {number} [capacity]
- * @property {string} attributeDisplay
- * @property {string} [req_attributes]
- * @property {string} [req_buildingNames]
- * @property {string} [req_specialists]
- * @property {string} flavorText
- * @property {string} [specialEffectText]
- */
-
-/**
- * @typedef {object} ExampleFormData
- * @property {string} settlementName
- * @property {{[key: string]: number}} attributes
- * @property {number} capacityAvailable
- * @property {number} capacityMax
- * @property {BuildingDisplayData[]} allBuildings   Sort all buildings by name alphabetically.
- */ 
-
-export default class SettlementApp extends HandlebarsApplicationMixin(ApplicationV2) {
-/*     // eslint-disable-next-line no-useless-constructor
-    constructor() {
-        super();
-    }
-
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            width: 1200,
-            height: 800,
-            popOut: true,
-            minimizable: true,
-            resizeable: true,
-            id: "settlementApp",
-            template: `modules/${MODULE.ID}/templates/settlementAppTemplate.hbs`,
-        })
-    }
-    
- */
+    /**
+     * 
+     * @param {Settlement} settlement 
+     * @param {object} [options] 
+     */
     constructor(settlement, options = {}) {
-        options.title = settlement.name;
-
-        super(options);
+        super({...options, document: settlement.parent, settlement: settlement});
         this.settlement = settlement;
-        this.allBuildingInstances = Building.allBuildingInstances;
     }
 
     static DEFAULT_OPTIONS = {
-        id: "settlementApp",
-        classes: [MODULE.ID, "settlement"],
+        id: "SettlementApp",
+        classes: ["sheet", "talia-custom", "settlement"],
+        sheetConfig: false,
+        window: {
+            resizable: false,
+            contentClasses: ["standard-form"]
+        },
+        position: {
+            height: 950,
+            width: 900,
+        },
         form: {
             submitOnChange: true,
             closeOnSubmit: false,
         },
-        window: {
-            contentClasses: ["standard-form"],
-            resizable: true,
-        },
-        position: {
-            width: 1000,
-            height: 800,
-        },
         actions: {
-            abort: this.#onAbortConstruction,
-            build: this.#onConstructBuilding,
+            openNotes: SettlementApp.#openNotes,
         }
     }
 
     static PARTS = {
-        header: { template: `modules/${MODULE.ID}/templates/settlementTemplates/sheet-header.hbs` },
-        nav: { template: `modules/${MODULE.ID}/templates/settlementTemplates/sheet-nav.hbs` },
-        overview: { template: `modules/${MODULE.ID}/templates/settlementTemplates/sheet-overview.hbs` },
-        buildings: { template: `modules/${MODULE.ID}/templates/settlementTemplates/sheet-buildings.hbs` },
+        header: { template: `modules/${MODULE.ID}/templates/settlementTemplates/header.hbs` },
+        navigation: { template: `modules/${MODULE.ID}/templates/settlementTemplates/navigation.hbs` },
+        general: { template: `modules/${MODULE.ID}/templates/settlementTemplates/general.hbs`, scrollable: [""] },
+        buildings: { template: `modules/${MODULE.ID}/templates/settlementTemplates/buildings.hbs`, scrollable: [""] },
+        effects: { template: `modules/${MODULE.ID}/templates/settlementTemplates/effects.hbs`, scrollable: [""] },
     }
 
     tabGroups = {
-        main: "overview"
+        main: "general"
     }
 
-    static _getAttrString(attributes, setPrefix = false) {
+    _attachFrameListeners() {
+        super._attachFrameListeners();
+        new ContextMenu(this.element, ".building-card", this._getBuildingCardContextMenuItems());
+        new ContextMenu(this.element, ".effect-card", this._getEffectCardContextMenuItems());
+    }
+
+    _prepareSubmitData(event, form, formData) {
+        const submitData = foundry.utils.expandObject(formData.object);
+
+        this.settlement.validate({changes: submitData, clean: true, fallback: false});
+        this.settlement.updateSource(submitData);
+        return {flags: { [MODULE.ID]: { Settlement: this.settlement.toObject() }}};
+
+    }
+
+    //#region Cross client sync
+
+    #updateHookId = null;
+
+    _onFirstRender(context, options) {
+        super._onFirstRender(context, options);
+
+        const hookId = Hooks.on("updateJournalEntry", (document, changed, options, userId) => {
+            if(userId === game.user.id 
+                || !changed.flags?.[MODULE.ID]?.Settlement
+                || !document.apps[this.id]
+            ) return;
+
+            this.settlement.syncWithDocument();
+            this.render();
+        });
+
+        this.#updateHookId = hookId;
+    }
+
+    _onClose(options) {
+        super._onClose(options);
+        Hooks.off("updateJournalEntry", this.#updateHookId);
+    }
+    //#endregion
+
+    //#region Actions
+
+    static async #openNotes(event, target) {
+        return this.document.sheet.render(true);
+    }
+    //#endregion
+
+    //#region Context
+
+    async _prepareContext(options) {
+        const tabs = {
+            general: { label: "General" },
+            buildings: { label: "Buildings" },
+            effects: { label: "Effects" },
+        };
+        for (const [k, v] of Object.entries(tabs)) {
+            v.cssClass = (this.tabGroups.main === k) ? "active" : "";
+            v.id = k;
+        }
+
+        const context = {};
+        const settlement = this.settlement;
+        const source = settlement.toObject();
+        const isGM = game.user.isGM;
+
+        const makeField = (path, options = {}) => {
+            const field = settlement.schema.getField(path);
+            const value = foundry.utils.getProperty(source, path);
+
+            return {
+                field: field,
+                value: value,
+                ...options
+            };
+        };
+
+        const fields = {};
+        fields.unlocked = makeField("unlocked");
+
+        const buildingsContext = Object.values(settlement.buildings)
+            .map(building => this._prepareBuilding(building))
+            .sort((a, b) => a.id.localeCompare(b.id, "en"));
+
+        const effectsContext = Object.values(settlement.effects)
+            .map(effect => this._prepareEffect(effect))
+            .sort((a, b) =>           //sort by least remaining duration first, alphabetically 2nd
+                a.remainingDays === b.remainingDays 
+                    ? a.name.localeCompare(b.name, "en") 
+                    : a.remainingDays - b.remainingDays
+            );
+
+        context.fields = fields;
+        context.buildingsContext = buildingsContext;
+        context.effectsContext = effectsContext;
+        context.tabs = tabs;
+        context.settlement = settlement;
+        context.source = source;
+        context.isGM = isGM;
+
+        return context;
+    }
+
+    static _getAttrDisplayString(attributes, setPrefix = false) {
         return Object.entries(attributes)
             .filter(([_, v]) => v)
-            .map(([k, v]) => { 
+            .map(([k, v]) => {
                 const prefix = (v > 0 && setPrefix) ? "+" : ""; 
                 const attr = k.at(0).toUpperCase() + k.slice(1); 
                 return `${prefix}${v} ${attr}`;
@@ -99,132 +162,221 @@ export default class SettlementApp extends HandlebarsApplicationMixin(Applicatio
             .join(", ");
     }
 
-    _getBuildingDisplayData(building) {
+    _prepareBuilding(building) {
+        const isBuilt = building.isBuilt;
+        const isRecent = building.isRecentlyConstructed;
+        const allReqsMet = building.allRequirementsMet;
 
+        const grants = [
+            SettlementApp._getAttrDisplayString(building.modifiers.attributes, true),
+            building.modifiers.capacity ? `${building.modifiers.capacity > 0 ? "+" : ""}${building.modifiers.capacity} Capacity` : "",
+            building.effectText
+        ].filter(Boolean);
 
-        const obj = {};
-        obj.name = building.name;
-        obj.sId = building.sId;
-        obj.scale = building.scale;
-        obj.flavorText = building.flavorText;
+        const requires = [
+            { 
+                displayString: SettlementApp._getAttrDisplayString(building.requirements.attributes),
+                classList: !isBuilt 
+                    ? building._attributesMet 
+                        ? "req-met"
+                        : "req-not-met"
+                    : ""
+            }, { 
+                displayString: [...building.requirements.buildings]
+                    .map(id => Building.database.get(id).name)
+                    .join(", "),
+                classList: !isBuilt 
+                    ? building._buildingsMet
+                        ? "req-met"
+                        : "req-not-met"
+                    : ""
+            }, {
+                displayString: [...building.requirements.unlocked]
+                    .map(str => str)
+                    .join(", "),
+                classList: !isBuilt 
+                    ? building._unlockedMet
+                        ? "req-met"
+                        : "req-not-met"
+                    : ""
+            }
+        ].filter(item => item.displayString);
 
-        obj.isRecentConstruction = building.recentlyConstructed;
+        const constructionDateDisplay = isBuilt ? building.constructionDate.displayString : "";
 
-        const meetsScale = building.meetsScale(this.settlement);
-        const meetsSpec = building.meetsSpecialistRequirements(this.settlement);
-        const meetsBuild = building.meetsBuildingRequirements(this.settlement);
-        const meetsAttr = building.meetsBuildingRequirements(this.settlement);
+        const conditionalClasses = [];
+        if( isBuilt ) conditionalClasses.push("highlight");
+        if( isRecent ) conditionalClasses.push("is-recent");
+        if( allReqsMet ) conditionalClasses.push("all-reqs-met");
+        if( building._scaleMet && !isBuilt ) conditionalClasses.push("scale-met");
+        const classList = conditionalClasses.join(" ");
 
-        const meetsAll = meetsScale && meetsSpec && meetsBuild && meetsAttr;
-        const isRecent = building.recentlyConstructed;
-        const hasBuild = this.settlement.buildings.has(building.sId);
+        return {
+            effectText: building.effectText, 
+            flavorText: building.flavorText, 
+            id: building.id, 
+            name: building.name, 
+            scale: building.scale,
+            constructionDateDisplay,
+            isRecent,
+            grants,
+            requires,
+            classList
+        };
+    }
 
-        obj.buttonText = isRecent ? "Abort" : "Build";
-        obj.buttonAction = isRecent ? "abort" 
-            : !hasBuild && meetsAll ? "build"
-                : "";
-        obj.isButtonDisabled = !isRecent && !hasBuild && !meetsAll;
-        obj.isButtonHidden = !isRecent && hasBuild;
+    _prepareEffect(effect) {
+        const isGM = game.user.isGM;
+        const isTemporary = effect.isTemporary;
+        const isActive = effect.isActive;
+
+        const grants = [ 
+            SettlementApp._getAttrDisplayString(effect.modifiers.attributes, true),
+            effect.modifiers.capacity ? `${effect.modifiers.capacity > 0 ? "+" : ""}${effect.modifiers.capacity} Capacity` : "",
+            effect.effectText
+        ].filter(Boolean);
+
+        const conditionalClasses = [];
+        if( isTemporary ) conditionalClasses.push("is-temporary");
+        if( isActive ) conditionalClasses.push("highlight");
+        if( !isActive && !isGM) conditionalClasses.push("hidden");
+        const classList = conditionalClasses.join(" ");
         
-
-        obj.isConstructed = building.isConstructed;
-        obj.constructionDate = building.constructionDateDisplay;
-
-        //grants
-        obj.grantList = [];
-        const attrString = SettlementApp._getAttrString(building.attributes, true);
-        if(attrString) obj.grantList.push(attrString);
-
-        const capacity = building.capacity;
-        const capacityString = capacity ? `${capacity > 0 ? "+" : ""}${capacity} Capacity` : "";
-        if(capacityString) obj.grantList.push(capacityString);
-
-        if(building.specialEffectText) obj.grantList.push(building.specialEffectText);
-
-        //requires
-        obj.reqList = [];
-        const reqs = building.requirements;
-        if(building.hasAttributeRequirements) {
-            const reqStr = SettlementApp._getAttrString(reqs.attributes);
-            obj.reqList.push(reqStr);
+        return {
+            id: effect.id,
+            name: effect.name,
+            isTemporary,
+            isActive,
+            beginDateStr: effect.beginDate.displayString,
+            endDateStr: isTemporary ? effect.endDate.displayString : "",
+            remainingDays: effect.remainingDays,
+            grants,
+            flavorText: effect.flavorText,
+            classList
         }
+    }
+    //#endregion
 
-        if(building.hasBuildingRequirements) {
-            const str = [...reqs.buildingIds]
-                .map(sId => Building.database.get(sId).name )
-                .join(", ");
-            obj.reqList.push(str);
-        }
-
-        if(building.hasSpecialistRequirements) {
-            const str = [...reqs.specialists]
-                .join(", ");
-            obj.reqList.push(str);
-        }
-
-        return obj;
+    //#region ContextMenu
+    _getBuildingCardContextMenuItems() {
+        return [
+            {
+                name: "Build",
+                icon: `<i class="fa-solid fa-person-digging"></i>`,
+                condition: (jq) => {
+                    const building = this._getBuildingFromJQ(jq);
+                    return !building.isBuilt && building.allRequirementsMet;
+                },
+                callback: this._onBuildButton.bind(this)
+            },
+            {
+                name: "Cancel Construction",
+                icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                condition: (jq) => {
+                    const building = this._getBuildingFromJQ(jq);
+                    return building.isRecentlyConstructed;
+                },
+                callback: this._onCancelConstructionButton.bind(this)
+            },
+            {
+                name: "Force Build (GM)",
+                icon: `<i class="fa-thin fa-person-digging"></i>`,
+                condition: (jq) => {
+                    const building = this._getBuildingFromJQ(jq);
+                    return game.user.isGM && !building.isBuilt;
+                },
+                callback: this._onBuildButton.bind(this)
+            },
+            {
+                name: "Force Cancel (GM)",
+                icon: `<i class="fa-thin fa-circle-xmark"></i>`,
+                condition: (jq) => {
+                    const building = this._getBuildingFromJQ(jq);
+                    return game.user.isGM && building.isBuilt;
+                },
+                callback: this._onCancelConstructionButton.bind(this)
+            },
+            {
+                name: "Modify Construction Date (GM)",
+                icon: `<i class="fa-thin fa-calendar"></i>`,
+                condition: (jq) => {
+                    const building = this._getBuildingFromJQ(jq);
+                    return game.user.isGM && building.isBuilt;
+                },
+                callback: this._onModifyConstructionDateButton.bind(this)
+            }
+        ]
     }
 
-
-    _prepareContext(options) {
-        const c = {};
-
-        const tabs = {
-            overview: { label: "Overview" },
-            buildings: { label: "Buildings" },
-        }
-        for(const [k, v] of Object.entries(tabs)) {
-            v.cssClass = (this.tabGroups.main === k) ? "active" : "";
-            v.id = k;
-        }
-        c.tabs = tabs;
-
-        c.settlementName = this.settlement.name;
-        c.attributes = this.settlement.attributes;
-        c.capacityAvailable = this.settlement.capacityAvailable;
-        c.capacityMax = this.settlement.capacity;
-
-        const settlementBuildings = this.settlement.buildings;
-        c.allBuildings = [
-            ...settlementBuildings.map(b => this._getBuildingDisplayData(b)),
-            ...this.allBuildingInstances
-                .filter(b => !settlementBuildings.has(b.sId))
-                .map(b => this._getBuildingDisplayData(b))
-        ].sort((a, b) => a.scale - b.scale);
-
-        return c;
+    _getEffectCardContextMenuItems() {
+        return [
+            {
+                name: "Activate",
+                icon: '<i class="fa-solid fa-plus"></i>',
+                condition: (jq) => {
+                    const effect = this._getEffectFromJQ(jq);
+                    return game.user.isGM && !effect.isActive
+                },
+                callback: async (jq) => {
+                    const effect = this._getEffectFromJQ(jq);
+                    await effect.activate();
+                }
+            },
+            {
+                name: "Deactivate",
+                icon: '<i class="fa-solid fa-minus"></i>',
+                condition: (jq) => {
+                    const effect = this._getEffectFromJQ(jq);
+                    return game.user.isGM && effect.isActive
+                },
+                callback: async (jq) => {
+                    const effect = this._getEffectFromJQ(jq);
+                    await effect.deactivate();
+                }
+            },
+            {
+                name: "Modify Begin Date",
+                icon: `<i class="fa-thin fa-calendar"></i>`,
+                condition: () => game.user.isGM,
+                callback: async (jq) => {
+                    const effect = this._getEffectFromJQ(jq);
+                    const newDate = await TaliaDate.fromDialog();
+                    if( newDate ) await effect.setBeginDate(newDate);
+                }
+            }
+        ]
     }
 
-    /**
-     * 
-     * @param {SubmitEvent} event 
-     * @param {HTMLFormElement} form 
-     * @param {FormDataExtended} formData 
+    _getEffectFromJQ(jq) {
+        const card = jq.closest(".effect-card")[0];
+        const id = card.dataset.id;
+        return this.settlement.effects[id];
+    }
+
+    /** 
+     * @param {JQuery} jq  
+     * @returns {Building}
      */
-    static async #onSubmit(event, form, formData) {
-        console.log({event, form, formData});
+    _getBuildingFromJQ(jq) {
+        const card = jq.closest(".building-card")[0];
+        const id = card.dataset.id;
+        return this.settlement.buildings[id];
     }
 
-    /**
-     * 
-     * @param {PointerEvent} event 
-     * @param {HTMLElement} target 
-     */
-    static async #onConstructBuilding(event, target) {
-        const sId = target.dataset.buildingid;
-        await Building.build(this.settlement, sId);
-        this.render();
+    async _onModifyConstructionDateButton(jq) {
+        const building = this._getBuildingFromJQ(jq);
+        const newDate = await TaliaDate.fromDialog();
+        if(newDate) await building.setConstructionDate(newDate);
     }
 
-    /**
-     * 
-     * @param {PointerEvent} event 
-     * @param {HTMLElement} target 
-     */
-    static async  #onAbortConstruction(event, target) {
-        const sId = target.dataset.buildingid;
-        const building = this.settlement.buildings.get(sId);
+    async _onCancelConstructionButton(jq) {
+        const building = this._getBuildingFromJQ(jq);
         await building.destroy();
-        this.render();
     }
+
+    async _onBuildButton(jq) {
+        const building = this._getBuildingFromJQ(jq);
+        await building.build();
+    }
+    //#endregion
 }

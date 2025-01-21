@@ -7,6 +7,7 @@ import utilHooks from "./utilHooks.mjs";
 import ChatCardButtons from "./chatCardButtons.mjs";
 import _methodAdditions from "./methodAdditions/_methodAdditions.mjs";
 import sceneEffects from "./sceneEffects.mjs";
+import TaliaDate from "./TaliaDate.mjs";
 
 export default {
     registerSection() {
@@ -24,6 +25,7 @@ export default {
 
 export const TaliaUtils = {
     Helpers,
+    TaliaDate
 }
 
 /**

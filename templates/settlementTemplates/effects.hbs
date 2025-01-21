@@ -1,0 +1,29 @@
+<div class="tab scrollable {{tabs.effects.cssClass}}" data-tab="effects" data-group="main">
+    {{#each effectsContext}}
+        <div class="card effect-card {{classList}}" data-id="{{id}}">
+            <div class="card-header">
+                <span class="name">{{name}}</span>
+                <span class="days-left"><i class="fa-regular fa-clock"></i> {{#if isTemporary}}{{remainingDays}} Days{{else}}∞{{/if}}</span>
+            </div>
+
+            <hr class="card-divider">
+
+            <p class="quote-text">{{flavorText}}</p>
+
+            <hr class="card-divider">
+
+            <div class="card-split-columns">
+                <div class="column">
+                    {{#if grants}}
+                    <ul class="split-list">
+                        {{#each grants}}
+                        <li>{{this}}</li>
+                        {{/each}}
+                    </ul>
+                    {{/if}}
+                </div>
+            </div>
+
+        </div>
+    {{/each}}
+</div>

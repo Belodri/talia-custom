@@ -1,29 +1,24 @@
 import { TaliaCustomAPI } from "../../scripts/api.mjs";
 import { MODULE } from "../../scripts/constants.mjs";
-
-import Building from "./building.mjs"
-import Effect from "./effect.mjs"
-import Settlement   from "./settlement.mjs"
-
+import Settlement from "./settlement.mjs";
+import Effect from "./effect.mjs";
+import Building from "./building.mjs";
+import TaliaDate from "../../utils/TaliaDate.mjs";
 import SettlementApp from "./settlementApp.mjs";
 
 export default {
     registerSubsection() {
-        Settlement.init();
-
         (async () => {
-            const fileName = "sourceData";
-            const path = `modules/${MODULE.ID}/world/settlement/${fileName}.json`;
+            const path = `modules/${MODULE.ID}/jsonData/settlementSourceData.json`;
             const response = await fetch(path);
             const sourceData = await response.json();
 
-            Effect.initDatabase(sourceData.effectsData);
-            Building.initDatabase(sourceData.buildingsData);
+            Effect.initData(sourceData.effectsData);
+            Building.initData(sourceData.buildingsData);
 
-            //testing only
-            globalThis.setl = { Settlement, Effect, Building, SettlementApp };
+            TaliaCustomAPI.add({ Settlements: {
+                SettlementApp, Settlement, Building, Effect
+            }}, "none");
         })();
     }
 }
-
-//todo rewrite GAS to reflect the new data structure (no longer passing effectIds, instead just specialEffectText)

@@ -1,110 +1,64 @@
-import { _defineAttributesSchema, _defineDateSchema } from "./shared.mjs";
-import TaliaDate from "./TaliaDate.mjs";
-
-/**
- * @typedef {object} EffectObject
- * @property {string} sId                       - The unique identifier for the effect (same as the key in `allEffects`).
- * @property {number | null} durationInDays     - How many days does this effect last? If null, the effect is permanent.
- * @property {number} capacity                  - How much does this effect increase/decrease the settlement's capacity.
- * @property {object} attributes                - The attributes that this effect affects.  
- * @property {number} attributes.authority      - How much does this effect increase/decrease authority.
- * @property {number} attributes.economy        - How much does this effect increase/decrease economy.
- * @property {number} attributes.community      - How much does this effect increase/decrease community.
- * @property {number} attributes.progress       - How much does this effect increase/decrease progress.
- * @property {number} attributes.intrigue       - How much does this effect increase/decrease intrigue.
- * @property {string} description               - A description of the effect.
- * @property {DateObj} beginDate                - The date of the effect begin.
- */
-
+import { _defineDateSchema, _defineModifiersSchema } from "./sharedSchemas.mjs";
+import TaliaDate from "../../utils/TaliaDate.mjs";
 
 export default class Effect extends foundry.abstract.DataModel {
-    /** @readonly */
+    static defineSchema() {
+        const {
+            SchemaField, HTMLField, NumberField, StringField, EmbeddedDataField
+        } = foundry.data.fields;
+
+        return {
+            id: new StringField({ required: true, nullable: false, blank: false }),
+            name: new StringField({ required: true, nullable: false, blank: false }),
+            monthsDuration: new NumberField({ required: true, integer: true, min: 0, nullable: false, initial: 0 }),  // 0 means the effect is permanent
+            beginDate: new EmbeddedDataField( TaliaDate ),
+            modifiers: new SchemaField( _defineModifiersSchema() ),
+            flavorText: new StringField({ required: false, blank: true, initial: "" }),
+            effectText: new StringField({ required: false, blank: true, initial: "" }),
+        }
+    }
+
     static database = new foundry.utils.Collection();
 
-    static defineSchema() {
-        const { StringField, NumberField, SchemaField, HTMLField } = foundry.data.fields;
-        return {
-            sId: new StringField({required: true, blank: false}),
-            durationInDays: new NumberField({required: true, integer: true, nullable: true}),
-            capacity: new NumberField({required: true, integer: true, nullable: false}),
-            attributes: new SchemaField(_defineAttributesSchema()),
-            description: new HTMLField({blank: true, initial: ""}),
-            beginDate: new SchemaField(_defineDateSchema(), {nullable: false}),
-        }
-    }
-
-    /**
-     * Initialises the Effect.database collection from the effectsData array from sourceData
-     * and freezes each entry as well as Effect.database itself.
-     * @param {object[]} effectsData
-     */
-    static initDatabase(effectsData) {
+    static initData(effectsData) {
         for(const dataObj of effectsData) {
-            Effect.database.set( dataObj.sId, dataObj );
+            Effect.database.set(dataObj.id, dataObj);
         }
     }
 
-    constructor(data, options = {}) {
-        super(data, options);
+    get isTemporary() { return this.monthsDuration > 0 }
+
+    /** The date on which the effect ends. If the effect is permanent, the endDate is 0/0/0000 */
+    get endDate() {
+        return TaliaDate.fromOffset(this.beginDate, { months: this.monthsDuration });
     }
 
-    static apply(settlement, sId) {
-        const databaseEntry = Effect.database.get(sId);
-        if(!databaseEntry) throw new Error(`Effect not found | sId: "${sId}".`);
-        if(settlement.effects.has(sId)) throw new Error(`Effect already active | sId: "${sId}"`);
-
-        const effectData = foundry.utils.deepClone(databaseEntry);
-        effectData.beginDate = TaliaDate.now().toObject();
-        const effect = new Effect(effectData, {parent: settlement});
-        return settlement.addEffect(effect);
-    }
-
-    /**
-     * Sets the effect's begin date.
-     * @param {import("./TaliaDate.mjs").DateObject} date
+    /** 
+     * @returns {number} The remaining duration of an active effect in days; Infinity for permanent effects. 
+     * Months duration in days for inactive effects 
      */
-    modifyBeginDate(date) {
-        this.updateSource({beginDate: date});
-        return this;
-    }
-
-    /** @returns {TaliaDate | null}     Null if the effect has an infinite duration. */
-    get expiryDate() {
-        return this.durationInDays === null ?  null 
-            : TaliaDate.fromDate(this.beginDate)
-                .getOffsetDate(this.durationInDays);
-    }
-
-    get hasBegun() {
-        const nowInDays = TaliaDate.now().inDays();
-        return nowInDays <= TaliaDate.fromDate(this.beginDate).inDays();
-    }
-
-    get isExpired() {
-        const expiryDate = this.expiryDate;
-        if(expiryDate === null) return false;
-
-        const nowInDays = TaliaDate.now().inDays();
-        return nowInDays > expiryDate.inDays();
+    get remainingDays() {
+        if(this.isActive) {
+            if(this.isTemporary) return this.endDate.inDays - TaliaDate.now().inDays;
+            else return Infinity;
+        } else return this.monthsDuration * TaliaDate.DAYS_IN_MONTH;
     }
 
     get isActive() {
-        return this.hasBegun && !this.isExpired;
+        const now = TaliaDate.now();
+        return ( this.beginDate.isBefore(now) ||this.beginDate.isSame(now) ) && this.endDate.isAfter(now);
     }
 
-    /** Returns null if the the effect is not active or is already expired */
-    get remainingDays() {
-        if(!this.isActive || this.isExpired) return null;
-        const nowInDays = TaliaDate.now().inDays();
-        return nowInDays - this.expiryDate.inDays();
+    async setBeginDate(date) {
+        const newDate = TaliaDate.fromDate(date);
+        return await this.parent.update({[`effects.${this.id}.beginDate`]: newDate});
     }
 
-    get beginDateDisplay() {
-        return TaliaDate.fromDate(this.beginDate).displayString();
+    async activate() {
+        return this.isActive ? null : await this.setBeginDate(TaliaDate.now());
     }
-
-    get expiryDateDisplay() {
-        const expiryDate = this.expiryDate;
-        return expiryDate ? TaliaDate.fromDate(expiryDate).displayString() : "";
+    
+    async deactivate() {
+        return this.isActive ? await this.setBeginDate() : null;
     }
 }
