@@ -1,0 +1,172 @@
+/*
+    ToDo
+    -sticky header
+
+*/
+
+.talia-custom.settlement {
+    min-width: 900px;
+    min-height: 150px;
+
+
+    .container-stacked {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        align-items: center;
+    }
+
+    .header {
+        flex: 0;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+
+        .settlement-name {
+            font-weight: bold;
+            font-size: 2.8em;
+            align-self: center;
+            margin: 0 1rem;
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+    
+    
+            .settlement-name {
+                border: none;
+            }
+    
+            .attributes {
+                align-self: flex-start;
+                display: flex;
+                flex-direction: row;
+    
+                .attribute-container {
+                    margin-inline: 1em;
+    
+                    .attribute-number {
+                        font-size: 2rem;
+                        font-weight: bold;
+                    }
+    
+                    .attribute-name {
+                        text-transform: uppercase;
+                        font-weight: bold;
+                    }
+                }
+            }
+        }
+
+        .sheet-tabs {
+            border-top: 2px solid var(--color-underline-header);
+            border-bottom: 2px solid var(--color-underline-header);
+    
+            .item {
+                font-weight: bold;
+                font-size: 1.3rem;
+            }
+        }
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        margin: 0.5em 0.5em;
+        background: rgba(0, 0, 0, 0.1);
+        padding: 0.3em 0.3em;
+        border: 1px gray groove;
+
+        .card-divider {
+            margin: unset;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row;
+            align-items: center;
+
+            .name {
+                font-size: 1.6rem;
+                font-weight: bold;
+            }
+        }
+
+
+
+        .card-split-columns {
+            display: flex;
+            flex-direction: row;
+            margin-top: 5px;
+            
+            .column {
+                flex: 1 1 0;
+            }
+
+            .split-title {
+                font-weight: bold;
+            }
+
+            li.req-met:first-line {
+                color: green;
+            }
+
+            li.req-not-met:first-line {
+                color: rgb(141, 0, 0);
+            }
+        }
+
+        .quote-text {
+            font-style: italic;
+            font-size: var(--font-size-15)
+        }
+    }
+
+    .effect-card {
+
+        .card-header {
+            .days-left {
+                font-size: 1.3rem;
+                font-weight: bold;
+            }
+        }
+    }
+
+    .effect-card.hidden {
+        display: none;
+    }
+
+    .card.highlight {
+        background-color: rgba(1, 133, 45, 0.2);
+    }
+
+    .building-card {
+        .card-header {
+            position: relative;
+
+            .scale-number {
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+    
+            .construction-date {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+    }
+
+    .building-card.is-built {
+        background-color: rgba(1, 133, 45, 0.2);
+    }
+}

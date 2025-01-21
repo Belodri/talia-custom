@@ -1,0 +1,17 @@
+<div class="tab scrollable {{tabs.general.cssClass}}" data-tab="general" data-group="main">
+    <div class="public">
+        <button 
+            class=""
+            type="button"
+            data-action="openNotes"
+        >Open Notes</button>
+    </div>
+    {{#if isGM}}
+    <div class="private">
+        <fieldset>
+            <legend>Unlocked</legend>
+            {{formGroup fields.unlocked.field value=fields.unlocked.value}}
+        </fieldset>
+    </div>
+    {{/if}}
+</div>

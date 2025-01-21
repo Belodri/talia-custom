@@ -1,0 +1,43 @@
+<div class="tab scrollable {{tabs.buildings.cssClass}}" data-tab="buildings" data-group="main">
+    {{#each buildingsContext}}
+        <div class="card building-card {{classList}}" data-id="{{id}}">
+            <div class="card-header">
+                <span class="name">{{#if isRecent}}<i class="fa-solid fa-person-digging"></i> {{/if}}{{name}}</span>
+                <span class="construction-date">{{constructionDateDisplay}}</span>
+                <span class="scale-number">({{scale}})</span>
+            </div>
+
+            <hr class="card-divider">
+
+            <p class="quote-text">{{flavorText}}</p>
+
+            <hr class="card-divider">
+
+            <div class="card-split-columns">
+
+                <div class="column">
+                    <span class="split-title">Grants</span>
+                    {{#if grants}}
+                    <ul class="split-list">
+                        {{#each grants}}
+                        <li>{{this}}</li>
+                        {{/each}}
+                    </ul>
+                    {{/if}}
+                </div>
+
+                {{#if requires}}
+                <div class="column">
+                    <span class="split-title">Requires</span>
+                    <ul class="split-list">
+                        {{#each requires}}
+                        <li class="{{classList}}">{{displayString}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+                {{/if}}
+
+            </div>
+        </div>
+    {{/each}}
+</div>

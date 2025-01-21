@@ -92,5 +92,5 @@ function registerRulePages() {
     CONFIG.DND5E.rules.settlementcommoners = "Compendium.talia-custom.rules.JournalEntry.SJAQXPyELYfOfRE4.JournalEntryPage.QDIzkHKxvfCmpCwS";
     CONFIG.DND5E.rules.settlementseekers = "Compendium.talia-custom.rules.JournalEntry.SJAQXPyELYfOfRE4.JournalEntryPage.QQEdzklhPjPnSlJm";
     CONFIG.DND5E.rules.settlementveiled = "Compendium.talia-custom.rules.JournalEntry.SJAQXPyELYfOfRE4.JournalEntryPage.uRbfYgrnFvo1XA4Q";
-    CONFIG.DND5E.rules.settlementbuildings = "Compendium.talia-custom.rules.JournalEntry.SJAQXPyELYfOfRE4.JournalEntryPage.uruo07oEBNb25uEe";
+    CONFIG.DND5E.rules.settlementbuildings = "Compendium.talia-custom.rules.JournalEntry.SJAQXPyELYfOfRE4.JournalEntryPage.X4NBgdeKrORQTJ2z";
 }
