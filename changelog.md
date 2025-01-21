@@ -1,3 +1,13 @@
+# 1.16.0 - 2025/01/21
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Item: Boots of Blinding Speed
+    - Application: Settlement
+    - Realm Effect: Avernus
+    </details>
+
 # 1.15.0 - 2025/01/07
 
 -   <details>
