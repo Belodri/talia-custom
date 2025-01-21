@@ -377,5 +377,16 @@ export class Helpers {
             flavor: `Fall Distance: ${result.fallDistance}ft`
         });
     }
+
+    /**
+     * Opens a journal on the given page.
+     * @param {string} journalName 
+     * @param {string} pageName 
+     */
+    static openJournalPageView(journalName, pageName) {
+        const jEntry = game.journal.getName(journalName);
+        const jPage = jEntry?.pages?.getName(pageName);
+        if(jPage) return jEntry.sheet.render(true, {pageId: jPage.id});
+    }
 }
 
