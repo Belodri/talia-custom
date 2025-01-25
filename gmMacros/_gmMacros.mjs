@@ -1,6 +1,6 @@
 import { TaliaCustomAPI } from "../scripts/api.mjs";
 import playerInspirations from "./playerInspirations.mjs"
-import pcItemsToJSON from "./pcItemsToJSON.mjs"
+import pcItemsToJSON from "./websiteDataJSON.mjs"
 import monsterAttackDescriptionGen from "./monsterAttackDescriptionGen.mjs";
 import restManager from "./restManager.mjs"
 
