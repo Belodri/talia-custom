@@ -32,6 +32,12 @@
     </details>
 
 -   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Clientside click interaction with tiles on "Promise" scene
+    </details>
+
+-   <details>
     <summary><h2>Code</h2></summary>
 
     - Rewrote script for website data export 
