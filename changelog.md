@@ -1,3 +1,42 @@
+# 1.17.0 - 2025/01/28
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Settlement Overview and ingame date to website
+    - Items
+        - Jim's Lance of Compensation (documentation only, was added in 1.14.0) 
+
+    - Spells
+        - Suggestion
+    </details>
+
+-   <details>
+    <summary><h2>Added (Spoilers)</h2></summary>
+
+    - Items
+        - Bracers of Asmodeus
+        - Infernal Amulet
+        - Ring of Treachery
+        - Amulet of Appearance
+        - Condensed Order
+    
+    - Creatures
+        - Horned Devil
+        - Merregon
+        - Pit Fiend
+        - Black Abishai
+        - Green Abishai
+        - Orthon
+        - Imp
+    </details>
+
+-   <details>
+    <summary>Code</summary>
+
+    - Rewrote script for website data export 
+    </details>
+
 # 1.16.0 - 2025/01/21
 
 -   <details>

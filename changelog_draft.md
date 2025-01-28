@@ -4,4 +4,3 @@
 - In case of merge conflicts, **retain all entries** to ensure no changes are lost.
 - During release preparation, entries from this file are reviewed, organized, and moved into the main `changelog.md`.
 # Drafts
-- changed export to website script (adding ingame date and settlement data)
