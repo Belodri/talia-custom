@@ -13,6 +13,7 @@ export function registerWrappers() {
     libWrapper.register(MODULE.ID, "dnd5e.documents.ChatMessage5e.prototype._highlightCriticalSuccessFailure", wrap_dnd5e_documents_ChatMessage5e_prototype__highlightCriticalSuccessFailure, 'OVERRIDE');
     restrictMovement.registerWrapper();
     getRollDataWrapper.registerWrapper();
+    libWrapper.register(MODULE.ID, "Actor.prototype.toggleStatusEffect", wrap_Actor_prototype_toggleStatusEffect, "OVERRIDE");
 }
 
 /** Lets other parts of the module hook into talia_addToRollData and mutate the taliaObj which is then appended to rollData */
@@ -143,4 +144,87 @@ function wrap_dnd5e_documents_ChatMessage5e_prototype__highlightCriticalSuccessF
         else if ( total.classList.contains("failure") ) icons.append(makeIcon("fa-xmark"));
         if ( icons.children.length ) total.append(icons);
     }
+}
+
+/** 
+ * Replaces original function, keeping the functionality the same apart from incorporating a chosenDuration (if given).  
+ * Lets the user set the duration of the status effect (in seconds) when the 'Apply Status to Selected Tokens' button of an enricher is shift-clicked.
+ * 
+ * Had to modify the `applyAction` function in dnd5e source code (in `dnd5e/enrichers`) to get this to work!  
+ * Modified function:
+ * ```js
+ *  async function applyAction(event) {
+ *      const target = event.target.closest('[data-action="apply"][data-status]');
+ *      const status = target?.dataset.status;
+ *      const effect = CONFIG.statusEffects.find(e => e.id === status);
+ *      if ( !effect ) return;
+ *      event.stopPropagation();
+ *
+ *      let duration;
+ *      if (event.shiftKey) {
+ *          const {DialogV2} = foundry.applications.api;
+ *
+ *          const selectDurationGroup = new foundry.data.fields.NumberField({
+ *              label: "Duration in s",
+ *              required: true,
+ *              min: 1,
+ *              integer: true,
+ *              nullable: true,
+ *              initial: null
+ *          }).toFormGroup({}, {name: "duration"}).outerHTML;
+ *
+ *          const result = await DialogV2.prompt({
+ *              window: {
+ *                  title: `${effect.name} Duration`
+ *              },
+ *              content: selectDurationGroup,
+ *              modal: true,
+ *              rejectClose: false,
+ *              ok: {
+ *                  label: "Ok",
+ *                  callback: (event, button) => new FormDataExtended(button.form).object
+ *              }
+ *          });
+ * 
+ *          if (result?.duration > 0) duration = result.duration;
+ *      }
+ *
+ *      for ( const token of canvas.tokens.controlled ) {
+ *          await token.actor.toggleStatusEffect(effect.id, {chosenDuration: duration});
+ *      }
+ *  }
+ * ```
+ */
+async function wrap_Actor_prototype_toggleStatusEffect(statusId, {active, overlay=false, chosenDuration=undefined}) {
+    const status = CONFIG.statusEffects.find(e => e.id === statusId);
+    if ( !status ) throw new Error(`Invalid status ID "${statusId}" provided to Actor#toggleStatusEffect`);
+    const existing = [];
+
+    // Find the effect with the static _id of the status effect
+    if ( status._id ) {
+        const effect = this.effects.get(status._id);
+        if ( effect ) existing.push(effect.id);
+    }
+
+    // If no static _id, find all single-status effects that have this status
+    else {
+        for ( const effect of this.effects ) {
+            const statuses = effect.statuses;
+            if ( (statuses.size === 1) && statuses.has(status.id) ) existing.push(effect.id);
+        }
+    }
+
+    // Remove the existing effects unless the status effect is forced active
+    if ( existing.length ) {
+        if ( active ) return true;
+        await this.deleteEmbeddedDocuments("ActiveEffect", existing);
+        return false;
+    }
+
+    // Create a new effect unless the status effect is forced inactive
+    if ( !active && (active !== undefined) ) return;
+    const effect = await ActiveEffect.implementation.fromStatusEffect(statusId);
+    if ( overlay ) effect.updateSource({"flags.core.overlay": true});
+    if ( chosenDuration ) effect.updateSource({"duration.seconds": chosenDuration});    //added line
+    return ActiveEffect.implementation.create(effect, {parent: this, keepId: true});
 }
