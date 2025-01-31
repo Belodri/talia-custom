@@ -8,6 +8,7 @@ import ChatCardButtons from "./chatCardButtons.mjs";
 import _methodAdditions from "./methodAdditions/_methodAdditions.mjs";
 import sceneEffects from "./sceneEffects.mjs";
 import TaliaDate from "./TaliaDate.mjs";
+import RepeatingEffects from "./RepeatingEffects.mjs";
 
 export default {
     registerSection() {
@@ -20,6 +21,7 @@ export default {
         ChatCardButtons.registerHooks();
         _methodAdditions.registerSection();
         sceneEffects.register();
+        RepeatingEffects.register();
     }
 }
 

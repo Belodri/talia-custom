@@ -7,5 +7,6 @@
 - fix: Step of the Wind duration (and application)
 
 - added: Added dialog to select the duration for Status Effects applied via enricher (by shift-clicking enricher)
+- added: Automatic repeating damage rolls for active effects (cannot use items or account for origin rollData yet)
 - fix: Darkness spell
 - fix: Arcane Gate
