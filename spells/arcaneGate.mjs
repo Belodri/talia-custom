@@ -13,16 +13,19 @@ export default {
  *
  */
 async function arcaneGateRegionScript(region, scene) {
-    if(!region.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)) return;
-    const itemUuid = region.getFlag("region-attacher", "itemUuid");
-    if(!itemUuid) return;
+    if(!game.user.isGM) return;
 
-    const gatesRegionsArray = scene.regions?.filter(r => r.getFlag("region-attacher", "itemUuid") === itemUuid) ?? [];
-
-    if(gatesRegionsArray.length !== 2) return ui.notifications.info("You need to place exactly two gates.");
-
-    const teleportBehaviorsArray = gatesRegionsArray.map(r => r.behaviors.find(b => b.type === "teleportToken"));
-
-    await gatesRegionsArray[0].updateEmbeddedDocuments("RegionBehavior", [{_id: teleportBehaviorsArray[0].id, "system.destination": gatesRegionsArray[1].uuid}]);
-    await gatesRegionsArray[1].updateEmbeddedDocuments("RegionBehavior", [{_id: teleportBehaviorsArray[1].id, "system.destination": gatesRegionsArray[0].uuid}]);
+    setTimeout(async () => {
+        const itemUuid = region.getFlag("region-attacher", "itemUuid");
+        if(!itemUuid) return;
+    
+        const gatesRegionsArray = scene.regions?.filter(r => r.getFlag("region-attacher", "itemUuid") === itemUuid) ?? [];
+    
+        if(gatesRegionsArray.length !== 2) return ui.notifications.info("Exactly two gates need to be placed.");
+    
+        const teleportBehaviorsArray = gatesRegionsArray.map(r => r.behaviors.find(b => b.type === "teleportToken"));
+    
+        await gatesRegionsArray[0].updateEmbeddedDocuments("RegionBehavior", [{_id: teleportBehaviorsArray[0].id, "system.destination": gatesRegionsArray[1].uuid}]);
+        await gatesRegionsArray[1].updateEmbeddedDocuments("RegionBehavior", [{_id: teleportBehaviorsArray[1].id, "system.destination": gatesRegionsArray[0].uuid}]);
+    }, 500);
 }
