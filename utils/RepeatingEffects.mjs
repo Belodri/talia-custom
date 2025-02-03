@@ -187,10 +187,27 @@ class CombatTriggers {
     static async _executeAppliedEffects(actor, hook) {
         if(!actor) return;
         for (const e of actor.appliedEffects) {
-            if(e.flags?.[MODULE.ID]?.repeatEffects.trigger !== hook) continue;
-            //only damage rolls for now
-            await rollDamage(actor, e);
+            if( CombatTriggers._shouldExecute(e, hook) ) await rollDamage(actor, e);
         }
+    }
+
+    /**
+     * Decides if a given effect should be executed.
+     * @param {ActiveEffect} effect     
+     * @param {string} hook             The trigger name.
+     */
+    static _shouldExecute(effect, hook) {
+        if(effect.flags?.[MODULE.ID]?.repeatEffects?.trigger !== hook) return false;
+
+        // Active Auras integration
+        const aa = effect.flags.ActiveAuras;
+        if(aa?.isAura 
+            && aa.ignoreSelf 
+            && !aa.applied
+        ) return false;
+
+        //return true if all checks are passed
+        return true;
     }
 }
 
@@ -210,7 +227,8 @@ class RepeatedItemUse {
 }
 
 async function rollDamage(actor, effect) {
-    const typeConfigs = effect.flags[MODULE.ID].rollConfigs;
+    const typeConfigs = effect.flags[MODULE.ID].repeatEffects?.damageRollConfigs;
+    if(!typeConfigs) return;
 
     const rollConfigs = Object.entries(typeConfigs)
         .filter(([_, v]) => v)
