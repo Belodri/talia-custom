@@ -1,3 +1,38 @@
+# 1.18.0 - 2025/02/04
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Dialog to select the duration for Status Effects applied via enricher (by shift-clicking enricher)
+    - Automatic repeating damage rolls for active effects (cannot use items or account for origin rollData yet)
+
+    </details>
+
+-   <details>
+    <summary><h2>Added (Spoilers)</h2></summary>
+
+    - Creatures
+        - Infernal Chancellor
+        - Devil Adjudicator
+        - Pain Devil
+        - Devil Jurist
+        - Devil Notary (minion)
+        - Lemure
+        - Deva
+        - Champion
+        - Githzerai Zerth
+        - Ashari Stoneguard
+        - Gray Render
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Feature: Step of the Wind duration (and application)
+    - Spell: Darkness
+    - Spell: Arcane Gate
+    </details>
+
 # 1.17.0 - 2025/01/28
 
 -   <details>
