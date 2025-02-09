@@ -4,3 +4,4 @@
 - In case of merge conflicts, **retain all entries** to ensure no changes are lost.
 - During release preparation, entries from this file are reviewed, organized, and moved into the main `changelog.md`.
 # Drafts
+- fix: Error when no flag for a repeating effect could be found on an active effect
