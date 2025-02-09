@@ -285,6 +285,7 @@ async function renderActiveEffectConfigHook(app, html, data) {
         app.render();
     }
     const mFlag = flags[MODULE.ID]?.repeatEffects;
+    if(!mFlag) return;
 
     const rollFormulaConfigs = Object.entries(mFlag.damageRollConfigs)
         .reduce((acc, [k, v]) => {
