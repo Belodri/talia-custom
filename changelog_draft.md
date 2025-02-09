@@ -25,3 +25,8 @@
     - Drow Poison
     - Torpor  
     ...as well as any potions, spell scrolls, or spell gems based on these
+- fix: Various faulty item descriptions in compendium
+    - Sapping Sting
+    - Thunder Step
+    - Jim's Magic Missile
+- change: Stone's Endurance: Added auto roll on use and removed "healing" tag (no mechanical changes).
