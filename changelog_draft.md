@@ -23,5 +23,5 @@
     - Phantasmal Horror
     - Malice
     - Drow Poison
-    - Torpor
+    - Torpor  
     ...as well as any potions, spell scrolls, or spell gems based on these
