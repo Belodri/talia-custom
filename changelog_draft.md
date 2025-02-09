@@ -5,3 +5,23 @@
 - During release preparation, entries from this file are reviewed, organized, and moved into the main `changelog.md`.
 # Drafts
 - fix: Error when no flag for a repeating effect could be found on an active effect
+- fix: Certain Active Effects which carry status effects did not apply as expected if the Active Effect used the same icon file as the carried status effect.
+- fix: Certain Active Effects which carry status effects were misconfigured after breaking changes in 3rd party module
+    - Hold Monster
+    - Hold Person
+    - Invisibility
+    - Greater Invisibility
+    - Sleet Storm
+    - Grease
+    - Earth Tremor
+    - Telekinesis
+    - Evard's Black Tentacles
+    - Wall of Sand
+    - Sapping Sting
+    - Stunning Strike
+    - Raulothim's Psychic Lance
+    - Phantasmal Horror
+    - Malice
+    - Drow Poison
+    - Torpor  
+    ...as well as any potions, spell scrolls, or spell gems based on these
