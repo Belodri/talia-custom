@@ -9,6 +9,7 @@ import _methodAdditions from "./methodAdditions/_methodAdditions.mjs";
 import sceneEffects from "./sceneEffects.mjs";
 import TaliaDate from "./TaliaDate.mjs";
 import RepeatingEffects from "./RepeatingEffects.mjs";
+import triggeredSpellGemsDisplay from "./triggeredSpellGemsDisplay.mjs";
 
 export default {
     registerSection() {
@@ -22,6 +23,7 @@ export default {
         _methodAdditions.registerSection();
         sceneEffects.register();
         RepeatingEffects.register();
+        triggeredSpellGemsDisplay.register();
     }
 }
 
