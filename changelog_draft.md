@@ -30,3 +30,9 @@
     - Thunder Step
     - Jim's Magic Missile
 - change: Stone's Endurance: Added auto roll on use and removed "healing" tag (no mechanical changes).
+- add: Repeating effects item usage (explain this more clearly in the actual changelog!)
+    - updated items using this mechanic:
+        - Hold Person
+        - Slow
+        - Hold Monster
+        - Phantasmal Horror
