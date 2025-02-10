@@ -5,6 +5,9 @@
 
     - Dialog to select the duration for Status Effects applied via enricher (by shift-clicking enricher)
     - Automatic repeating damage rolls for active effects (cannot use items or account for origin rollData yet)
+    - Scene Effects
+        - New Moon's Shroud
+        - Blood Moon's Spite
 
     </details>
 
@@ -23,6 +26,7 @@
         - Githzerai Zerth
         - Ashari Stoneguard
         - Gray Render
+        - Wendigo
     </details>
 
 -   <details>
