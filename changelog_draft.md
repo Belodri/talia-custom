@@ -36,3 +36,4 @@
         - Slow
         - Hold Monster
         - Phantasmal Horror
+- add: GM overview of equipped triggered spell gems
