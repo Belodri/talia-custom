@@ -62,10 +62,14 @@ class GemDisplay {
         }
     }
 
+    static isActorPC(actorOrName) {
+        return !!GemDisplay.itemLog[actorOrName instanceof Actor ? actorOrName.name : actorOrName];
+    }
+
     static registerHooks() {
         Hooks.on("updateItem", (item, data, options, userId) => {
             const equipped = data.system?.equipped;
-            if(typeof equipped !== "boolean") return;
+            if(typeof equipped !== "boolean" || !GemDisplay.isActorPC(item.actor)) return;
 
             if(equipped === true ) GemDisplay.addItem(item);
             else if(equipped === false) GemDisplay.removeItem(item);
@@ -74,8 +78,8 @@ class GemDisplay {
         });
 
         Hooks.on("deleteItem", (item, options, userId) => {
-            if(GemDisplay.itemLog[item.actor.name]) {
-                GemDisplay.removeItem();
+            if(GemDisplay.isActorPC(item.actor)) {
+                GemDisplay.removeItem(item);
                 GemDisplay.updateText();
             }
         });
