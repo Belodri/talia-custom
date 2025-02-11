@@ -1,3 +1,83 @@
+# 1.19.0 - 2025/02/11
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Item use reminders for Active Effects with repeating effects. The following items have been updated to use this mechanic:
+        - Hold Person
+        - Slow
+        - Hold Monster
+        - Phantasmal Horror
+
+    - Items
+        - Ring of Greater Regeneration
+        - Silver Tears (replacing Condensed Order)
+        - Bracers of Defense
+        - Boots of Vile Darkness
+    - Spells
+        - Astral Projection
+    - (GM) overview of equipped triggered spell gems
+    </details>
+
+-   <details>
+    <summary><h2>Added (Spoilers)</h2></summary>
+
+    - Creatures
+        - Githyanki Gish
+        - Githyanki Knight
+        - Githyanki Xenomancer
+        - Ziraji Hunter
+        - Black Earth Priest
+        - Dragon Hunter
+        - Battle Mage
+        - Voidclaw Zombie
+        - Shadow Assassin
+    </details>
+
+-   <details>
+    <summary><h2>Removed</h2></summary>
+
+    - Item: Condensed Order (replaced by Silver Tears)
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Replaced Aviana's "Silver Wing Shield" feature item with an equivalent equipment item. (No mechanical changes)
+    - Stone's Endurance: Added auto roll on use and removed "healing" tag (no mechanical changes).
+    - Tiger Spirit's Solitary Hunter bonus is now toggled on/off manually via a macro since I can't figure out how to make the vision check work properly.
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Error when no flag for a repeating effect could be found on an active effect
+    - Certain Active Effects which carry status effects did not apply as expected if the Active Effect used the same icon file as the carried status effect.
+    - Certain Active Effects which carry status effects were misconfigured after breaking changes in 3rd party module. The following items affected by this have been fixed:
+        - Hold Monster
+        - Hold Person
+        - Invisibility
+        - Greater Invisibility
+        - Sleet Storm
+        - Grease
+        - Earth Tremor
+        - Telekinesis
+        - Evard's Black Tentacles
+        - Wall of Sand
+        - Sapping Sting
+        - Stunning Strike
+        - Raulothim's Psychic Lance
+        - Phantasmal Horror
+        - Malice
+        - Drow Poison
+        - Torpor  
+        ...as well as any potions, spell scrolls, or spell gems based on these
+    - Various item descriptions in compendium (no mechanical changes):
+        - Sapping Sting
+        - Thunder Step
+        - Jim's Magic Missile
+    </details>
+
 # 1.18.0 - 2025/02/04
 
 -   <details>
