@@ -10,12 +10,18 @@ import sceneEffects from "./sceneEffects.mjs";
 import TaliaDate from "./TaliaDate.mjs";
 import RepeatingEffects from "./RepeatingEffects.mjs";
 import triggeredSpellGemsDisplay from "./triggeredSpellGemsDisplay.mjs";
+import DetectionChecker from "./detectionChecker.mjs";
+
+export const TaliaUtils = {
+    Helpers,
+    TaliaDate,
+    DetectionChecker,
+}
 
 export default {
     registerSection() {
         utilHooks.register();
         spellbookManager.register();
-        TaliaCustomAPI.add(TaliaUtils, "none");
         ItemHookManager.registerManager();
         sizeChange.regsiter();
         extendStringClass();
@@ -24,12 +30,9 @@ export default {
         sceneEffects.register();
         RepeatingEffects.register();
         triggeredSpellGemsDisplay.register();
-    }
-}
 
-export const TaliaUtils = {
-    Helpers,
-    TaliaDate
+        TaliaCustomAPI.add(TaliaUtils, "none");
+    }
 }
 
 /**
