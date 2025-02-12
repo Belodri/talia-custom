@@ -195,7 +195,7 @@ function wrap_dnd5e_documents_ChatMessage5e_prototype__highlightCriticalSuccessF
  *  }
  * ```
  */
-async function wrap_Actor_prototype_toggleStatusEffect(statusId, {active, overlay=false, chosenDuration=undefined}) {
+async function wrap_Actor_prototype_toggleStatusEffect(statusId, {active, overlay=false, chosenDuration=undefined}={}) {
     const status = CONFIG.statusEffects.find(e => e.id === statusId);
     if ( !status ) throw new Error(`Invalid status ID "${statusId}" provided to Actor#toggleStatusEffect`);
     const existing = [];
