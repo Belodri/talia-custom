@@ -8,3 +8,4 @@
 - fix: Errors with 'dead' status effect and 'Mark NPC Defeated' macro
 - add: `DetectionChecker` to TaliaCustomAPI
 - change: Tiger Spirit's damage against isolated targets is now fully automated
+- add: GmMacro `dprCalc`
