@@ -1,3 +1,27 @@
+# 1.20.0 - 2025/02/15
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Utility class `DetectionChecker` to API
+    - GmMacro `DPRCalc`
+    - Creatures
+        - War Devil
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Tiger Spirit: Evaluation of isolated targets is now fully automated. The macro has been changed to allow for manual toggling if needed.
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Error when calling `wrap_Actor_prototype_toggleStatusEffect` with only a single argument.
+    - Errors with 'dead' status effect and 'Mark NPC Defeated' GmMacro
+    </details>
+
 # 1.19.0 - 2025/02/11
 
 -   <details>
