@@ -20,7 +20,7 @@ export async function createSpellGem(actor, chosenArgs) {
     //fixes after creating the scroll but before creating the actual spell gem on the actor
     foundry.utils.mergeObject(workingObj, {
         "system.description.value": `${chosenArgs.isTrigger ? `<p><strong>Trigger: </strong>${chosenArgs.triggerConditions}</p><hr>` : ""}${workingObj.system.description.value}`,
-        "system.properties": ["mgc"],
+        "system.properties": ["mgc", "somatic"],
     });
     
     const [newItem] = await actor.createEmbeddedDocuments("Item", [workingObj]);
@@ -51,6 +51,7 @@ function getChanges(actor, chosenArgs) {
         "system.rarity": chosenArgs.chosenGem.system.rarity,
         "system.price.value": chosenArgs.chosenGem.system.price.value,
         "system.weight.value": chosenArgs.chosenGem.system.weight.value,
+        "flags.talia-custom.spellGem.school": chosenArgs.chosenSpell.system.school,
     };
 
     //attack changes
