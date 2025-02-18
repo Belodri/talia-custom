@@ -94,7 +94,7 @@ class CombatTriggers {
         if (turnForward) {
             // Retrieve combatants.
             const previousId = foundry.utils.getProperty(options, `${MODULE.ID}.previousCombatant`);
-            const previousCombatant = !combatStarted ? combat.combatants.get(previousId) : null;
+            const previousCombatant = combatStarted ? combat.combatants.get(previousId) : null;
 
             // Execute turn start and turn end triggers.
             CombatTriggers._executeAppliedEffects(combat.combatant?.actor, "onTurnStart");
@@ -311,6 +311,7 @@ async function getSourceItem(effect) {
 /**
  * @param {import ("../system/dnd5e/module/documents/actor/actor.mjs").default} actor 
  * @param {import ("../system/dnd5e/module/documents/active-effect.mjs").default} effect 
+ * @param {string} hook 
  */
 async function createItemMessage(actor, effect, hook) {
     let sourceItem = await getSourceItem(effect);

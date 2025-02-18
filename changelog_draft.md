@@ -27,3 +27,4 @@
     > **Note:**  
     > Spell gems created before this patch do not work with bonuses that apply only to spells of a certain school.   
     > At the time of writing, Evocation Wizard's feature Empowered Evocation is the only thing affected by this.
+- fixed: Active Effects with automated repeating item use trigger 'onTurnEnd' not triggering
