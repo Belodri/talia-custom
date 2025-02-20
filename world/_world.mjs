@@ -19,5 +19,6 @@ export default {
         _settlement.registerSubsection();
         damageAbsorption.register();
         addActiveEffectFields.register();
+        _guildmanager.registerSubsection();
     }
 }
