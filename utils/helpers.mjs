@@ -388,5 +388,65 @@ export class Helpers {
         const jPage = jEntry?.pages?.getName(pageName);
         if(jPage) return jEntry.sheet.render(true, {pageId: jPage.id});
     }
+
+    /**
+     * Returns an array of a number of unique, random elements from an array.
+     * The passed array is not modified.
+     * @param {any[]} arr 
+     * @param {number} [count=1]    The number of elements to be returned. 
+     *                              Cannot be smaller than 1 or larger than `arr.length`, otherwise an error is thrown.
+     * @returns {any[]}             An array of the randomly chosen elements.
+     */
+    static getRandomArrayElements(arr, count = 1) {
+        if (!Array.isArray(arr)) throw new TypeError("First argument must be an array.");
+        if (typeof count !== "number" || count < 1 || count > arr.length) {
+            throw new RangeError("Count must be between 1 and the length of the array.");
+        }
+
+        const results = [];
+        const seen = new Set();
+
+        while (results.length < count) {
+            const randIndex = Math.floor(Math.random() * arr.length);
+            if (!seen.has(randIndex)) {
+                seen.add(randIndex);
+                results.push(arr[randIndex]);
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Returns an array of randomly selected keys from a weighted object.
+     * Keys may repeat based on their weights.
+     * @param {object} weights      An object where keys are items and values are their weights.
+     * @param {number} count        The number of keys to return.
+     * @returns {string[]}          An array of randomly selected keys, respecting weights.
+     */
+    static getWeightedRandomKeys(weights, count) {
+        if (typeof count !== "number" || count < 1) {
+            throw new RangeError("Count must be a positive number.");
+        }
+
+        const entries = Object.entries(weights);
+        const totalWeight = entries.reduce((sum, [_, weight]) => sum + weight, 0);
+
+        const result = [];
+
+        for (let i = 0; i < count; i++) {
+            let random = Math.random() * totalWeight;
+
+            for (const [key, weight] of entries) {
+                if (random < weight) {
+                    result.push(key);
+                    break;
+                }
+                random -= weight;
+            }
+        }
+
+        return result;
+    }
 }
 
