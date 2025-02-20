@@ -90,7 +90,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
     }
 
     get assignedMission() {
-        return this.parent.missions.find(m => m.assignedAdventurers.has(this.id));
+        return this.parent.missions.find(m => !m.isOver && m.assignedAdventurers.has(this.id));
     }
 
     /**
