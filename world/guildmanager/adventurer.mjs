@@ -1,154 +1,233 @@
 import { Helpers } from "../../utils/helpers.mjs";
+import Guild from "./guild.mjs";
+import TaliaDate from "../../utils/TaliaDate.mjs";
+import shared from "./shared.mjs";
+import { MODULE } from "../../scripts/constants.mjs";
 
 /**
  * 
- * @typedef {object} AdventurerDataObject
- * @property {string} name                              The name of the adventurer.
- * @property {string} id                                The id of the adventurer.
- * @property {object} rawAttributes                     The adventurer's attributes.
- * @property {Attribute} rawAttributes.brawn            Physical prowess, combat ability, and endurance.
- * @property {Attribute} rawAttributes.cunning          Stealth, subterfuge, strategy, and knowledge.
- * @property {Attribute} rawAttributes.spellcraft       Magical affinity, knowledge and powers.
- * @property {Attribute} rawAttributes.influence        Social skills, manipulation, charisma, and leadership.
- * @property {Attribute} rawAttributes.reliability      Reliability gauges how consistently the adventurer can be counted on to complete tasks and follow through without undermining the guild or mission.
- * @property {number} survivedMissions                  The number of missions this Adventurer has survived.
+ * @typedef {object} Attributes
+ * @property {number} brawn            Physical prowess, combat ability, and endurance.
+ * @property {number} cunning          Stealth, subterfuge, strategy, and knowledge.
+ * @property {number} spellcraft       Magical affinity, knowledge and powers.
+ * @property {number} influence        Social skills, manipulation, charisma, and leadership.
+ * @property {number} reliability      Reliability gauges how consistently the adventurer can be counted on to complete tasks and follow through without undermining the guild or mission.
  */
 
-export class Adventurer {
-    _rawAttributes = {
-        brawn: 0,
-        cunning: 0,
-        spellcraft: 0,
-        influence: 0,
-        reliability: 0
-    };
+/**
+ * @typedef {object} EvaluatedAttribute
+ * @property {number} base
+ * @property {number} bonus
+ * @property {number} total
+ * @property {number} mod
+ * @property {number} exp
+ */
 
+export default class Adventurer extends foundry.abstract.DataModel {
+    constructor(...args) {
+        super(...args);
     
-    /**
-     * 
-     * @param {AdventurerDataObject} dataObject 
-     */
-    constructor(dataObject = {}) {
-        //set raw attributes
-        for(let [k, v] of Object.entries(this._rawAttributes)) {
-            // Ensure attributes are set from the dataObject, or use 3d6 if not provided
-            this._rawAttributes[k] = dataObject.rawAttributes?.[v] ??
-                (Helpers.getRandomInt(1,6) + Helpers.getRandomInt(1,6) + Helpers.getRandomInt(1,6));   // 3d6
-        }
-
-        //other properties
-        this.name = dataObject.name ?? "New Adventurer";
-        this.id = dataObject.id ?? foundry.utils.randomID();
-        this.survivedMissions = dataObject.survivedMissions ?? 0;
-        this.isAssigned = dataObject.isAssigned ?? false;
+        //for type annotations
+        /** @type {Record<string, EvaluatedAttribute>} */
+        this.attributes ??= {}
     }
 
-    /*----------------------------------------------------------------------------
-                    Instance Methods            
-    ----------------------------------------------------------------------------*/
+    static CONFIG = {
+        sex: ["male", "female"],
+        charClass: ["brawn", "cunning", "spellcraft", "influence"],
+        race: ["human", "dragonborn", "dwarf", "elf", "orc", "tiefling"],
+        namesJsonPath: `modules/${MODULE.ID}/jsonData/fantasyNames.json`,
+        defaultNames: {
+            male: "John",
+            female: "Ann",
+            family: "Default"
+        },
+        raceWeights: {
+            human: 10,
+            dragonborn: 1,
+            dwarf: 4,
+            elf: 6,
+            orc: 5,
+            tiefling: 2
+        },
+        baseAttributeRoll: {
+            diceCount: 3,
+            diceSize: 6,
+            charClassBonus: 3,
+        },
+        expTable: { //survived missions to exp bonus
+            2: 1,
+            5: 2,
+            9: 3,
+            14: 4,
+            20: 5
+        }
+    }
 
-    
-    /**
-     * Returns a plain object representation of the adventurer instance for JSON serialization.
-     * This method is automatically called by JSON.stringify().
-     * @returns {AdventurerDataObject} A plain object containing the adventurer's properties.
-     */
-    toJSON() {
+    static ATTRIBUTE_KEYS = ["brawn", "cunning", "spellcraft", "influence", "reliability"];
+
+    static #NAMES = null;
+
+    static defineSchema() {
+        const {
+            StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField, BooleanField, FilePathField
+        } = foundry.data.fields;
+
         return {
-            name: this.name,
-            id: this.id,
-            rawAttributes: foundry.utils.deepClone(this._rawAttributes),
-            survivedMissions: this.survivedMissions,
-            isAssigned: this.isAssigned,
+            id: new StringField({ required: true, nullable: false, blank: false }),
+            name: new StringField({ required: true, blank: false, label: "Name" }),
+            details: new SchemaField({ 
+                sex: new StringField({ choices: Adventurer.CONFIG.sex, blank: false, initial: Adventurer.CONFIG.sex[0] }),
+                race: new StringField({ choices: Adventurer.CONFIG.race, blank: false, initial: Adventurer.CONFIG.race[0] }),
+                charClass: new StringField({ choices: Adventurer.CONFIG.charClass, blank: false, initial: Adventurer.CONFIG.charClass[0] })
+            }),
+            _attributes: new SchemaField( shared.defineAttributesSchema(), { label: "Attributes" } ),
+            _attributeBonuses: new SchemaField( shared.defineAttributesSchema(), { label: "Bonuses" } ),
+            survivedMissions: new NumberField({ integer: true, initial: 0, min: 0 }),
+            _isDead: new BooleanField(),
+            img: new FilePathField({ categories: ["IMAGE"], label: "Image" }),
         }
     }
 
-    /**
-     * @typedef {object} RollResult
-     * @property {Adventurer} adventurer    The adventurer who's made this roll.
-     * @property {string} attribute         The attribute that has been rolled.
-     * @property {number} dc                The difficulty class of the roll.
-     * @property {boolean} isSuccess
-     * @property {boolean} isCritical
-     * @property {boolean} isFumble         
-     * @property {Roll} roll                The evaluated roll
-     */
+    get assignedMission() {
+        return this.parent.missions.find(m => m.assignedAdventurers.has(this.id));
+    }
 
     /**
-     * Rolls a given attribute and compares the result to a given DC.
-     * @param {string} attributeKey 
-     * @param {number} dc 
-     * @returns {Promise<RollResult>}
+     * Update this Adventurer, propagating the changes to the parent Guild.  
+     * @param {object} changes          New values which should be applied to the data model
+     * @param {object} [options={}]     Options which determine how the new data is merged
+     * @returns {Promise<object>}       An object containing the changed keys and values
      */
-    async rollAttribute(attributeKey, dc) {
-        const roll = await new foundry.dice.Roll(`1d20`).evaluate();
+    async update(changes, options = {}) {
+        return this.parent.updateEmbedded(this, changes, options);
+    }
 
-        const mod = this.attributes[attributeKey].mod;
-        const exp = this.experienceBonus;
-        const final = roll.total + mod + exp;
-        let result = {
-            adventurer: this,
-            attribute: attributeKey,
-            dc,
-            isSuccess: (roll.total === 20 || final >= dc) && roll.total !== 1,
-            isCritical: roll.total === 20,
-            isFumble: roll.total === 1,
-            roll,
+    //#region Data preparation
+    _initialize(...args) {
+        super._initialize(...args);
+        this.prepareDerivedData();
+    }
+
+    prepareDerivedData() {
+
+        const expBonus = (() => {
+            const expTable = Adventurer.CONFIG.expTable;
+            const thresholds = Object.keys(expTable).map(Number).filter(m => this.survivedMissions >= m);
+            return thresholds.length ? expTable[Math.max(...thresholds)] : 0;
+        })();
+
+        const attributes = Object.entries(this._attributes)
+            .reduce((acc, [attr, value]) => {
+                const base = value;
+                const bonus = this._attributeBonuses[attr];
+                const total = base + bonus;
+                const mod = Math.floor( ( total - 10 ) / 2 );
+
+                const exp = expBonus;
+
+                acc[attr] = {
+                    base, bonus, total, mod, exp,
+                }
+                return acc;
+            }, {});
+
+        this.attributes = attributes;
+    }
+    //#endregion
+
+    //#region Random Generation
+
+    /**
+     * Randomly generates data for an adventurer.
+     */
+    static async getRandomData() {
+        const sex = Adventurer._getRandomSex();
+        const charClass = Adventurer._getRandomCharClass();
+        const race = Adventurer._getRandomRace();
+        const name = await Adventurer._getRandomName( sex, race );
+        const img = Adventurer._getRandomImg( charClass, sex, race );
+        const attributes = Adventurer._getRandomAttributes( charClass );
+
+        return {
+            name,
+            img,
+            _attributes: attributes,
+            details: {
+                sex, charClass, race
+            },
+        }
+    }
+
+    static _getRandomAttributes(charClass) {
+        return Adventurer.ATTRIBUTE_KEYS.reduce((acc, curr) => {
+            acc[curr] = Adventurer._getRandomAttributeValue(curr, charClass);
+            return acc;
+        }, {});
+    }
+
+    static _getRandomAttributeValue(attribute, charClass) {
+        const { diceCount, diceSize, charClassBonus } = Adventurer.CONFIG.baseAttributeRoll;
+        
+        let sum = attribute === charClass 
+            ? charClassBonus 
+            : 0;
+        for(let i = 0; i < diceCount; i++) {
+            sum += Helpers.getRandomInt(1, diceSize);
+        }
+        return sum;
+    }
+
+    static _getRandomCharClass() {
+        const [charClass] = Helpers.getRandomArrayElements(Adventurer.CONFIG.charClass, 1);
+        return charClass;
+    }
+
+    static _getRandomSex() { 
+        const [sex] = Helpers.getRandomArrayElements(Adventurer.CONFIG.sex, 1);
+        return sex;
+    }
+
+    static _getRandomRace() {
+        const [race] = Helpers.getWeightedRandomKeys(Adventurer.CONFIG.raceWeights, 1);
+        return race;
+    }
+
+    //TODO _getRandomImg implementation
+    static _getRandomImg( charClass, sex, race ) {
+        return "icons/svg/cowled.svg";
+    }
+
+    /**
+     * Returns a random name for a given type and race.
+     * @param {"male" | "female" | "family"} type 
+     * @param {string} race
+     * @returns {Promise<string>}
+     */
+    static async _getRandomName(type, race) {
+        const names = await Adventurer._fetchNames();
+
+        const raceNames = names?.[type]?.[race];
+        if(!raceNames) return Adventurer.CONFIG.defaultNames[type];
+
+        const [name] = Helpers.getRandomArrayElements(raceNames, 1);
+        return name;
+    }
+
+    static async _fetchNames() {
+        if( Adventurer.NAMES ) return Adventurer.#NAMES;
+
+        const path = `modules/${MODULE.ID}/jsonData/fantasyNames.json`;
+
+        const response = await fetch(Adventurer.CONFIG.namesJsonPath);
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
         }
 
-        return result;
+        const json = await response.json();
+        Adventurer.#NAMES = json;
+        return Adventurer.#NAMES;
     }
 
-    /*----------------------------------------------------------------------------
-                    Getters            
-    ----------------------------------------------------------------------------*/
-
-    /**
-     * Gets the adventurer's attributes along with their modifiers.
-     * 
-     * The attributes are based on the raw values stored in `#rawAttributes`, and each attribute 
-     * has a modifier calculated using the formula `(attribute value - 10) / 2` (rounded down).
-     * 
-     * Example:
-     * ```javascript
-     * {
-     *   brawn: { total: 12, mod: 1 },
-     *   cunning: { total: 14, mod: 2 },
-     *   spellcraft: { total: 8, mod: -1 },
-     *   influence: { total: 10, mod: 0 },
-     *   reliability: { total: 16, mod: 3 }
-     * }
-     * ```
-     * 
-     * @returns {object} An object containing the adventurer's attributes with their total and modifier.
-     * @returns {{[key: string]: {total: number, mod: number}}} The object maps attribute names (e.g., `brawn`, `cunning`) 
-     * to an object containing the total value and the modifier for each attribute.
-     */
-    get attributes() {
-        let attributes = {};
-        for(let [k, v] of Object.entries(this._rawAttributes)) {
-            attributes[k] = {
-                total: v,
-                mod: Math.floor((v - 10) / 2)
-            }
-        }
-        return attributes;
-    }
-
-    /**
-     * Gets the experience bonus based on the number of survived missions.
-     * 
-     * The bonus is awarded as follows:
-     * - +1 for the first survived mission
-     * - +1 for the third survived mission
-     * - +1 for every three survived missions after the third
-     *
-     * @returns {number} The calculated experience bonus.
-     */
-    get experienceBonus() {
-        if(this.survivedMissions === 0) return 0;                   // bonus starts at 0
-        if(this.survivedMissions < 3) return 1;                     // get a +1 bonus for the first survived mission
-        if(this.survivedMissions < 6) return 2;                     // get a +1 bonus for the third survived mission
-        return 2 + Math.floor((this.survivedMissions - 3) / 3);     // get a +1 bonus for every three survived missions after that
-    }
+    //#endregion
 }
