@@ -1,7 +1,8 @@
-import { Guild } from "./guild.mjs"
+import { TaliaCustomAPI } from "../../scripts/api.mjs"
+import Guild from "./guild.mjs"
 
 export default {
-    registerSection() {
-
+    registerSubsection() {
+        TaliaCustomAPI.add( {Guild} , "none");
     }
 }
