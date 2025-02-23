@@ -1,3 +1,99 @@
+# 1.21.0 - 2025/02/23
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Spells
+        - Aganazzar's Scorcher
+        - Contact Other Plane
+        - Disintegrate
+        - Etherealness
+        - Knock
+        - Major Image
+        - Mordenkainen's Magnificent Mansion
+        - Otiluke's Resilient Sphere
+        - Plane Shift
+        - Project Image
+        - Remove Curse
+        - Scatter
+        - Silent Image
+        - Tongues
+        - Unseen Servant
+        -   <details>
+            <summary>Mental Prison (changed)</summary>
+
+            from
+            > You attempt to bind a creature within an illusory cell that only it perceives. One creature you can see within range must make an Intelligence saving throw. The target succeeds automatically if it is immune to being charmed.
+            > 
+            > On a successful save, the target takes 5d10 psychic damage, and the spell ends. On a failed save, the target takes 5d10 psychic damage, and you make the area immediately around the target's space appear dangerous to it in some way. You might cause the target to perceive itself as being surrounded by fire, floating razors, or hideous maws filled with dripping teeth. Whatever form the illusion takes, the target can't see or hear anything beyond it and is restrained for the spell's duration. If the target is moved out of the illusion, makes a melee attack through it, or reaches any part of its body through it, the target takes 10d10 psychic damage, and the spell ends.
+
+            to
+            > You attempt to bind a creature within an illusory cell that only it perceives. One creature you can see within range must make an Intelligence saving throw. The target succeeds automatically if it is immune to being charmed.
+            > 
+            > On a successful save, the target takes 5d10 psychic damage, and the spell ends. On a failed save, the target takes 5d10 psychic damage, and you make the area immediately around the target's space appear dangerous to it in some way. You might cause the target to perceive itself as being surrounded by fire, floating razors, or hideous maws filled with dripping teeth. Whatever form the illusion takes, the target is blinded and deafened to anything beyond it and is restrained for the spell's duration. If the target is moved out of the illusion, makes a melee attack through it, or reaches any part of its body through it, the target takes 10d10 psychic damage, and the spell ends.    
+            </details>
+
+        -   <details>
+            <summary>Power Word Stun (changed)</summary>
+
+            from
+            > You speak a word of power that can overwhelm the mind of one creature you can see within range, leaving it dumbfounded. If the target has 150 hit points or fewer, it is stunned. Otherwise, the spell has no effect.
+            > 
+            > The stunned target must make a Constitution saving throw at the end of each of its turns. On a successful save, this stunning effect ends.
+
+            to
+            > You speak a word of power that can overwhelm the mind of one creature you can see within range, leaving it dumbfounded. If the target has hit points equal to or fewer than 10 * your caster level, it is stunned. Otherwise, the spell has no effect.
+            >
+            > The stunned target must make a Constitution saving throw at the end of each of its turns. On a successful save, this stunning effect ends.
+            </details>
+
+    - Creatures
+        - Unseen Servant
+    - Items
+        - Leaden Fist
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Updated items to use bab instead of ActiveEffects to modify spell attacks and spell save DCs (no mechanical changes).  
+    This might cause the the spell attack bonus and spell save DC displayed on your character sheet to appear lower than they are because the evaluation of which bonuses apply to any given spell are now evaluated only when the spell is cast.
+
+        - Circlet of Blasting +1
+        - Infernal Amulet
+        - Sun Statue
+        - Bless
+        - Potion of Heroism
+        - High Priest's Obsidian Battleaxe
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Active Effects with automated repeating item use trigger 'onTurnEnd' should now trigger correctly
+
+    - Status effects should now be toggled off correctly, even in cases where the Active Effect created by the status effect also had statuses other than itself.
+
+    - A spell cast from a spell gem should now benefit from the same conditional bonuses that would apply to that spell if cast under the same circumstances. 
+        > **Note**  
+        > Spell gems created before this patch do not work with bonuses that apply only to spells of a certain school.   
+        > Evocation Wizard's feature Empowered Evocation should be the only thing affected by this.
+
+        <details>
+
+        - Spell gems are now considered to be spells instead of consumables for various calculations.
+        - Modified creation of spell gems to record spell school and component (only somatic, set for all spell gems) in flag on spell gem
+        
+        - Modified the following methods in bab's code:
+            - `RollHooks.preDisplayCard`
+            - `FilterManager.itemTypes`
+            - `FilterManager.spellSchools`
+            - `FilterManager.spellComponents`
+            - `FilterManager.spellLevels`
+        </details>
+    - Rod of Hellish Flames' Surge of Brimstone should now work with spells cast from spell gems.
+    </details>
+
 # 1.20.0 - 2025/02/15
 
 -   <details>
