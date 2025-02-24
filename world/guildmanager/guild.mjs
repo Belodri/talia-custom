@@ -2,6 +2,7 @@ import { MappingField } from "../../utils/mappingField.mjs";
 import { MODULE } from "../../scripts/constants.mjs";
 import Adventurer from "./adventurer.mjs";
 import Mission from "./mission.mjs";
+import GuildApp from "./guildApp.mjs";
 
 /** @typedef {import("../../foundry/common/utils/collection.mjs").default} Collection */
 
@@ -165,6 +166,24 @@ export default class Guild extends foundry.abstract.DataModel {
         return diff; 
     }
 
+    /** 
+     * Deletes embedded Missions or Adventurers by their ids.
+     * @param {string[]} ids 
+     */
+    async deleteEmbedded(ids) {
+        const changes = {};
+
+        for(const id of ids) {
+            const inst = this._missions[id] ?? this._adventurers[id] ?? null;
+            if(!inst) throw new Error(`Invalid id "${id}".`);
+
+            const key = inst instanceof Mission ? "_missions" : "_adventurers";
+            changes[`${key}.-=${id}`] = null;
+        }
+
+        return this.update(changes);
+    }
+
     /**
      * Syncs this instance of Guild with the data on the flag on the parent document.
      * Called by an updateDocument hook to keep instances in sync across clients.
@@ -236,6 +255,7 @@ export default class Guild extends foundry.abstract.DataModel {
         await this.update(guildChanges);
         return diff;
     }
+
     //#endregion
 
     //#region Data preparation

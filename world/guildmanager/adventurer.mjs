@@ -55,7 +55,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
             diceSize: 6,
             charClassBonus: 3,
         },
-        expTable: { //survived missions to exp bonus
+        expTable: { // (survived missions + criticalRolls) to exp bonus
             2: 1,
             5: 2,
             9: 3,
@@ -84,13 +84,30 @@ export default class Adventurer extends foundry.abstract.DataModel {
             _attributes: new SchemaField( shared.defineAttributesSchema(), { label: "Attributes" } ),
             _attributeBonuses: new SchemaField( shared.defineAttributesSchema(), { label: "Bonuses" } ),
             survivedMissions: new NumberField({ integer: true, initial: 0, min: 0 }),
-            _isDead: new BooleanField(),
+            criticalRolls: new NumberField({ integer: true, initial: 0, min: 0 }),
+            _deathTimestamp: new NumberField({ nullable: true, required: false, initial: null }),
             img: new FilePathField({ categories: ["IMAGE"], label: "Image" }),
         }
     }
 
     get assignedMission() {
         return this.parent.missions.find(m => !m.isOver && m.assignedAdventurers.has(this.id));
+    }
+
+    get isAssigned() { return !!this.assignedMission; }
+
+    get isDead() { return !!this._deathTimestamp; }
+
+    /**
+     * @returns {number} The exp bonus this adventurer adds to rolls.
+     */
+    get expBonus() {
+        const expTable = Adventurer.CONFIG.expTable;
+        const combinedExp = this.survivedMissions + this.criticalRolls;
+        const thresholds = Object.keys(expTable)
+            .map(Number)
+            .filter(m => combinedExp >= m);
+        return thresholds.length ? expTable[Math.max(...thresholds)] : 0;
     }
 
     /**
@@ -111,12 +128,6 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     prepareDerivedData() {
 
-        const expBonus = (() => {
-            const expTable = Adventurer.CONFIG.expTable;
-            const thresholds = Object.keys(expTable).map(Number).filter(m => this.survivedMissions >= m);
-            return thresholds.length ? expTable[Math.max(...thresholds)] : 0;
-        })();
-
         const attributes = Object.entries(this._attributes)
             .reduce((acc, [attr, value]) => {
                 const base = value;
@@ -124,10 +135,8 @@ export default class Adventurer extends foundry.abstract.DataModel {
                 const total = base + bonus;
                 const mod = Math.floor( ( total - 10 ) / 2 );
 
-                const exp = expBonus;
-
                 acc[attr] = {
-                    base, bonus, total, mod, exp,
+                    base, bonus, total, mod,
                 }
                 return acc;
             }, {});
@@ -227,6 +236,37 @@ export default class Adventurer extends foundry.abstract.DataModel {
         const json = await response.json();
         Adventurer.#NAMES = json;
         return Adventurer.#NAMES;
+    }
+
+    //#endregion
+
+    //#region Mission Results Handling
+
+    async _onMissionFinish(mission) {
+        const advResults = Object.values(mission.results)
+            .reduce((acc, { adventurerId, isCritical, causedDeath }) => {
+                if (adventurerId === this.id) {
+                    acc.hasResults = true;
+                    if (isCritical) acc.critsCount++;
+                    if (causedDeath) acc.died = true;
+                }
+                return acc;
+            }, { hasResults: false, critsCount: 0, died: false });
+
+        // should never happen but just in case
+        if (!advResults.hasResults) return;
+
+        const changes = {};
+        if (advResults.died) {
+            changes._deathTimestamp = game.time.worldTime;
+        } else {
+            changes.survivedMissions = this.survivedMissions + 1;
+            if (advResults.critsCount) {
+                changes.criticalRolls = this.criticalRolls + advResults.critsCount;
+            }
+        }
+
+        return this.update(changes) //async
     }
 
     //#endregion

@@ -21,8 +21,8 @@ export default class Mission extends foundry.abstract.DataModel {
         /** @type {Collection<string, Adventurer>} */
         this.assignedAdventurers ??= new foundry.utils.Collection();
 
-        /** @type {Collection<string, CheckResult>} */
-        this.checkResults ??= new foundry.utils.Collection();
+        /** @type {{[key: string]: CheckResult}} */
+        this.results ??= {};
     }
     
     static CONFIG = {
@@ -35,34 +35,102 @@ export default class Mission extends foundry.abstract.DataModel {
             max: 3,
         },
         maxAdventurers: 4,
+        risk: {
+            low: {
+                deathMargin: 0,
+            },
+            medium: {
+                deathMargin: 3,
+            },
+            high: {
+                deathMargin: 6,
+            }
+        }
     }
 
     static defineSchema() {
         const {
-            StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField, BooleanField, ArrayField, ObjectField
+            StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField, 
+            BooleanField, ArrayField, ObjectField, DocumentUUIDField
         } = foundry.data.fields;
 
         return {
             id: new StringField({ required: true, nullable: false, blank: false }),
-            name: new StringField({ blank: true, initial: "" }),
-            dc: new SchemaField( shared.defineAttributesSchema() ),
-            durationInMonths: new NumberField({ integer: true, initial: 1, positive: true }),
-            description: new StringField({ required: false, blank: true, initial: "" }),
+            name: new StringField({ blank: true, initial: "", label: "Name" }),
+            dc: new SchemaField( shared.defineAttributesSchema(), {label: "DC"}),
+            risk: new StringField({ choices: Object.keys(Mission.CONFIG.risk), initial: "low", required: true, label: "Risk" }),
+            rewards: new SchemaField({
+                gp: new NumberField({ integer: true, nullable: true, required: true, positive: true, label: "gp"}),
+                items: new SetField( new DocumentUUIDField({ embedded: false, type: "Item" }), {label: "Items"}),
+                other: new SetField( new StringField(), { label: "Other rewards" })
+            }, { label: "Rewards" }),
+            durationInMonths: new NumberField({ integer: true, initial: 1, positive: true, label: "Duration (months)"}),
+            description: new StringField({ required: false, blank: true, initial: "", label: "Description" }),
             _assignedAdventurerIds: new SetField( new StringField() ),
-            _checkResults: new ArrayField( new ObjectField() ),
-            startDate: new EmbeddedDataField( TaliaDate, { initial: shared.defineDateSchema() } ),
-            isOver: new BooleanField(),
+            results: new ObjectField({ required: false }),
+            startDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null } ), 
+            finishDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
+            _hasFinished: new BooleanField(),
         }
     }
 
-    /** The date on which the mission finishes. If the mission hasn't started yet, the finishDate is 0/0/0000 */
-    get finishDate() {
-        return TaliaDate.fromOffset(this.startDate, { months: this.durationInMonths });
+    //#region Getters
+
+    /** Can an adventurer be assigned to this mission. */
+    get canAssign() {
+        return !this.hasStarted 
+            && this._assignedAdventurerIds.size <= Mission.CONFIG.maxAdventurers
     }
 
-    get hasStarted() { return !!this.startDate?.inDays; }
+    /** Can this mission start? */
+    get canStart() {
+        return !this.hasStarted
+            && this._assignedAdventurerIds.size
+            && this._assignedAdventurerIds.size <= Mission.CONFIG.maxAdventurers
+    }
 
-    get isFinished() { return this.hasStarted && this.finishDate.isBefore( TaliaDate.now() ); }
+    /** Has this mission been started? */
+    get hasStarted() { return !!this.startDate; }
+
+    /** Has this mission returned? */
+    get hasReturned() { return this.hasStarted && this.startDate?.isBefore(this.returnDate); }
+
+    /** Has this mission been finished, finalized, and logged? */
+    get hasFinished() { return !!this.finishDate; }
+
+    /** The date on which the mission returns. If the mission hasn't started yet, the returnDate is undefined */
+    get returnDate() {
+        return this.startDate ? TaliaDate.fromOffset(this.startDate, { months: this.durationInMonths }) : undefined;
+    }
+
+    /** The number of days until the mission returns. Returns null if the mission hasn't started or has already returned. */
+    get daysUntilReturn() { 
+        return ( this.hasStarted && !this.hasReturned ) 
+            ? this.returnDate.inDays - this.startDate.inDays
+            : null;
+    }
+
+    /** 
+     * Gets results that have not been revealed. 
+     * @returns {CheckResult[] | null}  An array of check results or null if results doesn't exist
+     */
+    get unrevealedResults() {
+        return this.results 
+            ? Object.values(this.results).filter(r => !r.isRevealed) 
+            : null;
+    }
+
+    /** 
+     * Gets results that have been revealed. 
+     * @returns {CheckResult[] | null}  An array of check results or null if results doesn't exist
+     */
+    get revealedResults() {
+        return this.results
+            ? Object.values(this.results).filter(r => r.isRevealed) 
+            : null;
+    }
+
+    //#endregion
 
     /**
      * Update this Mission, propagating the changes to the parent Guild.  
@@ -87,9 +155,6 @@ export default class Mission extends foundry.abstract.DataModel {
                 const adv = this.parent._adventurers[id];
                 return [id, adv];
             }) 
-        );
-        this.checkResults = new foundry.utils.Collection(
-            this._checkResults.map((res) => [res.id, res])
         );
     }
     //#endregion
@@ -144,12 +209,13 @@ export default class Mission extends foundry.abstract.DataModel {
     //#region Random Generation
 
     static getRandomData() {
-        const dc = Mission._getRandomDCs();
-        const durationInMonths = Mission._getRandomDuration();
-
-        return {
-            dc, durationInMonths
+        const data = {
+            dc: Mission._getRandomDCs(),
+            durationInMonths: Mission._getRandomDuration(),
+            risk: Mission._getRandomRisk(),
         }
+
+        return data;
     }
 
     static _getRandomDuration() {
@@ -164,50 +230,70 @@ export default class Mission extends foundry.abstract.DataModel {
             return acc;
         }, {});
     }
+
+    static _getRandomRisk() {
+        const [chosen] = Helpers.getRandomArrayElements(
+            Object.keys(Mission.CONFIG.risk), 1
+        );
+        return chosen;
+    }
     //#endregion
 
-    //#region Start
-
-    get canStart() {
-        const hasAdventurers = !!this.assignedAdventurers.size;
-
-        return hasAdventurers;
-    }
+    //#region Start & Finish
 
     async start({restart=false} = {}) {
-        if( !this.canStart ) {
-            throw new Error("This mission cannot be started yet.");
-        }
 
-        if( this.hasStarted && !restart ) {
-            throw new Error("Mission is already started.")
-        }
-
-        const results = await Resolver.createMissionResults(this);
-        const startDate = TaliaDate.now();
-
+        const allowStart = ( restart && !this.hasStarted && !this.hasFinished ) 
+            || this.canStart;
+        if(!allowStart) throw new Error(`Unable to start mission id "${this.id}".`);
+        
         const changes = {
-            _checkResults: results,
-            startDate: startDate,
+            results: await Resolver.createMissionResults(this),
+            startDate: TaliaDate.now(),
         }
         return this.update(changes);
+    }
+
+    async finish() {
+        if( !this.hasReturned || this.hasFinished ) throw new Error(`Unable to finish mission id "${this.id}".`);
+
+        const promises = [
+            ...this.assignedAdventurers.map(adv => adv._onMissionFinish(this)),
+            this.update({ finishDate: TaliaDate.now() })
+        ];
+        
+        return Promise.all(promises);
     }
     
     //#endregion
 
+    /**
+     * @typedef {object} ResultRevealOptions
+     * @property {boolean} updateResult         Should the result be updated (isRevealed set to true)? Default = `true`
+     * @property {boolean} createMessage        Whether to automatically create the chat message, or only return the
+     *                                          prepared chatData object. Default = `true`
+     * @property {string} rollMode              The template roll mode to use for the message from CONFIG.Dice.rollModes
+     *                                          Default = `CONST.DICE_ROLL_MODES.PUBLIC`
+     */
 
     /**
      * Transform a result into a ChatMessage, displaying the roll result.
      * This function can either create the ChatMessage directly, or return the data object that will be used to create.
-     * @param {CheckResult} result 
-     * @param {object} [options]
-     * @param {boolean} [options.create=true]   Whether to automatically create the chat message, or only return the
-     *                                          prepared chatData object.
-     * @param {string} [options.rollMode]       The template roll mode to use for the message from CONFIG.Dice.rollModes
-     * @returns {Promise<ChatMessage|object>}   A promise which resolves to the created ChatMessage document if create is
-     *                                          true, or the Object of prepared chatData otherwise.
+     * @param {string} resultId 
+     * @param {Partial<ResultRevealOptions>} [revealOptions]
+     * @returns {Promise<ChatMessage|object>}           A promise which resolves to the created ChatMessage document if createMessage is
+     *                                                  true, or the Object of prepared chatData otherwise.
      */
-    static async resultToMessage(result, {create=true, rollMode=CONST.DICE_ROLL_MODES.PUBLIC}={}) {
+    async revealResult(resultId, revealOptions={}) {
+        const {
+            updateResult = true,
+            createMessage = true,
+            rollMode = CONST.DICE_ROLL_MODES.PUBLIC
+        } = revealOptions;
+
+        const result = this.results[resultId];
+        if(!result) throw new Error(`Result id "${resultId}" not found in mission id "${this.id}".`);
+
         const { rollObj, attributeKey, dc, adventurerName } = result;
 
         const roll = dnd5e.dice.D20Roll.fromData(rollObj);
@@ -223,23 +309,45 @@ export default class Mission extends foundry.abstract.DataModel {
                 }
             }
         };
-        return roll.toMessage(messageData, { create, rollMode });    //async
+
+        if(!result.isRevealed && updateResult) {
+            await this.update({[`results.${result.id}.isRevealed`]: true });
+        }
+
+        return await roll.toMessage(messageData, { create: createMessage, rollMode });
+    }
+
+    /**
+     * Transform all results into ChatMessages, displaying the roll result.
+     * This function can either create the ChatMessages directly, or return the data objects that will be used to create.
+     * @param {Partial<ResultRevealOptions>} revealOptions 
+     * @returns {Promise<ChatMessage[] | object[]>}     A promise which resolves to an array of created ChatMessage documents if createMessage is
+     *                                                  true, or an array of prepared chatData objects otherwise.
+     */
+    async revealAllResults(revealOptions={}) {
+        const results = this.results;
+        if(!result) throw new Error(`Results for mission id "${this.id}" undefined.`);
+
+        const promises = Object.keys(results)
+            .map(id => this.revealResult(id, revealOptions));
+        return Promise.all(promises);   
     }
 }
 
 /**
  * @typedef {object} CheckResult
- * @property {string} id                A unique identifier for this result. `${adventurerId}.${attributeKey}`
+ * @property {string} id                A unique identifier for this result. `${adventurerId}_${attributeKey}`
  * @property {string} adventurerId      The id of the adventurer who rolled this result.
  * @property {string} adventurerName    The name of the adventurer who rolled this result.
  * @property {string} attributeKey      The attribute that this roll is for.
  * @property {boolean} isSuccess        Is this roll a success
  * @property {number} dc                The DC for the check.
  * @property {number} total             The total of the rolled check.
- * @property {number} margin            The absolute difference between DC and total
+ * @property {number} margin            How much is the total over/under the DC?
  * @property {boolean} isFumble         Is this check a critical fail?
  * @property {boolean} isCritical       Is this check a critical success?
  * @property {object} rollObj           The roll as an object.
+ * @property {boolean} isRevealed       Has this result been revealed to players in a chat message?
  */
 
 class Resolver {
@@ -268,16 +376,19 @@ class Resolver {
         this.mission = mission;
     }
 
-    //#region Creating Mission Results
     /** 
      * Rolls all checks of the mission and returns the results.
      * Does not create ChatMessages so those can be revealed later. 
      * @param {Mission} mission 
-     * @returns {Promise<CheckResult[]>}
+     * @returns {Promise<{[key: string]: CheckResult}>}
      */
     static async createMissionResults(mission) {
         const resolver = new Resolver(mission);
-        return resolver._createResults();
+        const resultsArray = await resolver._createResults();
+        return resultsArray.reduce((acc, curr) => {
+            acc[curr.id] = curr;
+            return acc;
+        }, {});
     }
 
     /** 
@@ -299,37 +410,6 @@ class Resolver {
     }
 
     /**
-     * Rolls a check for a given attribute and adventurer and returns the result.
-     * @param {string} attributeKey             
-     * @param {Adventurer} adventurer
-     * @returns {Promise<CheckResult>}
-     */
-    async #getCheckResult(attributeKey, adventurer ) {
-        const id = `${adventurer.id}.${attributeKey}`;
-        const dc = this.mission.dc[attributeKey];
-
-        const roll = await this.#rollCheck({
-            attributeKey, dc, adventurer
-        });
-
-        const result = {
-            id,
-            adventurerId: adventurer.id,
-            adventurerName: adventurer.name,
-            attributeKey,
-            isSuccess: Helpers.isRollSuccess(roll),
-            dc: roll.options.targetValue,
-            total: roll.total,
-            margin: Math.abs( roll.options.targetValue - roll.total),
-            isFumble: roll.isFumble,
-            isCritical: roll.isCritical,
-            rollObj: roll.toJSON(),
-        };
-
-        return result;
-    }
-
-    /**
      * Rolls, evaluates, and returns the check as a dnd5e D20 roll.
      * @param {object} args
      * @param {string} args.attributeKey
@@ -341,9 +421,14 @@ class Resolver {
         const attr = attributeKey[0].toUpperCase() + attributeKey.slice(1);
         const flavor = `<strong>${attr} check - DC ${dc}</strong>`;
 
+        const rollData = {
+            mod: adventurer.attributes[attributeKey].mod,
+            exp: adventurer.expBonus,
+        };
+
         return await dnd5e.dice.d20Roll({
             parts: ["@mod", "@exp"], 
-            data: adventurer.attributes[attributeKey],
+            data: rollData,
             targetValue: dc,
             flavor: flavor,
             fastForward: true,
@@ -374,7 +459,46 @@ class Resolver {
         return best;
     }
 
-    //#endregion
+    /**
+     * Rolls a check for a given attribute and adventurer and returns the result.
+     * @param {string} attributeKey             
+     * @param {Adventurer} adventurer
+     * @returns {Promise<CheckResult>}
+     */
+    async #getCheckResult(attributeKey, adventurer ) {
+        const id = `${adventurer.id}_${attributeKey}`;
+        const dc = this.mission.dc[attributeKey];
+
+        const roll = await this.#rollCheck({
+            attributeKey, dc, adventurer
+        });
+
+        const { isFumble, isCritical, total } = roll;
+        const rollObj = roll.toJSON();
+        const isSuccess = Helpers.isRollSuccess(roll);
+        const margin = total - dc;
+
+        const causedDeath = (() => {
+            const deathMargin = Mission.CONFIG.risk[this.mission.risk].deathMargin;
+            return this.isFumble || ( deathMargin + margin ) < 0
+        })();
+        
+        return {
+            id,
+            adventurerId: adventurer.id,
+            adventurerName: adventurer.name,
+            attributeKey,
+            isSuccess,
+            isFumble,
+            isCritical,
+            total,
+            margin,
+            dc,
+            rollObj,
+            causedDeath,
+            isRevealed: false,
+        };
+    }
 }
 
 /* 
