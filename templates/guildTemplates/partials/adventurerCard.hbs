@@ -1,0 +1,30 @@
+<div class="adventurer-card" data-adventurer-id="{{id}}" data-drag="true">
+    <div class="card-header collapsible">
+        {{#if state.icon}}
+        <i class="{{state.icon}}"></i>
+        {{/if}}
+        <span class="name">{{name}}</span>
+        <div class="level">
+            <i class="{{level.icon}}"></i>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="about">
+            <img class="portrait" src="{{img}}" alt="{{name}}"></img>
+            <p class="description">{{description}}</p>
+        </div>
+        
+        <div class="attributes">
+            {{#each attributes}}
+            <span class="label">{{label}}</span>
+            <span class="total">{{total}}</span>
+            <span class="mod">{{mod}}</span>
+            {{/each}}
+        </div>
+        {{#if assignedMission}}
+        <div class="assigned-mission">
+            <span class="name">{{assignedMission.name}}</span>
+        </div>
+        {{/if}}
+    </div>
+</div>

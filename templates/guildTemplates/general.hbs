@@ -1,0 +1,14 @@
+<div class="tab {{tabs.general.cssClass}}" data-tab="general" data-group="main">
+    <div class="missions scrollable">
+        {{#each missions.active}}
+        {{!-- Mission Cards --}}
+        {{> 'modules/talia-custom/templates/guildTemplates/partials/missionCard.hbs' }}
+        {{/each}}
+    </div>
+    <div class="adventurers scrollable">
+        {{#each adventurers.alive}}
+
+        {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurerCard.hbs' }}
+        {{/each}}
+    </div>
+</div>

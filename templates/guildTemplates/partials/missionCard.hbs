@@ -1,0 +1,45 @@
+<div class="mission-card" data-mission-id="{{id}}" data-drop="true">
+    <div class="card-header collapsible">
+        {{#if state.icon}}
+        <i class="{{state.icon}}"></i>
+        {{/if}}
+        <span class="name">{{name}}</span>
+        <div class="risk">
+            <i class="{{risk.icon}}"></i>
+            <span class="label">{{risk.label}}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="description">{{description}}</p>
+        <p class="reward">{{reward}}</p>
+        <div class="dcs">
+            {{#each dcData}}
+            <span class="label">{{label}}</span>
+            <span class="dc">{{dc}}</span>
+
+            {{#if name}}
+            <img class="slot-img" src="{{img}}" alt="{{name}}">
+            <span class="bonus">{{bonus}}</span>
+            {{/if}}
+            {{/each}}
+        </div>
+        <div class="assigned">
+            {{#each assigned}}
+            <div class="slot-card" data-adventurer-id="{{id}}">
+                <img class="slot-img" src="{{img}}" alt="{{name}}">
+                <div class="hover-card">
+                    <i class="{{level.icon}}"></i>
+
+                    <div class="attributes">
+                        {{#each attributes}}
+                        <span class="label">{{label}}</span>
+                        <span class="total">{{total}}</span>
+                        <span class="mod">{{mod}}</span>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+</div>

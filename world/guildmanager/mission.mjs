@@ -4,6 +4,7 @@ import Adventurer from "./adventurer.mjs";
 import TaliaDate from "../../utils/TaliaDate.mjs";
 import shared from "./shared.mjs";
 import { MODULE } from "../../scripts/constants.mjs";
+import { MappingField } from "../../utils/mappingField.mjs";
 
 /** @typedef {import("../../foundry/common/utils/collection.mjs").default} Collection */
 /** @typedef {import("../../system/dnd5e/module/dice/d20-roll.mjs").default} D20Roll */
@@ -37,16 +38,44 @@ export default class Mission extends foundry.abstract.DataModel {
         maxAdventurers: 4,
         risk: {
             low: {
+                label: "Low Risk",
+                icon: "fa-solid fa-0",
                 deathMargin: 0,
             },
             medium: {
+                label: "Medium Risk",
+                icon: "fa-solid fa-dice-three",
                 deathMargin: 3,
             },
             high: {
+                label: "High Risk",
+                icon: "fa-solid fa-dice-six",
                 deathMargin: 6,
+            }
+        },
+        states: {
+            none: {
+                icon: "fa-solid fa-users",
+                hint: "Adventurers can be assigned to this mission"
+            },
+            ready: {
+                icon: "fa-solid fa-user-check",
+                hint: "Can be started"
+            },
+            ongoing: {
+                icon: "fa-solid fa-route",
+                hint: "Is ongoing"
+            },
+            returned: {
+                icon: "fa-solid fa-exclamation",
+                hint: "Has returned"
+            },
+            logged: {
             }
         }
     }
+
+    // Reward items -> Set({uuid, itemName, quantity})>
 
     static defineSchema() {
         const {
@@ -61,7 +90,9 @@ export default class Mission extends foundry.abstract.DataModel {
             risk: new StringField({ choices: Object.keys(Mission.CONFIG.risk), initial: "low", required: true, label: "Risk" }),
             rewards: new SchemaField({
                 gp: new NumberField({ integer: true, nullable: true, required: true, positive: true, label: "gp"}),
-                items: new SetField( new DocumentUUIDField({ embedded: false, type: "Item" }), {label: "Items"}),
+
+                // Reward items -> Set({uuid, itemName, quantity})>
+                items: new SetField( new ObjectField(), {label: "Items"}),
                 other: new SetField( new StringField(), { label: "Other rewards" })
             }, { label: "Rewards" }),
             durationInMonths: new NumberField({ integer: true, initial: 1, positive: true, label: "Duration (months)"}),
@@ -128,6 +159,14 @@ export default class Mission extends foundry.abstract.DataModel {
         return this.results
             ? Object.values(this.results).filter(r => r.isRevealed) 
             : null;
+    }
+
+    get state() {
+        if(this.hasFinished) return 'logged';
+        if(this.hasReturned) return 'returned';
+        if(this.started) return 'ongoing';
+        if(this.canStart) return 'ready';
+        else return 'none';
     }
 
     //#endregion
@@ -204,7 +243,6 @@ export default class Mission extends foundry.abstract.DataModel {
         return this.update({_assignedAdventurerIds: []});
     }
     //#endregion
-
 
     //#region Random Generation
 
@@ -332,6 +370,28 @@ export default class Mission extends foundry.abstract.DataModel {
             .map(id => this.revealResult(id, revealOptions));
         return Promise.all(promises);   
     }
+
+    /**
+     * Gets an array of itemObjects of item rewards.
+     * The itemObjects' quantity is modified to match.
+     */
+    async getRewardItemObjects() {
+        const rewardItemObjects = new foundry.utils.Collection();
+        for(const record of this.rewards.items) {
+            const item = await fromUuid(record.uuid);
+            const itemObj = item.toObject();
+            itemObj.system.quantity = record.quantity;
+            rewardItemObjects.set(uuid, itemObj);
+        }
+        return rewardItemObjects;
+    }
+
+    get bestForChecks() {
+        return Object.entries(this.dc).reduce((acc, [attr, dc]) => {
+            acc[attr] = Resolver.getBestForCheck(this, attr);
+            return acc;
+        }, {});
+    }
 }
 
 /**
@@ -398,7 +458,7 @@ class Resolver {
      */
     async _createResults() {
         const checkPromises = Resolver.CONFIG.mainChecks.map((key) => {
-            const adv = this.#getBestForCheck(key);
+            const adv = Resolver.getBestForCheck(this.mission, key);
             return this.#getCheckResult(key, adv); // Directly return the promise
         });
     
@@ -445,14 +505,15 @@ class Resolver {
 
     /**
      * Gets the adventurer that's best suited for making a check.
+     * @param {Mission} mission 
      * @param {string} attributeKey 
      * @returns {Adventurer}
      */
-    #getBestForCheck(attributeKey) {
+    static getBestForCheck(mission, attributeKey) {
         let best = null;
-        for(const adv of this.mission.assignedAdventurers) {
+        for(const adv of mission.assignedAdventurers) {
             if (!best 
-                || adv.attributes[attributeKey].mod > best.attributes[attributeKey].mod) {
+                || adv.attributes[attributeKey].totalRollMod > best.attributes[attributeKey].totalRollMod) {
                 best = adv;
             }
         }

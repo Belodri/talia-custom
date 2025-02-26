@@ -11,16 +11,16 @@ import { MODULE } from "../../scripts/constants.mjs";
  * @property {number} cunning          Stealth, subterfuge, strategy, and knowledge.
  * @property {number} spellcraft       Magical affinity, knowledge and powers.
  * @property {number} influence        Social skills, manipulation, charisma, and leadership.
- * @property {number} reliability      Reliability gauges how consistently the adventurer can be counted on to complete tasks and follow through without undermining the guild or mission.
+ * @property {number} reliability      Accountability, perseverance, and loyalty.
  */
 
 /**
  * @typedef {object} EvaluatedAttribute
  * @property {number} base
- * @property {number} bonus
  * @property {number} total
  * @property {number} mod
- * @property {number} exp
+ * @property {number} totalRollMod
+ * @property {string} label
  */
 
 export default class Adventurer extends foundry.abstract.DataModel {
@@ -28,7 +28,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
         super(...args);
     
         //for type annotations
-        /** @type {Record<string, EvaluatedAttribute>} */
+        /** @type {{[attributeKey: string]: EvaluatedAttribute}} */
         this.attributes ??= {}
     }
 
@@ -61,6 +61,79 @@ export default class Adventurer extends foundry.abstract.DataModel {
             9: 3,
             14: 4,
             20: 5
+        },
+        levels: {
+            0: {
+                rollBonus: 0,
+                expMin: 0,
+                icon: "fa-solid fa-kiwi-bird"
+            },
+            1: {
+                rollBonus: 1,
+                expMin: 2,
+                icon: "fa-solid fa-dice-one"
+            },
+            2: {
+                rollBonus: 2,
+                expMin: 5,
+                icon: "fa-solid fa-dice-two"
+            },
+            3: {
+                rollBonus: 3,
+                expMin: 9,
+                icon: "fa-solid fa-dice-three"
+            },
+            4: {
+                rollBonus: 4,
+                expMin: 14,
+                icon: "fa-solid fa-dice-four"
+            },
+            5: {
+                rollBonus: 5,
+                expMin: 20,
+                icon: "fa-solid fa-dice-five"
+            },
+        },
+        states: {
+            waiting: {
+                iicon: "fa-solid fa-user",
+                label: "Dead"
+            },
+            assigned: {
+                icon: "fa-solid fa-user-check",
+                label: "Assigned"
+            },
+            away: {
+                icon: "fa-solid fa-route",
+                label: "Away"
+            },
+            dead: {
+                icon: "fa-solid fa-skull",
+                label: "Dead"
+            }
+        }
+    }
+
+    static ATTRIBUTE_LABELS = {
+        brawn: {
+            label: "Brawn",
+            explanation: "Physical prowess, combat ability, and endurance."
+        },
+        cunning: {
+            label: "Cunning",
+            explanation: "Stealth, subterfuge, strategy, and knowledge."
+        },
+        spellcraft: {
+            label: "Spellcraft",
+            explanation: "Magical affinity, knowledge and powers."
+        },
+        influence: {
+            label: "Influence",
+            explanation: "Social skills, manipulation, charisma, and leadership."
+        },
+        reliability: {
+            label: "Reliability",
+            explanation: "Accountability, perseverance, and loyalty."
         }
     }
 
@@ -82,21 +155,32 @@ export default class Adventurer extends foundry.abstract.DataModel {
                 charClass: new StringField({ choices: Adventurer.CONFIG.charClass, blank: false, initial: Adventurer.CONFIG.charClass[0] })
             }),
             _attributes: new SchemaField( shared.defineAttributesSchema(), { label: "Attributes" } ),
-            _attributeBonuses: new SchemaField( shared.defineAttributesSchema(), { label: "Bonuses" } ),
             survivedMissions: new NumberField({ integer: true, initial: 0, min: 0 }),
             criticalRolls: new NumberField({ integer: true, initial: 0, min: 0 }),
-            _deathTimestamp: new NumberField({ nullable: true, required: false, initial: null }),
+            _deathDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
             img: new FilePathField({ categories: ["IMAGE"], label: "Image" }),
         }
     }
 
+    //#region Getters
+
+    get level() { return this.expBonus; }
+
+    get state() {
+        if(this.isDead) return "dead";
+        const mission = this.assignedMission;
+        if(!mission) return "waiting";
+        if(mission.hasStarted && !mission.hasReturned) return "away";
+        else return "assigned";
+    }
+
     get assignedMission() {
-        return this.parent.missions.find(m => !m.isOver && m.assignedAdventurers.has(this.id));
+        return this.parent.missions.find(m => !m.isFinished && m.assignedAdventurers.has(this.id));
     }
 
     get isAssigned() { return !!this.assignedMission; }
 
-    get isDead() { return !!this._deathTimestamp; }
+    get isDead() { return !!this._deathDate; }
 
     /**
      * @returns {number} The exp bonus this adventurer adds to rolls.
@@ -109,6 +193,32 @@ export default class Adventurer extends foundry.abstract.DataModel {
             .filter(m => combinedExp >= m);
         return thresholds.length ? expTable[Math.max(...thresholds)] : 0;
     }
+
+    /**
+     * @typedef {object} AttrLabelObject
+     * @property {number} mod
+     * @property {number} total
+     * @property {string} key
+     * @property {string} label
+     * @property {string} explanation
+     */
+
+    /**
+     * @returns {{[attributeKey: string]: AttrLabelObject}}
+     */
+    get attributeLabels() {
+        return Object.entries(this.attributes).reduce((acc, [attr, props]) => {
+            acc[attr] = {
+                mod: props.mod,
+                label: Adventurer.ATTRIBUTE_LABELS[attr].label,
+                explanation: Adventurer.ATTRIBUTE_LABELS[attr].explanation,
+                total: props.total,
+                key: attr
+            }
+        }, {});
+    }
+
+    //#endregion
 
     /**
      * Update this Adventurer, propagating the changes to the parent Guild.  
@@ -127,16 +237,16 @@ export default class Adventurer extends foundry.abstract.DataModel {
     }
 
     prepareDerivedData() {
-
         const attributes = Object.entries(this._attributes)
             .reduce((acc, [attr, value]) => {
                 const base = value;
-                const bonus = this._attributeBonuses[attr];
-                const total = base + bonus;
+                const total = base;
                 const mod = Math.floor( ( total - 10 ) / 2 );
+                const totalRollMod = mod + this.expBonus;
+                const label = Adventurer.ATTRIBUTE_LABELS[attr];
 
                 acc[attr] = {
-                    base, bonus, total, mod,
+                    base, total, mod, totalRollMod, label
                 }
                 return acc;
             }, {});
@@ -258,7 +368,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
         const changes = {};
         if (advResults.died) {
-            changes._deathTimestamp = game.time.worldTime;
+            changes._deathDate = TaliaDate.now();
         } else {
             changes.survivedMissions = this.survivedMissions + 1;
             if (advResults.critsCount) {
