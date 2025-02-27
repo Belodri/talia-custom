@@ -16,11 +16,16 @@ import { MODULE } from "../../scripts/constants.mjs";
 
 /**
  * @typedef {object} EvaluatedAttribute
+ * @property {string} attributeKey
+ * @property {string} label
+ * @property {string} explanation
  * @property {number} base
  * @property {number} total
  * @property {number} mod
+ * @property {number} expBonus
  * @property {number} totalRollMod
- * @property {string} label
+ * @property {string} modDisplay
+ * @property {string} totalRollModDisplay
  */
 
 export default class Adventurer extends foundry.abstract.DataModel {
@@ -55,61 +60,66 @@ export default class Adventurer extends foundry.abstract.DataModel {
             diceSize: 6,
             charClassBonus: 3,
         },
-        expTable: { // (survived missions + criticalRolls) to exp bonus
-            2: 1,
-            5: 2,
-            9: 3,
-            14: 4,
-            20: 5
-        },
         levels: {
             0: {
+                level: 0,
                 rollBonus: 0,
                 expMin: 0,
-                icon: "fa-solid fa-kiwi-bird"
+                icon: "fa-solid fa-kiwi-bird",
+                hint: "Level 0"
             },
             1: {
+                level: 1,
                 rollBonus: 1,
                 expMin: 2,
-                icon: "fa-solid fa-dice-one"
+                icon: "fa-solid fa-dice-one",
+                hint: "Level 1"
             },
             2: {
+                level: 2,
                 rollBonus: 2,
                 expMin: 5,
-                icon: "fa-solid fa-dice-two"
+                icon: "fa-solid fa-dice-two",
+                hint: "Level 2"
             },
             3: {
+                level: 3,
                 rollBonus: 3,
                 expMin: 9,
-                icon: "fa-solid fa-dice-three"
+                icon: "fa-solid fa-dice-three",
+                hint: "Level 3"
             },
             4: {
+                level: 4,
                 rollBonus: 4,
                 expMin: 14,
-                icon: "fa-solid fa-dice-four"
+                icon: "fa-solid fa-dice-four",
+                hint: "Level 4"
             },
             5: {
+                level: 5,
                 rollBonus: 5,
                 expMin: 20,
-                icon: "fa-solid fa-dice-five"
+                icon: "fa-solid fa-dice-five",
+                hint: "Level 5"
             },
         },
         states: {
             waiting: {
-                iicon: "fa-solid fa-user",
-                label: "Dead"
+                icon: "fa-solid fa-user",
+                hint: "Waiting to be assigned"
             },
             assigned: {
                 icon: "fa-solid fa-user-check",
-                label: "Assigned"
+                hint: "Assigned to a mission"
             },
             away: {
                 icon: "fa-solid fa-route",
-                label: "Away"
+                hint: "On a mission"
             },
             dead: {
                 icon: "fa-solid fa-skull",
-                label: "Dead"
+                hint: "Dead"
             }
         }
     }
@@ -164,7 +174,28 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     //#region Getters
 
-    get level() { return this.expBonus; }
+    get exp() { return this.survivedMissions + this.criticalRolls; }
+
+    get expForLevelUp() { 
+        const expMinNext = Adventurer.CONFIG.levels[this.level + 1]?.expMin;
+        return expMinNext 
+            ? expMinNext - this.exp
+            : null;  
+    }
+
+    get level() { 
+        const levels = Adventurer.CONFIG.levels;
+        const combinedExp = this.survivedMissions + this.criticalRolls;
+
+        let lastLevel = levels[0];
+
+        for (const level of Object.values(levels)) {
+            if (level.expMin > combinedExp) return lastLevel.level;
+            lastLevel = level;
+        }
+
+        return lastLevel.level;
+    }
 
     get state() {
         if(this.isDead) return "dead";
@@ -186,36 +217,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
      * @returns {number} The exp bonus this adventurer adds to rolls.
      */
     get expBonus() {
-        const expTable = Adventurer.CONFIG.expTable;
-        const combinedExp = this.survivedMissions + this.criticalRolls;
-        const thresholds = Object.keys(expTable)
-            .map(Number)
-            .filter(m => combinedExp >= m);
-        return thresholds.length ? expTable[Math.max(...thresholds)] : 0;
-    }
-
-    /**
-     * @typedef {object} AttrLabelObject
-     * @property {number} mod
-     * @property {number} total
-     * @property {string} key
-     * @property {string} label
-     * @property {string} explanation
-     */
-
-    /**
-     * @returns {{[attributeKey: string]: AttrLabelObject}}
-     */
-    get attributeLabels() {
-        return Object.entries(this.attributes).reduce((acc, [attr, props]) => {
-            acc[attr] = {
-                mod: props.mod,
-                label: Adventurer.ATTRIBUTE_LABELS[attr].label,
-                explanation: Adventurer.ATTRIBUTE_LABELS[attr].explanation,
-                total: props.total,
-                key: attr
-            }
-        }, {});
+        return Adventurer.CONFIG.levels[this.level].rollBonus;
     }
 
     //#endregion
@@ -239,14 +241,26 @@ export default class Adventurer extends foundry.abstract.DataModel {
     prepareDerivedData() {
         const attributes = Object.entries(this._attributes)
             .reduce((acc, [attr, value]) => {
+                const getDisplayMod = (modifier) => `${modifier >= 0 ? "+" : ""}${modifier}`;
+
                 const base = value;
-                const total = base;
+                const total = base;     // to allow for easy expansion in the future
+
                 const mod = Math.floor( ( total - 10 ) / 2 );
-                const totalRollMod = mod + this.expBonus;
-                const label = Adventurer.ATTRIBUTE_LABELS[attr];
+                const expBonus = this.expBonus;
+                const totalRollMod = mod + expBonus;
 
                 acc[attr] = {
-                    base, total, mod, totalRollMod, label
+                    attributeKey: attr,
+                    label: Adventurer.ATTRIBUTE_LABELS[attr].label,
+                    explanation: Adventurer.ATTRIBUTE_LABELS[attr].explanation,
+                    base, 
+                    total, 
+                    mod, 
+                    expBonus,
+                    totalRollMod, 
+                    modDisplay: getDisplayMod(mod),
+                    totalRollModDisplay: getDisplayMod(totalRollMod),
                 }
                 return acc;
             }, {});

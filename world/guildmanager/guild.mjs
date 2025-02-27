@@ -250,7 +250,7 @@ export default class Guild extends foundry.abstract.DataModel {
         changes = foundry.utils.expandObject(changes);
         const diff = embedded.updateSource(changes, options);
         const guildChanges = {
-            [`${key}.${mission.id}`]: diff,
+            [`${key}.${embedded.id}`]: diff,
         };
         await this.update(guildChanges);
         return diff;

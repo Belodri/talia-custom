@@ -37,7 +37,6 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             };
             d.callbacks = {
                 dragstart: this._onDragStart.bind(this),
-                dragover: this._onDragOver.bind(this),
                 drop: this._onDrop.bind(this),
             };
             return new DragDrop(d);
@@ -76,17 +75,14 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         const el = event.currentTarget;
         if ('link' in event.target.dataset) return;
 
-        // Extract the data you need
-        let dragData = null;
-
-        if (!dragData) return;
+        const dragData = {
+            adventurerId: el.dataset?.adventurerId,
+        };
+        
+        if (!dragData.adventurerId) return;
 
         // Set data transfer
         event.dataTransfer.setData('text/plain', JSON.stringify(dragData));
-    }
-
-    _onDragOver(event) {
-        
     }
 
     /**
@@ -97,12 +93,13 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     async _onDrop(event) {
         const data = TextEditor.getDragEventData(event);
 
-        // Handle different data types
-        switch (data.type) {
-            // write your cases
+        const adventurerId = data?.adventurerId;
+        const missionId = event.currentTarget?.dataset?.missionId;
+        if(adventurerId && missionId) {
+            const mission = this.guild.missions.get(missionId);
+            return mission.assignAdventurer(adventurerId);
         }
     }
-
   
     //#endregion
 
@@ -124,6 +121,10 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         },
         actions: {
             openNotes: GuildApp.#openNotes,
+            unassign: GuildApp.#unassign,
+            startMission: GuildApp.#startMission,
+            finishMission: GuildApp.#finishMission,
+            toggleCollapse: GuildApp.#toggleCollapse,
         },
         dragDrop: [{ dragSelector: '[data-drag]', dropSelector: '[data-drop]' }],
     }
@@ -187,6 +188,44 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     static async #openNotes(event, target) {
         return this.document.sheet.render(true);
     }
+
+    /**
+     * @param {PointerEvent} event - The originating click event
+     * @param {HTMLElement} target - the capturing HTML element which defined a [data-action]
+     */
+    static async #unassign(event, target) {
+        const advId = target.dataset?.adventurerId;
+        if(!advId) return;
+
+        const adv = this.guild.adventurers.get(advId);
+        const mis = adv?.assignedMission;
+
+        return mis.unassignAdventurer(adv);
+    }
+
+    static async #startMission(event, target) {
+        const misId = target.dataset?.missionId;
+        if(!misId) return;
+
+        const mis = this.guild.missions.get(misId);
+        return mis.start();
+    }
+
+    static async #finishMission(event, target) {
+        const misId = target.dataset?.missionId;
+        if(!misId) return;
+
+        const mis = this.guild.missions.get(misId);
+        return mis.finish();
+    }
+
+    /**
+     * @param {PointerEvent} event - The originating click event
+     * @param {HTMLElement} target - the capturing HTML element which defined a [data-action]
+     */
+    static async #toggleCollapse(event, target) {
+        target.classList.toggle("collapsed");
+    }
     //#endregion
 
     //#region Context
@@ -235,6 +274,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         return context;
     }
 
+    //#endregion
+
     //#region Mission Context
 
     _prepareMissionsContext() {
@@ -278,10 +319,11 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     /**
      * @typedef {object} MissionCardContext
      * @property {string} id
-     * @property {object} [state]
-     * @property {string} [state.icon]
+     * @property {object} state
+     * @property {string} state.icon
+     * @property {string} state.hint
      * @property {object} risk
-     * @property {string} risk.label
+     * @property {string} risk.hint
      * @property {string} risk.icon
      * @property {string} name
      * @property {string} description
@@ -317,7 +359,6 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     /**
      * 
      * @param {Mission} mis 
-     * @returns 
      */
     getMissionCardContext(mis) {
         const reward = (() => {
@@ -333,48 +374,74 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             return rewardStrings.join(", ");
         })();
 
-        const bestAll = mis.bestForChecks;
-        const dcData = Object.entries(mis.dc)
+        const dcDataRaw = Object.entries(mis.dc)
             .reduce((acc, [attr, dc]) => {
-                const best = bestAll[attr];
-                const bestBonus = best?.attributes[attr].totalRollMod ?? null;
-
                 acc[attr] = {
                     key: attr,
                     label: Adventurer.ATTRIBUTE_LABELS[attr].label,
                     explanation: Adventurer.ATTRIBUTE_LABELS[attr].explanation,
-                    dc, 
-                    name: best?.name ?? "",
-                    bonus: best ? `${bestBonus >= 0 ? "+" : ""}${bestBonus}` : "",
-                    img: best?.img ?? "",
-                };
+                    dc,
+                }
                 return acc;
             }, {});
 
+        const bestAll = mis.bestForMainChecks;
         const assigned = mis.assignedAdventurers.map(adv => {
             return {
                 id: adv.id,
                 name: adv.name,
                 img: adv.img,
-                level: {
-                    icon: Adventurer.CONFIG.levels[adv.level].icon,
-                },
-                attributes: adv.attributes,
+                attributes: Object.values(adv.attributes)
+                    .reduce((acc, curr) => {
+                        const isHighlighted = bestAll[curr.attributeKey]?.id === adv.id
+                            || curr.attributeKey === "reliability";
+
+                        const spanClass = isHighlighted 
+                            ? "highlighted"
+                            : "greyed";
+                        
+                        acc[curr.attributeKey] = {
+                            totalBonus: adv.attributes[curr.attributeKey].totalRollModDisplay,
+                            spanClass,
+                        }
+                        return acc;
+                    }, {}),
             }
         });
 
+        const state = mis.state;
+        const missionButton = {};
+        if(state.key === "ready") {
+            missionButton.display = true;
+            missionButton.action = "startMission";
+            missionButton.label = "Start Mission";
+        } else if(state.key === "returned") {
+            missionButton.display = true;
+            missionButton.action = "finishMission";
+            missionButton.label = "View Mission Report";
+        }
+
+        
+        const durationLabel = mis.duration.remaining > 0 
+            ? `${mis.duration.remaining} days remaining`
+            : !this.hasStarted 
+                ? `${mis.duration.total} days`
+                : "";
+        
         return {
             id: mis.id,
             name: mis.name,
             description: mis.description,
+            durationLabel,
             durationInMonths: mis.durationInMonths,
-            state: Mission.CONFIG.states[mis.state],
-            risk: Mission.CONFIG.risk[mis.risk],
+            state: mis.state,
+            risk: mis.risk,
             reward,
-            dcData,
-            daysUntilReturn: mis.daysUntilReturn,
+            dcDataRaw,
+            daysUntilReturn: mis.daysUntilReturn > 0 ? mis.daysUntilReturn : null,
             results: mis.results,
             assigned,
+            missionButton
         }
     }
     //#endregion
@@ -420,73 +487,70 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      */
 
     getAdventurerCardContext(adv) {
+        const currentLevel = adv.level;
+        const currentExp = adv.exp;
+        const nextLevelObj = Adventurer.CONFIG.levels[currentLevel + 1];
+        
+        const nextLevelTooltip = nextLevelObj 
+            ? `${currentExp}/${nextLevelObj.expMin} exp`
+            : "max";
+
+        const level = {
+            current: adv.level,
+            explanation: "Each level grants a +1 bonus to all checks.",
+        }
+
+        const exp = {
+            current: adv.exp,
+            forNext: nextLevelObj?.expMin ?? "max",
+            explanation: "Each successful mission and each natural 20 grant +1 exp."
+        }
+
         return {
             id: adv.id,
             name: adv.name,
             img: adv.img,
             description: adv.description,
             state: Adventurer.CONFIG.states[adv.state],
-            level: Adventurer.CONFIG.levels[adv.level],
+            exp,
+            level,
             assignedMission: adv.assignedMission,
             deathDate: adv.deathDate ? adv.deathDate.displayString : "",
-            attributes: adv.attribtues
+            attributes: Object.values(adv.attributes)
         }
     }
 
     //#endregion
 
-    //#region ContextMenu
+    //#region Mission Context Menu
     _getMissionCardContextMenuItems() {
-        return;
-        //UNFINISHED
-
         return [
             {
-                name: "Build",
-                icon: `<i class="fa-solid fa-person-digging"></i>`,
-                condition: (jq) => {
-                    const building = this._getBuildingFromJQ(jq);
-                    return !building.isBuilt && building.allRequirementsMet;
-                },
-                callback: this._onBuildButton.bind(this)
-            },
-            {
-                name: "Cancel Construction",
+                name: "Unassign All",
                 icon: `<i class="fa-regular fa-circle-xmark"></i>`,
                 condition: (jq) => {
-                    const building = this._getBuildingFromJQ(jq);
-                    return building.isRecentlyConstructed;
+                    const mission = this._getMissionFromJQ(jq);
+                    return !!mission.assignedAdventurers.size && !mission.hasStarted;
                 },
-                callback: this._onCancelConstructionButton.bind(this)
+                callback: this._onUnassignAll.bind(this)
             },
             {
-                name: "Force Build (GM)",
-                icon: `<i class="fa-thin fa-person-digging"></i>`,
-                condition: (jq) => {
-                    const building = this._getBuildingFromJQ(jq);
-                    return game.user.isGM && !building.isBuilt;
-                },
-                callback: this._onBuildButton.bind(this)
+                name: "(GM) Edit Mission",
+                //icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                condition: (jq) => game.user.isGM,
+                callback: this._onEditMission.bind(this)
             },
-            {
-                name: "Force Cancel (GM)",
-                icon: `<i class="fa-thin fa-circle-xmark"></i>`,
-                condition: (jq) => {
-                    const building = this._getBuildingFromJQ(jq);
-                    return game.user.isGM && building.isBuilt;
-                },
-                callback: this._onCancelConstructionButton.bind(this)
-            },
-            {
-                name: "Modify Construction Date (GM)",
-                icon: `<i class="fa-thin fa-calendar"></i>`,
-                condition: (jq) => {
-                    const building = this._getBuildingFromJQ(jq);
-                    return game.user.isGM && building.isBuilt;
-                },
-                callback: this._onModifyConstructionDateButton.bind(this)
-            }
-        ]
+        ];
+    }
+
+    async _onUnassignAll(jq) {
+        const mission = this._getMissionFromJQ(jq);
+        return mission.unassignAll();
+    }
+
+    async _onEditMission(jq) {
+        const mission = this._getMissionFromJQ(jq);
+        return mission.edit();
     }
 
     _getAdventurerCardContextMenuItems() {
@@ -533,7 +597,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
 
     _getAdventurerFromJQ(jq) {
         const card = jq.closest(".adventurer-card")[0];
-        const id = card.dataset.id;
+        const id = card.dataset.adventurerId;
         return this.guild.adventurers.get(id);
     }
 
@@ -543,7 +607,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      */
     _getMissionFromJQ(jq) {
         const card = jq.closest(".mission-card")[0];
-        const id = card.dataset.id;
+        const id = card.dataset.missionId;
         return this.guild.missions.get(id);
     }
     //#endregion

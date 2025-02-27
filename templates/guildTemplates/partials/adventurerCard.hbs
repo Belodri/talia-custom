@@ -1,26 +1,35 @@
-<div class="adventurer-card" data-adventurer-id="{{id}}" data-drag="true">
-    <div class="card-header collapsible">
-        {{#if state.icon}}
-        <i class="{{state.icon}}"></i>
-        {{/if}}
-        <span class="name">{{name}}</span>
-        <div class="level">
-            <i class="{{level.icon}}"></i>
+<div class="card adventurer-card" data-adventurer-id="{{id}}" data-drag="true">
+    <div class="card-header collapsible" data-action="toggleCollapse">
+        <img class="portrait" src="{{img}}" alt="{{name}}"></img>
+        <div class="data-header">
+            <div class="overview-bar">
+                <span class="name">{{name}}</span>
+                <i class="{{state.icon}}" data-tooltip="{{state.hint}}"></i>
+                
+            </div>
+            <hr>
+            <div class="attributes">
+                {{#each attributes}}
+                <div class="attribute-full">
+                    <span class="label" data-tooltip="{{explanation}}">{{label}}</span>
+                    <span class="total">{{total}}</span>
+                    <span class="mod-display">{{modDisplay}}</span>
+                </div>
+                {{/each}}
+                <div class="attribute-full side-panel">
+                    <span class="label" data-tooltip="{{level.explanation}}">Level</span>
+                    <span class="total">{{level.current}}</span>
+                    <span class="mod-display" data-tooltip="{{exp.explanation}}">{{exp.current}}/{{exp.forNext}}</span>
+                </div>
+            </div>
         </div>
     </div>
     <div class="card-body">
+        <hr>
         <div class="about">
-            <img class="portrait" src="{{img}}" alt="{{name}}"></img>
             <p class="description">{{description}}</p>
         </div>
         
-        <div class="attributes">
-            {{#each attributes}}
-            <span class="label">{{label}}</span>
-            <span class="total">{{total}}</span>
-            <span class="mod">{{mod}}</span>
-            {{/each}}
-        </div>
         {{#if assignedMission}}
         <div class="assigned-mission">
             <span class="name">{{assignedMission.name}}</span>

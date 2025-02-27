@@ -38,39 +38,51 @@ export default class Mission extends foundry.abstract.DataModel {
         maxAdventurers: 4,
         risk: {
             low: {
-                label: "Low Risk",
-                icon: "fa-solid fa-0",
-                deathMargin: 0,
+                explanation: "Failing a check with a natural 1 results in death.",
+                label: "Low",
+                deathMargin: 99,
             },
             medium: {
-                label: "Medium Risk",
-                icon: "fa-solid fa-dice-three",
-                deathMargin: 3,
+                explanation: "Failing a check by 5 or more results in death.",
+                label: "Medium",
+                deathMargin: 5,
             },
             high: {
-                label: "High Risk",
-                icon: "fa-solid fa-dice-six",
-                deathMargin: 6,
+                explanation: "Failing a check results in death.",
+                label: "High",
+                deathMargin: 0,
             }
         },
         states: {
             none: {
+                key: "none",
                 icon: "fa-solid fa-users",
-                hint: "Adventurers can be assigned to this mission"
+                hint: "Adventurers can be assigned to this mission",
+                label: ""
             },
             ready: {
+                key: "ready",
                 icon: "fa-solid fa-user-check",
-                hint: "Can be started"
+                hint: "Can be started",
+                label: "Ready"
             },
             ongoing: {
+                key: "ongoing",
                 icon: "fa-solid fa-route",
-                hint: "Is ongoing"
+                hint: "Is ongoing",
+                label: "Ongoing"
             },
             returned: {
+                key: "returned",
                 icon: "fa-solid fa-exclamation",
-                hint: "Has returned"
+                hint: "Has returned",
+                label: "Returned"
             },
             logged: {
+                key: "logged",
+                icon: "",
+                hint: "",
+                label: ""
             }
         }
     }
@@ -87,7 +99,7 @@ export default class Mission extends foundry.abstract.DataModel {
             id: new StringField({ required: true, nullable: false, blank: false }),
             name: new StringField({ blank: true, initial: "", label: "Name" }),
             dc: new SchemaField( shared.defineAttributesSchema(), {label: "DC"}),
-            risk: new StringField({ choices: Object.keys(Mission.CONFIG.risk), initial: "low", required: true, label: "Risk" }),
+            _risk: new StringField({ choices: Object.keys(Mission.CONFIG.risk), initial: "low", required: true, label: "Risk" }),
             rewards: new SchemaField({
                 gp: new NumberField({ integer: true, nullable: true, required: true, positive: true, label: "gp"}),
 
@@ -124,7 +136,10 @@ export default class Mission extends foundry.abstract.DataModel {
     get hasStarted() { return !!this.startDate; }
 
     /** Has this mission returned? */
-    get hasReturned() { return this.hasStarted && this.startDate?.isBefore(this.returnDate); }
+    get hasReturned() { 
+        const retDays = this.daysUntilReturn;
+        return retDays !== null && retDays <= 0;
+    }
 
     /** Has this mission been finished, finalized, and logged? */
     get hasFinished() { return !!this.finishDate; }
@@ -134,9 +149,9 @@ export default class Mission extends foundry.abstract.DataModel {
         return this.startDate ? TaliaDate.fromOffset(this.startDate, { months: this.durationInMonths }) : undefined;
     }
 
-    /** The number of days until the mission returns. Returns null if the mission hasn't started or has already returned. */
+    /** The number of days until the mission returns. Returns null if the mission hasn't started. Returns a negative number if the mission has returned already.*/
     get daysUntilReturn() { 
-        return ( this.hasStarted && !this.hasReturned ) 
+        return this.hasStarted
             ? this.returnDate.inDays - this.startDate.inDays
             : null;
     }
@@ -162,11 +177,20 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     get state() {
-        if(this.hasFinished) return 'logged';
-        if(this.hasReturned) return 'returned';
-        if(this.started) return 'ongoing';
-        if(this.canStart) return 'ready';
-        else return 'none';
+        const states = Mission.CONFIG.states;
+
+        const current = this.hasFinished ? states["logged"]
+            : this.hasReturned ? states['returned']
+                : this.hasStarted ? states['ongoing']
+                    : this.canStart ? states['ready']
+                        : states['none'];
+        return current;
+    }
+
+    get risk() {
+        /** @type {"low", "medium", "high"} */
+        const r = this._risk;
+        return Mission.CONFIG.risk[r];
     }
 
     //#endregion
@@ -195,6 +219,12 @@ export default class Mission extends foundry.abstract.DataModel {
                 return [id, adv];
             }) 
         );
+
+        this.duration = {
+            total: this.durationInMonths * 30,
+            remaining: this.daysUntilReturn
+        };
+
     }
     //#endregion
 
@@ -210,12 +240,33 @@ export default class Mission extends foundry.abstract.DataModel {
             adventurer = this.parent.adventurers.get(adventurer);
         }
 
-        if(this.assignedAdventurers.has(adventurer.id)) return;
-        if( this.assignedAdventurers.size >= Mission.CONFIG.maxAdventurers ) {
-            throw new Error(`Cannot assign: Maximum number of adventurers per mission reached (${Mission.CONFIG.maxAdventurers}).`);
+        if( !adventurer || !( adventurer instanceof Adventurer) ) {
+            throw new Error(`Invalid argument "${adventurer}".`);
         }
-        if( adventurer.assignedMission ) throw new Error(`Adventurer "${adventurer.name}" is already assigned to another mission.`);
 
+
+        if(this.assignedAdventurers.has(adventurer.id)) {
+            ui.notifications.error(`This adventurer is already assigned to this mission.`);
+            return;
+        };
+
+        if( this.assignedAdventurers.size >= Mission.CONFIG.maxAdventurers ) {
+            ui.notifications.error(`You cannot assign more than ${Mission.CONFIG.maxAdventurers} adventurers to this mission.`);
+            return;
+        }
+        if( adventurer.assignedMission ) {
+            ui.notifications.error(`This adventurer is already assigned to another mission.`);
+            return;
+        }
+
+        return this.#assignAdventurer(adventurer);
+    }
+
+    /**
+     * Assigns an adventurer to this mission.
+     * @param {Adventurer} adventurer
+     */
+    async #assignAdventurer(adventurer) {
         const ids = new Set([...this._assignedAdventurerIds]);
         ids.add(adventurer.id);
         return this.update({_assignedAdventurerIds: [...ids]});
@@ -292,8 +343,14 @@ export default class Mission extends foundry.abstract.DataModel {
         return this.update(changes);
     }
 
-    async finish() {
+    async finish({revealResults = true}) {
         if( !this.hasReturned || this.hasFinished ) throw new Error(`Unable to finish mission id "${this.id}".`);
+
+        if(revealResults) {
+            for(const result of this.results) {
+                if(!result.isRevealed) await this.revealResult(result.id);
+            }
+        }
 
         const promises = [
             ...this.assignedAdventurers.map(adv => adv._onMissionFinish(this)),
@@ -305,6 +362,7 @@ export default class Mission extends foundry.abstract.DataModel {
     
     //#endregion
 
+    //#region Results
     /**
      * @typedef {object} ResultRevealOptions
      * @property {boolean} updateResult         Should the result be updated (isRevealed set to true)? Default = `true`
@@ -386,11 +444,18 @@ export default class Mission extends foundry.abstract.DataModel {
         return rewardItemObjects;
     }
 
-    get bestForChecks() {
+    get bestForMainChecks() {
         return Object.entries(this.dc).reduce((acc, [attr, dc]) => {
+            if(attr === "reliability") return acc;
             acc[attr] = Resolver.getBestForCheck(this, attr);
             return acc;
         }, {});
+    }
+
+    //#endregion
+
+    async edit() {
+        //todo
     }
 }
 
@@ -540,8 +605,8 @@ class Resolver {
         const margin = total - dc;
 
         const causedDeath = (() => {
-            const deathMargin = Mission.CONFIG.risk[this.mission.risk].deathMargin;
-            return this.isFumble || ( deathMargin + margin ) < 0
+            const deathMargin = this.mission.risk.deathMargin;
+            return this.isFumble || ( deathMargin + margin ) < 0;
         })();
         
         return {
