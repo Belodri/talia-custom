@@ -1,16 +1,4 @@
-<div class="tab {{tabs.general.cssClass}} general" data-tab="general" data-group="main">
-    <div class="half-column missions scrollable">
-        <span class="half-column-title">Missions</span>
-        {{#each missions.active}}
-        {{!-- Mission Cards --}}
-        {{> 'modules/talia-custom/templates/guildTemplates/partials/missionCard.hbs' }}
-        {{/each}}
-    </div>
-    <div class="half-column adventurers scrollable">
-        <span class="half-column-title">Adventurers</span>
-        {{#each adventurers.alive}}
-
-        {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurerCard.hbs' }}
-        {{/each}}
-    </div>
+<div class="tab general {{tabs.general.cssClass}} scrollable" data-tab="general" data-group="main">
+    {{> 'modules/talia-custom/templates/guildTemplates/partials/missions.hbs' }}
+    {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurers.hbs' }}
 </div>

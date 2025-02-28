@@ -23,8 +23,18 @@
             </div>
         </div>
         <hr>
-        <p class="description">{{description}}</p>
-        <p class="reward">{{reward}}</p>
+        <div class="text-content">
+            {{#if description}}
+             <div class="paragraph-with-title">
+                <span>Description</span>
+                <p>{{description}}</p>
+            </div>
+            {{/if}}
+            <div class="paragraph-with-title">
+                <span>Rewards</span>
+                <p>{{{reward}}}</p>
+            </div>
+        </div>
         <hr>
         {{#if assigned}}
         <div class="assignments">

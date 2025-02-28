@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 import { MODULE } from "../../scripts/constants.mjs";
 import TaliaDate from "../../utils/TaliaDate.mjs";
 import Mission from "./mission.mjs";
@@ -125,6 +124,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             startMission: GuildApp.#startMission,
             finishMission: GuildApp.#finishMission,
             toggleCollapse: GuildApp.#toggleCollapse,
+            createNewMission: GuildApp.#createNewMission,
+            createNewAdventurer: GuildApp.#createNewAdventurer,
         },
         dragDrop: [{ dragSelector: '[data-drag]', dropSelector: '[data-drop]' }],
     }
@@ -132,10 +133,10 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     static PARTS = {
         header: { template: `modules/${MODULE.ID}/templates/guildTemplates/header.hbs` },
         navigation: { template: `modules/${MODULE.ID}/templates/guildTemplates/navigation.hbs` },
-        general: { template: `modules/${MODULE.ID}/templates/guildTemplates/general.hbs` },
+        general: { template: `modules/${MODULE.ID}/templates/guildTemplates/general.hbs`, scrollable: [""]},
         //missions: { template: `modules/${MODULE.ID}/templates/guildTemplates/missions.hbs`, scrollable: [""] },
         //adventurers: { template: `modules/${MODULE.ID}/templates/guildTemplates/adventurers.hbs`, scrollable: [""] },
-        //graveyard: { template: `modules/${MODULE.ID}/templates/guildTemplates/graveyard.hbs`, scrollable: [""] },
+        graveyard: { template: `modules/${MODULE.ID}/templates/guildTemplates/graveyard.hbs`, scrollable: [".scrollable"] },
         //log: { template: `modules/${MODULE.ID}/templates/guildTemplates/log.hbs`, scrollable: [""] }
     }
 
@@ -219,6 +220,14 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         return mis.finish();
     }
 
+    static async #createNewMission(event, target) {
+        return this.guild.createRandomMission();
+    }
+
+    static async #createNewAdventurer(event, target) {
+        return this.guild.createRandomAdventurer();
+    }
+
     /**
      * @param {PointerEvent} event - The originating click event
      * @param {HTMLElement} target - the capturing HTML element which defined a [data-action]
@@ -244,7 +253,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     async _prepareContext(options) {
         const tabs = {
             general: { label: "Guild Hall" },
-            //graveyard: { label: "Graveyard" },
+            graveyard: { label: "Graveyard" },
             //log: { label: "Mission Log" },
         };
         for (const [k, v] of Object.entries(tabs)) {
@@ -258,7 +267,6 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         const isGM = game.user.isGM;
 
         const fields = {};
-        //fields.unlocked = this.#makeField(source, "unlocked");
 
         const adventurers = this._prepareAdventurersContext();
         const missions = this._prepareMissionsContext();
@@ -329,7 +337,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      * @property {string} description
      * @property {string} reward
      * @property {DcData} dcData
-     * @property {number} durationInMonths
+     * @property {number} durationInDays
      * @property {number} daysUntilReturn
      * @property {{[checkResultId: string]: CheckResult}} results
      * @property {object[]} assigned 
@@ -362,16 +370,20 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      */
     getMissionCardContext(mis) {
         const reward = (() => {
-            const rewardStrings = [];
-            if(mis.rewards.gp) rewardStrings.push(`${mis.rewards.gp}gp`);
+            const parts = [];
 
-            for(const record of mis.rewards.items) {
-                rewardStrings.push(`${record.quantity}x ${record.itemName}`);
-            }
+            if(mis.rewards.gp) parts.push(`${mis.rewards.gp}gp`);
 
-            for(const str of mis.rewards.other) rewardStrings.push(str);
+            const itemRecordPart = Object.values(mis.rewards.itemRecords)
+                .filter(v => v.uuid)
+                .map(v => `${v.quantity}x ${v.name}`)
+                .join(", ");
+            if(itemRecordPart) parts.push(itemRecordPart);
 
-            return rewardStrings.join(", ");
+            const otherPart = Array.from(mis.rewards.other).join(", ");
+            if(otherPart) parts.push(otherPart);
+
+            return parts.join(`<br>`)
         })();
 
         const dcDataRaw = Object.entries(mis.dc)
@@ -421,19 +433,20 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             missionButton.label = "View Mission Report";
         }
 
-        
-        const durationLabel = mis.duration.remaining > 0 
-            ? `${mis.duration.remaining} days remaining`
-            : !this.hasStarted 
-                ? `${mis.duration.total} days`
-                : "";
+        const durationLabel = state.numeric <= 1 
+            ? `${mis.duration.total} days`
+            : state.numeric === 2 
+                ? `${mis.duration.remaining} days until return`
+                : state.numeric === 3
+                    ? "Returned"
+                    : "";
         
         return {
             id: mis.id,
             name: mis.name,
             description: mis.description,
             durationLabel,
-            durationInMonths: mis.durationInMonths,
+            durationInDays: mis.durationInDays,
             state: mis.state,
             risk: mis.risk,
             reward,
@@ -463,7 +476,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         ).map(adv => this.getAdventurerCardContext(adv));
         
         const dead = deadAdv.sort((a, b) => 
-            b._deadDate.inDays - a._deadDate.inDays // Sort descending, most recent deaths first
+            b._deathDate.inDays - a._deathDate.inDays // Sort descending, most recent deaths first
         ).map(adv => this.getAdventurerCardContext(adv));
         
         return { alive, dead };
@@ -506,6 +519,9 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             explanation: "Each successful mission and each natural 20 grant +1 exp."
         }
 
+        const cssClassesArray = [];
+        if(adv.isDead || adv.state === "away") cssClassesArray.push("collapsed");
+        
         return {
             id: adv.id,
             name: adv.name,
@@ -516,7 +532,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             level,
             assignedMission: adv.assignedMission,
             deathDate: adv.deathDate ? adv.deathDate.displayString : "",
-            attributes: Object.values(adv.attributes)
+            attributes: Object.values(adv.attributes),
+            cssClasses: cssClassesArray.join(" "),
         }
     }
 
@@ -526,7 +543,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     _getMissionCardContextMenuItems() {
         return [
             {
-                name: "Unassign All",
+                name: "Unassign All Adventurers",
                 icon: `<i class="fa-regular fa-circle-xmark"></i>`,
                 condition: (jq) => {
                     const mission = this._getMissionFromJQ(jq);
@@ -535,12 +552,37 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
                 callback: this._onUnassignAll.bind(this)
             },
             {
-                name: "(GM) Edit Mission",
+                name: "(GM) Edit",
                 //icon: `<i class="fa-regular fa-circle-xmark"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: this._onEditMission.bind(this)
             },
+            {
+                name: "(GM) Delete",
+                icon: `<i class="fa-solid fa-trash"></i>`,
+                condition: (jq) => game.user.isGM,
+                callback: this._onDeleteMission.bind(this)
+            },
+            {
+                name: "(GM) Force Return",
+                //icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                condition: (jq) => {
+                    const mission = this._getMissionFromJQ(jq);
+                    return game.user.isGM && !!mission.hasStarted && !mission.hasReturned
+                },
+                callback: this._onForceReturn.bind(this)
+            },
         ];
+    }
+
+    /** 
+     * @param {JQuery} jq  
+     * @returns {Mission}
+     */
+    _getMissionFromJQ(jq) {
+        const card = jq.closest(".mission-card")[0];
+        const id = card.dataset.missionId;
+        return this.guild.missions.get(id);
     }
 
     async _onUnassignAll(jq) {
@@ -553,80 +595,45 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         return mission.edit();
     }
 
-    _getAdventurerCardContextMenuItems() {
-        return;
-        //UNFINISHED
+    async _onDeleteMission(jq) {
+        const mission = this._getMissionFromJQ(jq);
+        return this.guild.deleteEmbedded([mission.id]);
+    }
 
+    async _onForceReturn(jq) {
+        const mission = this._getMissionFromJQ(jq);
+        return mission.update({returnDate: TaliaDate.now()});
+    }
+
+    //#endregion
+
+    //#region Adventurer Context Menu
+
+    _getAdventurerCardContextMenuItems() {
         return [
             {
-                name: "Activate",
-                icon: '<i class="fa-solid fa-plus"></i>',
-                condition: (jq) => {
-                    const effect = this._getEffectFromJQ(jq);
-                    return game.user.isGM && !effect.isActive
-                },
-                callback: async (jq) => {
-                    const effect = this._getEffectFromJQ(jq);
-                    await effect.activate();
-                }
+                name: "(GM) Edit",
+                //icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                condition: (jq) => game.user.isGM,
+                callback: this._onEditAdventurer.bind(this)
             },
-            {
-                name: "Deactivate",
-                icon: '<i class="fa-solid fa-minus"></i>',
-                condition: (jq) => {
-                    const effect = this._getEffectFromJQ(jq);
-                    return game.user.isGM && effect.isActive
-                },
-                callback: async (jq) => {
-                    const effect = this._getEffectFromJQ(jq);
-                    await effect.deactivate();
-                }
-            },
-            {
-                name: "Modify Begin Date",
-                icon: `<i class="fa-thin fa-calendar"></i>`,
-                condition: () => game.user.isGM,
-                callback: async (jq) => {
-                    const effect = this._getEffectFromJQ(jq);
-                    const newDate = await TaliaDate.fromDialog();
-                    if( newDate ) await effect.setBeginDate(newDate);
-                }
-            }
         ]
     }
 
+    async _onEditAdventurer(jq) {
+        const adventurer = this._getAdventurerFromJQ(jq);
+        return adventurer.edit();
+    }
+
+    /** 
+     * @param {JQuery} jq  
+     * @returns {Adventurer}
+     */
     _getAdventurerFromJQ(jq) {
         const card = jq.closest(".adventurer-card")[0];
         const id = card.dataset.adventurerId;
         return this.guild.adventurers.get(id);
     }
 
-    /** 
-     * @param {JQuery} jq  
-     * @returns {Building}
-     */
-    _getMissionFromJQ(jq) {
-        const card = jq.closest(".mission-card")[0];
-        const id = card.dataset.missionId;
-        return this.guild.missions.get(id);
-    }
     //#endregion
-
-
 }
-
-/**
- * @typedef {object} AssignedData
- * @property {string} id
- * @property {string} name
- * @property {string} img
- * @property {string} adventurerCardHTML    // a template of the adventurer's card
- * 
- */
-
-/**
- * @typedef {object} AdventurerCardData
- * @property {string} id
- * @property {string} name
- * @property {string} img
- */

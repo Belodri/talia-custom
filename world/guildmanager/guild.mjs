@@ -3,6 +3,7 @@ import { MODULE } from "../../scripts/constants.mjs";
 import Adventurer from "./adventurer.mjs";
 import Mission from "./mission.mjs";
 import GuildApp from "./guildApp.mjs";
+import TaliaDate from "../../utils/TaliaDate.mjs";
 
 /** @typedef {import("../../foundry/common/utils/collection.mjs").default} Collection */
 
@@ -20,39 +21,6 @@ import GuildApp from "./guildApp.mjs";
  * 
  * 
  */
-
-/*  NOTES ABOUT MISSIONS
-
-    Mission Getter:
-    - hasStarted()   Has this mission started (does it have a start date?)
-    - isFinished()  Has this mission finished (is the current date more than DURATION days after the start date?)
-    - isResolved()  Has this mission been resolved (finished & rewards granted)
-    
-    Mission States:
-    - available     The mission is available at the board but hasn't started yet
-        getter: !isRunning && !isRunning
-    - running       The mission has started but hasn't finished yet
-        getter: isRunning && !isFinished
-    - finished      The mission has finished, successfully or not
-
-    Mission Workflow
-    1) assign adventurers to mission
-    2) start mission
-    3) wait until mission has finished
-    4) resolve mission
- */
-
-/*  NOTES ABOUT ADVENTURERS
-
-    Adventurer States:
-    - available     The adventurer is available at the hall but has not been assigned to a mission
-        getter: !isAssigned && !isDead
-    - assigned      The adventurer is assigned to a mission
-        getter: isAssigned && !isDead
-    - dead          The adventurer is dead
-        getter: isDead
- */
-
 
 export default class Guild extends foundry.abstract.DataModel {
     constructor(...args) {
@@ -81,8 +49,8 @@ export default class Guild extends foundry.abstract.DataModel {
 
     /** @override */
     static metadata = Object.freeze({
-        label: "Settlement",
-        documentName: "settlement",
+        label: "Guild",
+        documentName: "guild",
         icon: null,
         defaultImg: null
     });
@@ -100,7 +68,7 @@ export default class Guild extends foundry.abstract.DataModel {
             ),
             _missions: new MappingField( 
                 new EmbeddedDataField(  Mission, { nullable: true } ), { initial: {}, nullable: false }
-            ),
+            )
         }
     }
 
@@ -162,26 +130,19 @@ export default class Guild extends foundry.abstract.DataModel {
     async update(changes, options = {}) {
         changes = foundry.utils.expandObject(changes);
         const diff = this.updateSource(changes, options);
-        await this.parent.setFlag(MODULE.ID, Guild.FLAG_KEY, this.toObject());
+
+        const obj = this.toObject();
+        const flattened = foundry.utils.flattenObject(diff);
+        const deletions = Object.entries(flattened)
+            .filter(([k, v]) => v === null && k.split(".").pop().startsWith("-=") )
+            .reduce((acc, [k, v]) => {
+                acc[k] = v;
+                return acc;
+            }, {});
+        const objWithDeletions = foundry.utils.mergeObject(obj, deletions, { inplace: false });
+        
+        await this.parent.setFlag(MODULE.ID, Guild.FLAG_KEY, objWithDeletions);
         return diff; 
-    }
-
-    /** 
-     * Deletes embedded Missions or Adventurers by their ids.
-     * @param {string[]} ids 
-     */
-    async deleteEmbedded(ids) {
-        const changes = {};
-
-        for(const id of ids) {
-            const inst = this._missions[id] ?? this._adventurers[id] ?? null;
-            if(!inst) throw new Error(`Invalid id "${id}".`);
-
-            const key = inst instanceof Mission ? "_missions" : "_adventurers";
-            changes[`${key}.-=${id}`] = null;
-        }
-
-        return this.update(changes);
     }
 
     /**
@@ -254,6 +215,24 @@ export default class Guild extends foundry.abstract.DataModel {
         };
         await this.update(guildChanges);
         return diff;
+    }
+
+    /** 
+     * Deletes embedded Missions or Adventurers by their ids.
+     * @param {string[]} ids 
+     */
+    async deleteEmbedded(ids) {
+        const changes = {};
+
+        for(const id of ids) {
+            const inst = this._missions[id] ?? this._adventurers[id] ?? null;
+            if(!inst) throw new Error(`Invalid id "${id}".`);
+
+            const key = inst instanceof Mission ? "_missions" : "_adventurers";
+            changes[`${key}.-=${id}`] = null;
+        }
+
+        return this.update(changes);
     }
 
     //#endregion

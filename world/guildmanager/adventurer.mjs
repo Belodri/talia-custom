@@ -107,19 +107,23 @@ export default class Adventurer extends foundry.abstract.DataModel {
         states: {
             waiting: {
                 icon: "fa-solid fa-user",
-                hint: "Waiting to be assigned"
+                hint: "Waiting to be assigned",
+                key: "waiting",
             },
             assigned: {
                 icon: "fa-solid fa-user-check",
-                hint: "Assigned to a mission"
+                hint: "Assigned to a mission",
+                key: "assigned",
             },
             away: {
                 icon: "fa-solid fa-route",
-                hint: "On a mission"
+                hint: "On a mission",
+                key: "away",
             },
             dead: {
                 icon: "fa-solid fa-skull",
-                hint: "Dead"
+                hint: "Dead",
+                key: "dead",
             }
         }
     }
@@ -160,13 +164,13 @@ export default class Adventurer extends foundry.abstract.DataModel {
             id: new StringField({ required: true, nullable: false, blank: false }),
             name: new StringField({ required: true, blank: false, label: "Name" }),
             details: new SchemaField({ 
-                sex: new StringField({ choices: Adventurer.CONFIG.sex, blank: false, initial: Adventurer.CONFIG.sex[0] }),
-                race: new StringField({ choices: Adventurer.CONFIG.race, blank: false, initial: Adventurer.CONFIG.race[0] }),
-                charClass: new StringField({ choices: Adventurer.CONFIG.charClass, blank: false, initial: Adventurer.CONFIG.charClass[0] })
+                sex: new StringField({ choices: Adventurer.CONFIG.sex, blank: false, initial: Adventurer.CONFIG.sex[0], label: "Sex" }),
+                race: new StringField({ choices: Adventurer.CONFIG.race, blank: false, initial: Adventurer.CONFIG.race[0], label: "Race" }),
+                charClass: new StringField({ choices: Adventurer.CONFIG.charClass, blank: false, initial: Adventurer.CONFIG.charClass[0], label: "Character Class" })
             }),
             _attributes: new SchemaField( shared.defineAttributesSchema(), { label: "Attributes" } ),
-            survivedMissions: new NumberField({ integer: true, initial: 0, min: 0 }),
-            criticalRolls: new NumberField({ integer: true, initial: 0, min: 0 }),
+            survivedMissions: new NumberField({ integer: true, initial: 0, min: 0, label: "Survived Missions" }),
+            criticalRolls: new NumberField({ integer: true, initial: 0, min: 0, label: "Critical Rolls" }),
             _deathDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
             img: new FilePathField({ categories: ["IMAGE"], label: "Image" }),
         }
@@ -394,4 +398,47 @@ export default class Adventurer extends foundry.abstract.DataModel {
     }
 
     //#endregion
+
+    async edit() {
+        const makeField = (path, options={}) => {
+            const field = this.schema.getField(path);
+            const value = foundry.utils.getProperty(source, path);
+    
+            return {
+                field: field,
+                value: value,
+                ...options
+            };
+        }
+
+        const { DialogV2 } = foundry.applications.api;
+        const source = this.toObject();
+
+        // Fields that don't require special handling
+        const fieldPaths = [
+            "name", 
+            "_attributes.brawn", "_attributes.cunning", "_attributes.spellcraft", "_attributes.influence", "_attributes.reliability",
+            "details.sex", "details.race", "details.charClass",
+            "survivedMissions", "criticalRolls", "img",
+        ];
+
+        const mainFields = fieldPaths.reduce((acc, curr) => {
+            const field = makeField(curr);
+            const element = field.field.toFormGroup({}, { value: field.value });
+            acc += element.outerHTML;
+            return acc;
+        }, "");
+
+        const changes = await DialogV2.prompt({
+            window: { title: "Adventurer Editor" },
+            position: { width: 500, height: "auto" },
+            content: mainFields, 
+            modal: false, 
+            rejectClose: false, 
+            ok: { callback: (event, button) => new FormDataExtended(button.form).object }
+        });
+
+        if(!changes) return;
+        return this.update(changes);
+    }
 }

@@ -31,10 +31,11 @@ export default class Mission extends foundry.abstract.DataModel {
             min: 10,
             max: 25
         },
-        durationMonths: {
-            min: 1,
-            max: 3,
+        durationDays: {
+            min: 30,
+            max: 90,
         },
+        maxRewardItems: 3,
         maxAdventurers: 4,
         risk: {
             low: {
@@ -58,36 +59,39 @@ export default class Mission extends foundry.abstract.DataModel {
                 key: "none",
                 icon: "fa-solid fa-users",
                 hint: "Adventurers can be assigned to this mission",
-                label: ""
+                label: "",
+                numeric: 0,
             },
             ready: {
                 key: "ready",
                 icon: "fa-solid fa-user-check",
                 hint: "Can be started",
-                label: "Ready"
+                label: "Ready",
+                numeric: 1,
             },
             ongoing: {
                 key: "ongoing",
                 icon: "fa-solid fa-route",
                 hint: "Is ongoing",
-                label: "Ongoing"
+                label: "Ongoing",
+                numeric: 2,
             },
             returned: {
                 key: "returned",
                 icon: "fa-solid fa-exclamation",
                 hint: "Has returned",
-                label: "Returned"
+                label: "Returned",
+                numeric: 3,
             },
             logged: {
                 key: "logged",
                 icon: "",
                 hint: "",
-                label: ""
+                label: "",
+                numeric: 4,
             }
         }
     }
-
-    // Reward items -> Set({uuid, itemName, quantity})>
 
     static defineSchema() {
         const {
@@ -95,25 +99,49 @@ export default class Mission extends foundry.abstract.DataModel {
             BooleanField, ArrayField, ObjectField, DocumentUUIDField
         } = foundry.data.fields;
 
+
+        const getRewardItemsSchema = () => {
+            const schemaObj = {};
+            for(let i = 0; i < Mission.CONFIG.maxRewardItems; i++) {
+                schemaObj[i] = new SchemaField({
+                    uuid: new DocumentUUIDField({ 
+                        embedded: false, 
+                        validate: (value) => { 
+                            if(value.includes("Item.")) return true;
+                            ui.notifications.error(`Invalid document. Expects documents of type "Item".`);
+                            return false;
+                        }
+                    }),
+                    quantity: new NumberField({min: 1, nullable: true, initial: null })
+                });
+            }
+            return schemaObj;
+        }
+
         return {
             id: new StringField({ required: true, nullable: false, blank: false }),
             name: new StringField({ blank: true, initial: "", label: "Name" }),
             dc: new SchemaField( shared.defineAttributesSchema(), {label: "DC"}),
-            _risk: new StringField({ choices: Object.keys(Mission.CONFIG.risk), initial: "low", required: true, label: "Risk" }),
+            _risk: new StringField({ 
+                initial: "low", required: true, label: "Risk",
+                choices: Object.entries(Mission.CONFIG.risk)
+                    .reduce((acc, [k, v]) => {
+                        acc[k] = v.label;
+                        return acc;
+                    }, {}),
+            }),
             rewards: new SchemaField({
                 gp: new NumberField({ integer: true, nullable: true, required: true, positive: true, label: "gp"}),
-
-                // Reward items -> Set({uuid, itemName, quantity})>
-                items: new SetField( new ObjectField(), {label: "Items"}),
+                items: new SchemaField( getRewardItemsSchema(), {label: "Items"} ),
                 other: new SetField( new StringField(), { label: "Other rewards" })
             }, { label: "Rewards" }),
-            durationInMonths: new NumberField({ integer: true, initial: 1, positive: true, label: "Duration (months)"}),
+            durationInDays: new NumberField({ integer: true, initial: 1, positive: true, label: "Duration (days)"}),
             description: new StringField({ required: false, blank: true, initial: "", label: "Description" }),
             _assignedAdventurerIds: new SetField( new StringField() ),
             results: new ObjectField({ required: false }),
             startDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null } ), 
+            returnDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null } ), 
             finishDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
-            _hasFinished: new BooleanField(),
         }
     }
 
@@ -133,7 +161,7 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     /** Has this mission been started? */
-    get hasStarted() { return !!this.startDate; }
+    get hasStarted() { return !!this.startDate && !!this.returnDate; }
 
     /** Has this mission returned? */
     get hasReturned() { 
@@ -143,11 +171,6 @@ export default class Mission extends foundry.abstract.DataModel {
 
     /** Has this mission been finished, finalized, and logged? */
     get hasFinished() { return !!this.finishDate; }
-
-    /** The date on which the mission returns. If the mission hasn't started yet, the returnDate is undefined */
-    get returnDate() {
-        return this.startDate ? TaliaDate.fromOffset(this.startDate, { months: this.durationInMonths }) : undefined;
-    }
 
     /** The number of days until the mission returns. Returns null if the mission hasn't started. Returns a negative number if the mission has returned already.*/
     get daysUntilReturn() { 
@@ -213,6 +236,12 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     prepareDerivedData() {
+        const getItemNameFromUuid = (uuid) => {
+            if(!uuid) return "";
+            const { name } = fromUuidSync(uuid);
+            return name;
+        };
+
         this.assignedAdventurers = new foundry.utils.Collection(
             this._assignedAdventurerIds.map(id => {
                 const adv = this.parent._adventurers[id];
@@ -221,10 +250,19 @@ export default class Mission extends foundry.abstract.DataModel {
         );
 
         this.duration = {
-            total: this.durationInMonths * 30,
+            total: this.durationInDays,
             remaining: this.daysUntilReturn
         };
 
+        this.rewards.itemRecords = Object.entries(this.rewards.items)
+            .reduce((acc, [key, values]) => {
+                acc[key] = {
+                    uuid: values.uuid,
+                    name: getItemNameFromUuid(values.uuid),
+                    quantity: values.quantity
+                };
+                return acc;
+            }, {});
     }
     //#endregion
 
@@ -299,16 +337,17 @@ export default class Mission extends foundry.abstract.DataModel {
 
     static getRandomData() {
         const data = {
+            name: "DEFAULT MISSION NAME",
             dc: Mission._getRandomDCs(),
-            durationInMonths: Mission._getRandomDuration(),
-            risk: Mission._getRandomRisk(),
+            durationInDays: Mission._getRandomDuration(),
+            _risk: Mission._getRandomRisk(),
         }
 
         return data;
     }
 
     static _getRandomDuration() {
-        const { min, max } = Mission.CONFIG.durationMonths;
+        const { min, max } = Mission.CONFIG.durationDays;
         return Helpers.getRandomInt(min, max);
     }
 
@@ -336,28 +375,56 @@ export default class Mission extends foundry.abstract.DataModel {
             || this.canStart;
         if(!allowStart) throw new Error(`Unable to start mission id "${this.id}".`);
         
+        const startDate = TaliaDate.now();
+        const returnDate = TaliaDate.fromOffset(startDate, {days: this.durationInDays})
+
         const changes = {
             results: await Resolver.createMissionResults(this),
-            startDate: TaliaDate.now(),
+            startDate,
+            returnDate,
         }
         return this.update(changes);
     }
 
-    async finish({revealResults = true}) {
+    async finish() {
         if( !this.hasReturned || this.hasFinished ) throw new Error(`Unable to finish mission id "${this.id}".`);
 
-        if(revealResults) {
-            for(const result of this.results) {
-                if(!result.isRevealed) await this.revealResult(result.id);
-            }
-        }
-
+        // perform updates
         const promises = [
             ...this.assignedAdventurers.map(adv => adv._onMissionFinish(this)),
             this.update({ finishDate: TaliaDate.now() })
         ];
+        await Promise.all(promises);
+
+
+        //then display results
+        await this.displayResults();    //todo displayResults()
         
-        return Promise.all(promises);
+
+        //then grant rewards
+        await this.grantRewards();  //todo grantRewards()
+    }
+
+    async displayResults() {
+        // Sort by adventurer name
+        const sorted = Object.values(this.results)
+            .sort((a, b) => a.adventurerName.localeCompare(b.adventurerName));
+
+        for(const result of sorted) {
+            await this._revealResult(result.id);
+        }
+
+        /*
+            Infos to include in summary message:
+
+            - who died
+            
+            - those who lived:
+                - how much exp gained
+                - any level ups?
+
+            - rewards
+        */
     }
     
     //#endregion
@@ -374,18 +441,11 @@ export default class Mission extends foundry.abstract.DataModel {
 
     /**
      * Transform a result into a ChatMessage, displaying the roll result.
-     * This function can either create the ChatMessage directly, or return the data object that will be used to create.
      * @param {string} resultId 
-     * @param {Partial<ResultRevealOptions>} [revealOptions]
-     * @returns {Promise<ChatMessage|object>}           A promise which resolves to the created ChatMessage document if createMessage is
-     *                                                  true, or the Object of prepared chatData otherwise.
+     * @returns {Promise<ChatMessage>}           A promise which resolves to the created ChatMessage document
      */
-    async revealResult(resultId, revealOptions={}) {
-        const {
-            updateResult = true,
-            createMessage = true,
-            rollMode = CONST.DICE_ROLL_MODES.PUBLIC
-        } = revealOptions;
+    async _revealResult(resultId) {
+
 
         const result = this.results[resultId];
         if(!result) throw new Error(`Result id "${resultId}" not found in mission id "${this.id}".`);
@@ -410,23 +470,32 @@ export default class Mission extends foundry.abstract.DataModel {
             await this.update({[`results.${result.id}.isRevealed`]: true });
         }
 
-        return await roll.toMessage(messageData, { create: createMessage, rollMode });
+        return await roll.toMessage(messageData, { rollMode: CONST.DICE_ROLL_MODES.PUBLIC });
     }
 
     /**
      * Transform all results into ChatMessages, displaying the roll result.
-     * This function can either create the ChatMessages directly, or return the data objects that will be used to create.
-     * @param {Partial<ResultRevealOptions>} revealOptions 
-     * @returns {Promise<ChatMessage[] | object[]>}     A promise which resolves to an array of created ChatMessage documents if createMessage is
-     *                                                  true, or an array of prepared chatData objects otherwise.
      */
-    async revealAllResults(revealOptions={}) {
+    async revealAllResults() {
+        /** @type {{[key: string]: CheckResult}} */
         const results = this.results;
         if(!result) throw new Error(`Results for mission id "${this.id}" undefined.`);
 
-        const promises = Object.keys(results)
-            .map(id => this.revealResult(id, revealOptions));
-        return Promise.all(promises);   
+        // Sort by adventurer name
+        const sorted = Object.values(results)
+            .sort((a, b) => a.adventurerName.localeCompare(b.adventurerName));
+
+        // Display rolls
+        await Promise.all(sorted.map(r => this._revealResult(r.id)));
+
+        // Display summary
+
+        /*
+            info to display:
+
+            - rewards
+
+        */
     }
 
     /**
@@ -435,7 +504,7 @@ export default class Mission extends foundry.abstract.DataModel {
      */
     async getRewardItemObjects() {
         const rewardItemObjects = new foundry.utils.Collection();
-        for(const record of this.rewards.items) {
+        for(const record of Object.values(this.rewards.items)) {
             const item = await fromUuid(record.uuid);
             const itemObj = item.toObject();
             itemObj.system.quantity = record.quantity;
@@ -455,7 +524,70 @@ export default class Mission extends foundry.abstract.DataModel {
     //#endregion
 
     async edit() {
-        //todo
+        const makeField = (path, options={}) => {
+            const field = this.schema.getField(path);
+            const value = foundry.utils.getProperty(source, path);
+    
+            return {
+                field: field,
+                value: value,
+                ...options
+            };
+        }
+
+        const { DialogV2 } = foundry.applications.api;
+        const { DocumentUUIDField, NumberField } = foundry.data.fields;
+        const source = this.toObject();
+
+        const itemFields = Object.entries(this.rewards.items)
+            .reduce((acc, [k, v]) => {
+                const uuidField = new DocumentUUIDField({
+                    type: "Item",
+                    embedded: false,
+                    label: `Reward Item ${k}`,
+                    initial: v.uuid ?? null,
+                }).toFormGroup({}, {name: `rewards.items.${k}.uuid`}).outerHTML;
+
+                const quantityField = new NumberField({
+                    min: 1,
+                    required: true,
+                    initial: v.quantity ?? null,
+                    nullable: true,
+                }).toFormGroup({stacked: false}, {name: `rewards.items.${k}.quantity`}).outerHTML;
+                acc += uuidField + quantityField;
+                return acc;
+            }, "");
+
+        // Fields that don't require special handling
+        const fieldPaths = [
+            "name", "dc.brawn", "dc.cunning", "dc.spellcraft", "dc.influence", "dc.reliability",
+            "_risk", "rewards.gp", "rewards.other", "durationInDays", "description"
+        ];
+
+        // Paths for item fields
+        for(const k of Object.keys(this.rewards.items)) {
+            fieldPaths.push(`rewards.items.${k}.uuid`);
+            fieldPaths.push(`rewards.items.${k}.quantity`);
+        }
+
+        const mainFields = fieldPaths.reduce((acc, curr) => {
+            const field = makeField(curr);
+            const element = field.field.toFormGroup({}, { value: field.value });
+            acc += element.outerHTML;
+            return acc;
+        }, "");
+
+        const changes = await DialogV2.prompt({
+            window: { title: "Mission Editor" },
+            position: { width: 500, height: "auto" },
+            content: mainFields, 
+            modal: false, 
+            rejectClose: false, 
+            ok: { callback: (event, button) => new FormDataExtended(button.form).object }
+        });
+
+        if(!changes) return;
+        return this.update(changes);
     }
 }
 
