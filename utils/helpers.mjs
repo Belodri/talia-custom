@@ -205,6 +205,35 @@ export class Helpers {
     }
 
     /**
+     * Grants items to an actor, stacking them if applicable.
+     * @param {Actor} actor 
+     * @param {object[]} itemDataArray          An array of itemData objects.
+     * @param {object} [options]   
+     * @param {boolean} [options.stack=true]    Should the granted items be stacked with other, items of the same name in the actor's inventory? 
+     */
+    static async grantItems(actor, itemDataArray, { stack=true }={}) {
+        const promises = [];
+        const create = [];
+        for(const itemData of itemDataArray) {
+            const /** @type {Item} */ existing = actor.items.find(i => i.name === itemData.name);
+
+            // Stack existing items of the same name 
+            if( existing 
+                && stack 
+                && foundry.utils.hasProperty(existing, "system.quantity")
+                && foundry.utils.hasProperty(itemData, "system.quantity") 
+            ) {
+                const newQuant = existing.system.quantity + itemData.system.quantity;
+                promises.push( existing.update({"system.quantity": newQuant}) );
+            } else {
+                create.push( itemData );
+            }
+        }
+        if(create.length) promises.push( actor.createEmbeddedDocuments("Item", create) );
+        return Promise.all(promises);
+    }
+
+    /**
      * Inserts new list items into an HTML string containing a ul element with class "card-footer pills unlist".
      * Each new item is added only if its label doesn't already exist in the list.
      * 
