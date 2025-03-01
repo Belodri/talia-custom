@@ -3,6 +3,9 @@ import Guild from "./guild.mjs";
 import TaliaDate from "../../utils/TaliaDate.mjs";
 import shared from "./shared.mjs";
 import { MODULE } from "../../scripts/constants.mjs";
+import Mission from "./mission.mjs";
+
+/** @typedef {import("../../foundry/common/utils/collection.mjs").default} Collection */
 
 /**
  * 
@@ -157,7 +160,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     static defineSchema() {
         const {
-            StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField, BooleanField, FilePathField
+            StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField, BooleanField, FilePathField, ObjectField
         } = foundry.data.fields;
 
         return {
@@ -169,8 +172,8 @@ export default class Adventurer extends foundry.abstract.DataModel {
                 charClass: new StringField({ choices: Adventurer.CONFIG.charClass, blank: false, initial: Adventurer.CONFIG.charClass[0], label: "Character Class" })
             }),
             _attributes: new SchemaField( shared.defineAttributesSchema(), { label: "Attributes" } ),
-            survivedMissions: new NumberField({ integer: true, initial: 0, min: 0, label: "Survived Missions" }),
-            criticalRolls: new NumberField({ integer: true, initial: 0, min: 0, label: "Critical Rolls" }),
+            _missionResults: new ObjectField({initial: {}}),
+            baseExp: new NumberField({ integer: true, initial: 0, min: 0, label: "Base Exp" }),
             _deathDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
             img: new FilePathField({ categories: ["IMAGE"], label: "Image" }),
         }
@@ -178,23 +181,22 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     //#region Getters
 
-    get exp() { return this.survivedMissions + this.criticalRolls; }
+    /** @type {Guild} */
+    get guild() { return this.parent; }
 
     get expForLevelUp() { 
         const expMinNext = Adventurer.CONFIG.levels[this.level + 1]?.expMin;
         return expMinNext 
             ? expMinNext - this.exp
-            : null;  
+            : Infinity;  
     }
 
     get level() { 
         const levels = Adventurer.CONFIG.levels;
-        const combinedExp = this.survivedMissions + this.criticalRolls;
 
         let lastLevel = levels[0];
-
         for (const level of Object.values(levels)) {
-            if (level.expMin > combinedExp) return lastLevel.level;
+            if (level.expMin > this.exp) return lastLevel.level;
             lastLevel = level;
         }
 
@@ -209,8 +211,9 @@ export default class Adventurer extends foundry.abstract.DataModel {
         else return "assigned";
     }
 
-    get assignedMission() {
-        return this.parent.missions.find(m => !m.isFinished && m.assignedAdventurers.has(this.id));
+    /** @returns {Mission | undefined} */
+    get assignedMission() { 
+        return this.guild.missions.find(mis => !mis.hasFinished && mis.assignedAdventurers.has(this.id)) 
     }
 
     get isAssigned() { return !!this.assignedMission; }
@@ -243,7 +246,19 @@ export default class Adventurer extends foundry.abstract.DataModel {
     }
 
     prepareDerivedData() {
-        const attributes = Object.entries(this._attributes)
+        // Mission results
+        this.missionResults = new foundry.utils.Collection();
+        this.criticalRolls = 0;
+        this.exp = this.baseExp;
+
+        for(const [k, res] of Object.entries( this._missionResults )) {
+            this.missionResults.set(k, res);
+            this.criticalRolls += res.critsCount;
+            this.exp += res.expGained;
+        }
+
+        // Attributes
+        this.attributes = Object.entries(this._attributes)
             .reduce((acc, [attr, value]) => {
                 const getDisplayMod = (modifier) => `${modifier >= 0 ? "+" : ""}${modifier}`;
 
@@ -268,8 +283,6 @@ export default class Adventurer extends foundry.abstract.DataModel {
                 }
                 return acc;
             }, {});
-
-        this.attributes = attributes;
     }
     //#endregion
 
@@ -371,30 +384,14 @@ export default class Adventurer extends foundry.abstract.DataModel {
     //#region Mission Results Handling
 
     async _onMissionFinish(mission) {
-        const advResults = Object.values(mission.results)
-            .reduce((acc, { adventurerId, isCritical, causedDeath }) => {
-                if (adventurerId === this.id) {
-                    acc.hasResults = true;
-                    if (isCritical) acc.critsCount++;
-                    if (causedDeath) acc.died = true;
-                }
-                return acc;
-            }, { hasResults: false, critsCount: 0, died: false });
+        const advRes = foundry.utils.deepClone(mission.results.adventurerResults[this.id]);
 
-        // should never happen but just in case
-        if (!advResults.hasResults) return;
+        const updates = {
+            [`_missionResults.${mission.id}`]: advRes
+        };
+        if(advRes.died) updates._deathDate = TaliaDate.now();
 
-        const changes = {};
-        if (advResults.died) {
-            changes._deathDate = TaliaDate.now();
-        } else {
-            changes.survivedMissions = this.survivedMissions + 1;
-            if (advResults.critsCount) {
-                changes.criticalRolls = this.criticalRolls + advResults.critsCount;
-            }
-        }
-
-        return this.update(changes) //async
+        return this.update(updates);
     }
 
     //#endregion
@@ -419,7 +416,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
             "name", 
             "_attributes.brawn", "_attributes.cunning", "_attributes.spellcraft", "_attributes.influence", "_attributes.reliability",
             "details.sex", "details.race", "details.charClass",
-            "survivedMissions", "criticalRolls", "img",
+            "baseExp", "img",
         ];
 
         const mainFields = fieldPaths.reduce((acc, curr) => {

@@ -80,7 +80,6 @@
     .card {
         display: flex;
         flex-direction: column;
-        min-width: max-content;
 
         border: 1px solid var(--button-border-color);
         border-radius: 5px;
@@ -141,6 +140,10 @@
     .card-body {
         display: flex;
         flex-direction: column;
+
+        & p {
+            flex-wrap: wrap;
+        }
     }
 
     .assignments {

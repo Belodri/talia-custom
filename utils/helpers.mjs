@@ -477,5 +477,24 @@ export class Helpers {
 
         return result;
     }
+
+    /**
+     * Replaces placeholders in a string with corresponding values from an object.
+     *
+     * Placeholders are defined in the format `[placeholderName]` within the string.
+     * If a matching key exists in the provided object, it replaces the placeholder with the corresponding value.
+     * If a key is not found in the object, the placeholder remains unchanged.
+     *
+     * @param {string} str      The input string containing placeholders.
+     * @param {object} values   An object containing key-value pairs to replace placeholders.
+     * @returns {string}        The formatted string with replaced placeholders.
+     *
+     * @example
+     * const result = Helpers.replacePlaceholders("This is a [animal] named [name].", { animal: "dog", name: "foo" });
+     * console.log(result); // "This is a dog named foo."
+     */
+    static replacePlaceholders(str, values) {
+        return str.replace(/\[([a-zA-Z0-9_]+)\]/g, (match, key) => values[key] !== undefined ? values[key] : match);
+    }
 }
 

@@ -13,6 +13,8 @@ import { Helpers } from "../../utils/helpers.mjs";
  * @property {number} adventurerLevel   The level of the adventurer at the time of the roll.
  * @property {number} adventurerExp     The exp of the adventurer at the time of the roll.
  * @property {string} attributeKey      The attribute that this roll is for.
+ * @property {string} missionId         The id of the mission
+ * @property {string} missionName       The name of the mission
  * @property {boolean} isSuccess        Is this roll a success
  * @property {number} dc                The DC for the check.
  * @property {number} total             The total of the rolled check.
@@ -20,17 +22,28 @@ import { Helpers } from "../../utils/helpers.mjs";
  * @property {boolean} isFumble         Is this check a critical fail?
  * @property {boolean} isCritical       Is this check a critical success?
  * @property {object} rollObj           The roll as an object.
+ * @property {boolean} causedDeath      Did this roll cause the death of the adventurer?
  */
 
 /**
  * @typedef {object} AdventurerResult
  * @property {string} id                    The id of the adventurer
  * @property {string} name                  The name of the adventurer
+ * @property {string} missionId             The id of the mission
+ * @property {string} missionName           The name of the mission
  * @property {boolean} died                 Did the adventurer die from any of the checks?
  * @property {number} critsCount            How many crits did the adventurer roll in the checks they made?
  * @property {CheckResult[]} checkResults   The CheckResult objects of each of the checks the adventurer made.
  * @property {number} expGained             How much exp did the adventurer gain from these checks?
  * @property {boolean} causedLevelUp        Did the exp the adventurer gained from this cause a levelup?
+ */
+
+/**
+ * @typedef {{[adventurerId: string]: AdventurerResult}} AdventurerResults
+ */
+
+/**
+ * @typedef {{[checkId: string]: CheckResult}} CheckResults
  */
 
 export class Resolver {
@@ -144,10 +157,12 @@ export class Resolver {
             if (result.isCritical) critsCount++;
         }
 
-        const expGained = critsCount + (died ? 0 : expGainedForSuccessfulMission); // crits + 1 if survived
+        const expGained = critsCount + (died ? 0 : Resolver.CONFIG.expGainedForSuccessfulMission); // crits + 1 if survived
         const advResult = {
             id: adv.id,
             name: adv.name,
+            missionId: this.mission.id,
+            missionName: this.mission.name,
             died,
             critsCount,
             checkResults,
@@ -197,6 +212,8 @@ export class Resolver {
             adventurerName: adventurer.name,
             adventurerLevel: adventurer.level,
             adventurerExp: adventurer.exp,
+            missionId: this.mission.id,
+            missionName: this.mission.name,
             attributeKey: attributeKey,
             isSuccess: Helpers.isRollSuccess(roll),
             isFumble: roll.isFumble,

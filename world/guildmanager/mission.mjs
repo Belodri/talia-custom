@@ -5,25 +5,23 @@ import TaliaDate from "../../utils/TaliaDate.mjs";
 import shared from "./shared.mjs";
 import { MODULE } from "../../scripts/constants.mjs";
 import { MappingField } from "../../utils/mappingField.mjs";
+import { Resolver } from "./Resolver.mjs";
 
 /** @typedef {import("../../foundry/common/utils/collection.mjs").default} Collection */
-/** @typedef {import("../../system/dnd5e/module/dice/d20-roll.mjs").default} D20Roll */
 
 /*
     TO DO
     - Chat Message: Show Adventurer image
 */
 
+
 export default class Mission extends foundry.abstract.DataModel {
     constructor(...args) {
+        
         super(...args);
 
-        //for type annotations
         /** @type {Collection<string, Adventurer>} */
         this.assignedAdventurers ??= new foundry.utils.Collection();
-
-        /** @type {{[key: string]: CheckResult}} */
-        this.results ??= {};
     }
     
     static CONFIG = {
@@ -36,19 +34,23 @@ export default class Mission extends foundry.abstract.DataModel {
             max: 90,
         },
         maxRewardItems: 3,
+        minAdventurers: 2,
         maxAdventurers: 4,
         risk: {
             low: {
+                key: "low",
                 explanation: "Failing a check with a natural 1 results in death.",
                 label: "Low",
                 deathMargin: 99,
             },
             medium: {
+                key: "medium",
                 explanation: "Failing a check by 5 or more results in death.",
                 label: "Medium",
                 deathMargin: 5,
             },
             high: {
+                key: "high",
                 explanation: "Failing a check results in death.",
                 label: "High",
                 deathMargin: 0,
@@ -137,8 +139,14 @@ export default class Mission extends foundry.abstract.DataModel {
             }, { label: "Rewards" }),
             durationInDays: new NumberField({ integer: true, initial: 1, positive: true, label: "Duration (days)"}),
             description: new StringField({ required: false, blank: true, initial: "", label: "Description" }),
+            summaryFlavor: new StringField({ required: false, blank: true, initial: "", label: "Summary Flavor", hint: "The parameters [missionName], [duration], [startDate], [returnDate], [assigned], and [survived] are replaced with the mission's values in the final text." }),
             _assignedAdventurerIds: new SetField( new StringField() ),
-            results: new ObjectField({ required: false }),
+            results: new SchemaField({ 
+                /** @type {import("./Resolver.mjs").CheckResults} */
+                checkResults: new ObjectField(),
+                /** @type {import("./Resolver.mjs").AdventurerResults} */
+                adventurerResults: new ObjectField(),
+            }, { required: false, initial: undefined }),
             startDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null } ), 
             returnDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null } ), 
             finishDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
@@ -146,6 +154,9 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     //#region Getters
+
+    /** @returns {Guild} */
+    get guild() { return this.parent; }
 
     /** Can an adventurer be assigned to this mission. */
     get canAssign() {
@@ -156,7 +167,7 @@ export default class Mission extends foundry.abstract.DataModel {
     /** Can this mission start? */
     get canStart() {
         return !this.hasStarted
-            && this._assignedAdventurerIds.size
+            && this._assignedAdventurerIds.size >= Mission.CONFIG.minAdventurers
             && this._assignedAdventurerIds.size <= Mission.CONFIG.maxAdventurers
     }
 
@@ -179,25 +190,18 @@ export default class Mission extends foundry.abstract.DataModel {
             : null;
     }
 
-    /** 
-     * Gets results that have not been revealed. 
-     * @returns {CheckResult[] | null}  An array of check results or null if results doesn't exist
-     */
-    get unrevealedResults() {
-        return this.results 
-            ? Object.values(this.results).filter(r => !r.isRevealed) 
-            : null;
+    /** Does this mission have results? */
+    get hasResults() { 
+        const { isEmpty } = foundry.utils;
+        return !isEmpty(this.checkResults) 
+            && !isEmpty(this.adventurerResults)
     }
 
-    /** 
-     * Gets results that have been revealed. 
-     * @returns {CheckResult[] | null}  An array of check results or null if results doesn't exist
-     */
-    get revealedResults() {
-        return this.results
-            ? Object.values(this.results).filter(r => r.isRevealed) 
-            : null;
-    }
+    /** @type {import("./Resolver.mjs").CheckResults} */
+    get checkResults() { return this.results?.checkResults; }
+
+    /** @type {import("./Resolver.mjs").AdventurerResults} */
+    get adventurerResults() { return this.results?.adventurerResults; }
 
     get state() {
         const states = Mission.CONFIG.states;
@@ -216,6 +220,38 @@ export default class Mission extends foundry.abstract.DataModel {
         return Mission.CONFIG.risk[r];
     }
 
+    get bestForMainChecks() {
+        return Object.fromEntries(
+            Object.values(Resolver.CONFIG.attributes)
+                .filter(attr => attr.isMain)
+                .map(attr => [attr.key, Resolver.getBestForCheck(this, attr.key)])
+        );
+    }
+
+    /** Checks whether the mission was a success. Returns undefined if the mission hasn't started yet. */
+    get isSuccess() {
+        if (!this.hasStarted) return undefined;
+    
+        // Get all main attribute keys
+        const mainAttKeys = Object.values(Resolver.CONFIG.attributes)
+            .filter(att => att.isMain)
+            .map(att => att.key);
+        
+        // Check if at least one main attribute check was successful
+        const anyMainSuccess = Object.values(this.checkResults)
+            .some(res => res.isSuccess && mainAttKeys.includes(res.attributeKey));
+        
+        // Check if at least one adventurer with successful reliability check survived
+        const anySurvivorWithReliability = Object.values(this.checkResults)
+            .some(res => 
+                res.isSuccess && 
+                res.attributeKey === 'reliability' && 
+                !this.adventurerResults[res.adventurerId].died
+            );
+        
+        return anyMainSuccess && anySurvivorWithReliability;
+    }
+
     //#endregion
 
     /**
@@ -225,7 +261,7 @@ export default class Mission extends foundry.abstract.DataModel {
      * @returns {Promise<object>}       An object containing the changed keys and values
      */
     async update(changes, options = {}) {
-        return this.parent.updateEmbedded(this, changes, options);
+        return this.guild.updateEmbedded(this, changes, options);
     }
 
 
@@ -369,21 +405,19 @@ export default class Mission extends foundry.abstract.DataModel {
 
     //#region Start & Finish
 
-    async start({restart=false} = {}) {
-
-        const allowStart = ( restart && !this.hasStarted && !this.hasFinished ) 
-            || this.canStart;
-        if(!allowStart) throw new Error(`Unable to start mission id "${this.id}".`);
+    async start() {
+        if(!this.canStart) throw new Error(`Unable to start mission id "${this.id}".`);
         
         const startDate = TaliaDate.now();
-        const returnDate = TaliaDate.fromOffset(startDate, {days: this.durationInDays})
+        const returnDate = TaliaDate.fromOffset(startDate, {days: this.durationInDays});
 
-        const changes = {
-            results: await Resolver.createMissionResults(this),
-            startDate,
-            returnDate,
-        }
-        return this.update(changes);
+        const resolver = await new Resolver(this).evaluate();
+        const results = {
+            checkResults: resolver.checkResults,
+            adventurerResults: resolver.adventurerResults
+        };
+
+        return this.update({ results, startDate, returnDate });
     }
 
     async finish() {
@@ -396,7 +430,6 @@ export default class Mission extends foundry.abstract.DataModel {
         ];
         await Promise.all(promises);
 
-
         //then display results
         await this.displayResults();    //todo displayResults()
         
@@ -405,121 +438,118 @@ export default class Mission extends foundry.abstract.DataModel {
         await this.grantRewards();  //todo grantRewards()
     }
 
-    async displayResults() {
-        // Sort by adventurer name
-        const sorted = Object.values(this.results)
-            .sort((a, b) => a.adventurerName.localeCompare(b.adventurerName));
-
-        for(const result of sorted) {
-            await this._revealResult(result.id);
-        }
-
-        /*
-            Infos to include in summary message:
-
-            - who died
-            
-            - those who lived:
-                - how much exp gained
-                - any level ups?
-
-            - rewards
-        */
-    }
-    
     //#endregion
 
-    //#region Results
-    /**
-     * @typedef {object} ResultRevealOptions
-     * @property {boolean} updateResult         Should the result be updated (isRevealed set to true)? Default = `true`
-     * @property {boolean} createMessage        Whether to automatically create the chat message, or only return the
-     *                                          prepared chatData object. Default = `true`
-     * @property {string} rollMode              The template roll mode to use for the message from CONFIG.Dice.rollModes
-     *                                          Default = `CONST.DICE_ROLL_MODES.PUBLIC`
-     */
+    //#region ChatMessages
+
+    static FAIL_SUMMARIES = {
+        survivors: `The mission was unsuccessful over [duration] days, from [startDate] to [returnDate]. The returned members report of significant obstacles that prevented completion of the primary objective. The guild has recorded all relevant details for future reference and risk assessment. This contract is formally closed as unfulfilled.`,
+        noSurvivors: `The mission is recorded as failed after [duration] days from its commencement on [startDate]. None of the [assigned] dispatched members returned by [returnDate]. Search parties discovered evidence confirming the loss of all personnel. The guild has documented available information and formally closed this contract as unfulfilled with complete casualties.`,
+    }
+
+    getSummaryFlavor() {
+        if(!this.hasResults) return "";
+
+        const args = {
+            duration: this.duration.total,
+            startDate: this.startDate.displayString,
+            returnDate: this.returnDate.displayString,
+            assigned: this.assignedAdventurers.size,
+        }
+
+        const rawString = this.isSuccess 
+            ? this.summaryFlavor
+            : Object.values(this.adventurerResults).some(advRes => !advRes.died)
+                ? Mission.FAIL_SUMMARIES.survivors
+                : Mission.FAIL_SUMMARIES.noSurvivors;
+
+        return Helpers.replacePlaceholders(rawString, args);
+    }
+
+    async displaySummaryMessage() {
+
+        const _getIcon = (key) => {
+            const icons = {
+                crit: "fa-light fa-dice-d20",
+                death: "fa-solid fa-skull-crossbones",
+                success: "fa-solid fa-check",
+                fail: "fa-solid fa-xmark",
+                levelUp: "fa-solid fa-star"
+            }
+            return `<i class="${icons[key]}"></i>`;
+        }
+
+        if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
+
+        // Sort by adventurer name
+        const adventurerSummery = Object.values(this.adventurerResults)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(advRes => {
+                const parts = [];
+                if(advRes.died) parts.push(_getIcon("death"));
+                parts.push(`${advRes.name} +${advRes.expGained} exp`);
+                if(advRes.causedLevelUp) parts.push(`(${_getIcon("levelUp")} ${advRes.checkResults[0].adventurerLevel + 1})`);
+
+                const joined = parts.join(" ");
+                return `<p>${joined}</p>`;
+            })
+            .join("");
+
+        const msgHeader = `<h2>Mission Report: ${this.isSuccess ? `${_getIcon("success")} Success` : `${_getIcon("fail")} Failure`}</h2>`;
+        const flavorMsg = `<p>${this.getSummaryFlavor()}</p>`;
+
+        const content = msgHeader + flavorMsg + adventurerSummery;  //todo: rewards summary
+
+        return ChatMessage.implementation.create({
+            content,
+            speaker: { alias: this.parent.name },
+        });
+    }
+
+    async displayRolls() {
+        if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
+        
+        const sorted = Object.values(this.adventurerResults)
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        for(const advRes of sorted) {
+            const promises = advRes.checkResults.map(checkRes => this._createSingleRollMessage(checkRes.id));
+            await Promise.all(promises);
+        }
+    }
+
+    async displayResults() {    // called from 'Mission#finish' when a mission is first finished and via a button in the mission log ui 
+        if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
+
+        await this.displayRolls();
+        await this.displaySummaryMessage();
+        
+    }
 
     /**
-     * Transform a result into a ChatMessage, displaying the roll result.
+     * Transform a checkResult into a ChatMessage, displaying the roll result.
      * @param {string} resultId 
      * @returns {Promise<ChatMessage>}           A promise which resolves to the created ChatMessage document
      */
-    async _revealResult(resultId) {
-
-
-        const result = this.results[resultId];
+    async _createSingleRollMessage(resultId) {
+        const /** @type {CheckResult} */ result = this.checkResults[resultId];
         if(!result) throw new Error(`Result id "${resultId}" not found in mission id "${this.id}".`);
 
         const { rollObj, attributeKey, dc, adventurerName } = result;
 
         const roll = dnd5e.dice.D20Roll.fromData(rollObj);
-        const flavor = `<strong>${Resolver.CONFIG.attrCapital[attributeKey]}</strong> - DC ${dc}`;
+        const flavor = `DC ${dc} ${attributeKey.capitalize()} Check`;
+  
         const messageData = {
             flavor: flavor,
             speaker: {
                 alias: adventurerName,
             },
-            flags: {
-                [MODULE.ID]: {
-                    checkResult: result,
-                }
-            }
         };
-
-        if(!result.isRevealed && updateResult) {
-            await this.update({[`results.${result.id}.isRevealed`]: true });
-        }
 
         return await roll.toMessage(messageData, { rollMode: CONST.DICE_ROLL_MODES.PUBLIC });
     }
 
-    /**
-     * Transform all results into ChatMessages, displaying the roll result.
-     */
-    async revealAllResults() {
-        /** @type {{[key: string]: CheckResult}} */
-        const results = this.results;
-        if(!result) throw new Error(`Results for mission id "${this.id}" undefined.`);
-
-        // Sort by adventurer name
-        const sorted = Object.values(results)
-            .sort((a, b) => a.adventurerName.localeCompare(b.adventurerName));
-
-        // Display rolls
-        await Promise.all(sorted.map(r => this._revealResult(r.id)));
-
-        // Display summary
-
-        /*
-            info to display:
-
-            - rewards
-
-        */
-    }
-
-    /**
-     * Gets an array of itemObjects of item rewards.
-     * The itemObjects' quantity is modified to match.
-     */
-    async getRewardItemObjects() {
-        const rewardItemObjects = new foundry.utils.Collection();
-        for(const record of Object.values(this.rewards.items)) {
-            const item = await fromUuid(record.uuid);
-            const itemObj = item.toObject();
-            itemObj.system.quantity = record.quantity;
-            rewardItemObjects.set(uuid, itemObj);
-        }
-        return rewardItemObjects;
-    }
-
-    get bestForMainChecks() {
-        return Object.entries(this.dc).reduce((acc, [attr, dc]) => {
-            if(attr === "reliability") return acc;
-            acc[attr] = Resolver.getBestForCheck(this, attr);
-            return acc;
-        }, {});
-    }
 
     //#endregion
 
@@ -561,7 +591,7 @@ export default class Mission extends foundry.abstract.DataModel {
         // Fields that don't require special handling
         const fieldPaths = [
             "name", "dc.brawn", "dc.cunning", "dc.spellcraft", "dc.influence", "dc.reliability",
-            "_risk", "rewards.gp", "rewards.other", "durationInDays", "description"
+            "_risk", "rewards.gp", "rewards.other", "durationInDays", "description", "summaryFlavor"
         ];
 
         // Paths for item fields
@@ -590,201 +620,3 @@ export default class Mission extends foundry.abstract.DataModel {
         return this.update(changes);
     }
 }
-
-/**
- * @typedef {object} CheckResult
- * @property {string} id                A unique identifier for this result. `${adventurerId}_${attributeKey}`
- * @property {string} adventurerId      The id of the adventurer who rolled this result.
- * @property {string} adventurerName    The name of the adventurer who rolled this result.
- * @property {string} attributeKey      The attribute that this roll is for.
- * @property {boolean} isSuccess        Is this roll a success
- * @property {number} dc                The DC for the check.
- * @property {number} total             The total of the rolled check.
- * @property {number} margin            How much is the total over/under the DC?
- * @property {boolean} isFumble         Is this check a critical fail?
- * @property {boolean} isCritical       Is this check a critical success?
- * @property {object} rollObj           The roll as an object.
- * @property {boolean} isRevealed       Has this result been revealed to players in a chat message?
- */
-
-class Resolver {
-    static CONFIG = {
-        mainChecks: ["brawn", "cunning", "spellcraft", "influence"],
-        attrCapital: {
-            brawn: "Brawn",
-            cunning: "Cunning",
-            spellcraft: "Spellcraft",
-            influence: "Influence",
-            reliability: "Reliability",
-        },
-        rollFlavor: {
-            brawn: "<strong>Brawn</strong> Check",
-            cunning: "<strong>Cunning</strong> Check",
-            spellcraft: "<strong Check",
-            influence: "Influence Check",
-            reliability: "Reliability Check",
-        }
-    }
-
-    /**
-     * @param {Mission} mission 
-     */
-    constructor( mission ) {
-        this.mission = mission;
-    }
-
-    /** 
-     * Rolls all checks of the mission and returns the results.
-     * Does not create ChatMessages so those can be revealed later. 
-     * @param {Mission} mission 
-     * @returns {Promise<{[key: string]: CheckResult}>}
-     */
-    static async createMissionResults(mission) {
-        const resolver = new Resolver(mission);
-        const resultsArray = await resolver._createResults();
-        return resultsArray.reduce((acc, curr) => {
-            acc[curr.id] = curr;
-            return acc;
-        }, {});
-    }
-
-    /** 
-     * Rolls all checks of the mission and returns the results.
-     * Does not create ChatMessages so those can be revealed later. 
-     * @returns {Promise<CheckResult[]>}
-     */
-    async _createResults() {
-        const checkPromises = Resolver.CONFIG.mainChecks.map((key) => {
-            const adv = Resolver.getBestForCheck(this.mission, key);
-            return this.#getCheckResult(key, adv); // Directly return the promise
-        });
-    
-        const reliabilityPromises = this.mission.assignedAdventurers.map((adv) => 
-            this.#getCheckResult("reliability", adv)
-        );
-    
-        return Promise.all([...checkPromises, ...reliabilityPromises]);
-    }
-
-    /**
-     * Rolls, evaluates, and returns the check as a dnd5e D20 roll.
-     * @param {object} args
-     * @param {string} args.attributeKey
-     * @param {number} args.dc
-     * @param {Adventurer} args.adventurer
-     * @returns {D20Roll}
-     */
-    async #rollCheck({ attributeKey, dc, adventurer }) {
-        const attr = attributeKey[0].toUpperCase() + attributeKey.slice(1);
-        const flavor = `<strong>${attr} check - DC ${dc}</strong>`;
-
-        const rollData = {
-            mod: adventurer.attributes[attributeKey].mod,
-            exp: adventurer.expBonus,
-        };
-
-        return await dnd5e.dice.d20Roll({
-            parts: ["@mod", "@exp"], 
-            data: rollData,
-            targetValue: dc,
-            flavor: flavor,
-            fastForward: true,
-            chatMessage: false,
-            messageData: {
-                rollMode: CONST.DICE_ROLL_MODES.PUBLIC,
-                flavor: flavor,
-                speaker: {
-                    alias: adventurer.name,
-                }
-            }
-        });
-    }
-
-    /**
-     * Gets the adventurer that's best suited for making a check.
-     * @param {Mission} mission 
-     * @param {string} attributeKey 
-     * @returns {Adventurer}
-     */
-    static getBestForCheck(mission, attributeKey) {
-        let best = null;
-        for(const adv of mission.assignedAdventurers) {
-            if (!best 
-                || adv.attributes[attributeKey].totalRollMod > best.attributes[attributeKey].totalRollMod) {
-                best = adv;
-            }
-        }
-        return best;
-    }
-
-    /**
-     * Rolls a check for a given attribute and adventurer and returns the result.
-     * @param {string} attributeKey             
-     * @param {Adventurer} adventurer
-     * @returns {Promise<CheckResult>}
-     */
-    async #getCheckResult(attributeKey, adventurer ) {
-        const id = `${adventurer.id}_${attributeKey}`;
-        const dc = this.mission.dc[attributeKey];
-
-        const roll = await this.#rollCheck({
-            attributeKey, dc, adventurer
-        });
-
-        const { isFumble, isCritical, total } = roll;
-        const rollObj = roll.toJSON();
-        const isSuccess = Helpers.isRollSuccess(roll);
-        const margin = total - dc;
-
-        const causedDeath = (() => {
-            const deathMargin = this.mission.risk.deathMargin;
-            return this.isFumble || ( deathMargin + margin ) < 0;
-        })();
-        
-        return {
-            id,
-            adventurerId: adventurer.id,
-            adventurerName: adventurer.name,
-            attributeKey,
-            isSuccess,
-            isFumble,
-            isCritical,
-            total,
-            margin,
-            dc,
-            rollObj,
-            causedDeath,
-            isRevealed: false,
-        };
-    }
-}
-
-/* 
-    
-    Calculates the actual reward based on mission outcomes, considering the results of major attribute rolls and reliability rolls.
-    @throws {Error} If the mission checks have not been rolled yet.
-    @returns {number} The actual reward, adjusted based on major and reliability roll results.
-    
-    get actualReward() {
-        if(!this.isRolled) throw new Error("Actual reward cannot be determined until the mission checks have been rolled.");
-
-        // Calculate the multiplier for major attribute rolls
-        let majorRewardMultiplier = 1;
-        for(let rollResult of Object.values(this.missionRolls.major)) {
-            if(rollResult.isCritical) majorRewardMultiplier += 0.5;       // Critical success increases reward by 50%
-            else if(!rollResult.isSuccess) majorRewardMultiplier -= 0.25; // Failure decreases reward by 25%
-        }
-
-        // Calculate the multiplier for reliability rolls
-        let reliabilityMultiplier = 1;
-        const reliabilityResults = Object.values(this.missionRolls.reliability);
-        // If any adventurer rolled a critical success, reliability multiplier remains 100%
-        if (!reliabilityResults.some(result => result.isCritical)) {
-            // Otherwise the reliability multiplier equals the proportion of successes
-            const successfulReliabilityRolls = reliabilityResults.filter(result => result.isSuccess).length;
-            reliabilityMultiplier = successfulReliabilityRolls / this.adventurerCount;
-        }
-        
-        return this.potentialReward * majorRewardMultiplier * reliabilityMultiplier;
-    }
- */

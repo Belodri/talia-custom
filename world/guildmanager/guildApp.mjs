@@ -339,7 +339,9 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      * @property {DcData} dcData
      * @property {number} durationInDays
      * @property {number} daysUntilReturn
-     * @property {{[checkResultId: string]: CheckResult}} results
+     * @property {object} results
+     * @property {import("./Resolver.mjs").CheckResults} results.checkResults
+     * @property {import("./Resolver.mjs").AdventurerResults} results.adventurerResults
      * @property {object[]} assigned 
      */
 
@@ -587,22 +589,26 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
 
     async _onUnassignAll(jq) {
         const mission = this._getMissionFromJQ(jq);
-        return mission.unassignAll();
+        await mission.unassignAll();
+        this.render();
     }
 
     async _onEditMission(jq) {
         const mission = this._getMissionFromJQ(jq);
-        return mission.edit();
+        await mission.edit();
+        this.render();
     }
 
     async _onDeleteMission(jq) {
         const mission = this._getMissionFromJQ(jq);
-        return this.guild.deleteEmbedded([mission.id]);
+        await this.guild.deleteEmbedded([mission.id]);
+        this.render();
     }
 
     async _onForceReturn(jq) {
         const mission = this._getMissionFromJQ(jq);
-        return mission.update({returnDate: TaliaDate.now()});
+        await mission.update({returnDate: TaliaDate.now()});
+        this.render();
     }
 
     //#endregion
@@ -622,7 +628,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
 
     async _onEditAdventurer(jq) {
         const adventurer = this._getAdventurerFromJQ(jq);
-        return adventurer.edit();
+        await adventurer.edit();
+        this.render();
     }
 
     /** 
