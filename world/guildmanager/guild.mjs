@@ -139,7 +139,7 @@ export default class Guild extends foundry.abstract.DataModel {
                 acc[k] = v;
                 return acc;
             }, {});
-        const objWithDeletions = foundry.utils.mergeObject(obj, deletions, { inplace: false });
+        const objWithDeletions = foundry.utils.mergeObject(obj, deletions);
         
         await this.parent.setFlag(MODULE.ID, Guild.FLAG_KEY, objWithDeletions);
         return diff; 
@@ -167,6 +167,7 @@ export default class Guild extends foundry.abstract.DataModel {
         data.id = id;
         const mission = new Mission(data, {parent: this});
         await this.update({[`_missions.${id}`]: mission });
+
         return this.missions.get(id);
     }
 
@@ -189,7 +190,7 @@ export default class Guild extends foundry.abstract.DataModel {
     }
 
     async createRandomAdventurer() {
-        const randomData = await Adventurer.getRandomData();
+        const randomData = await Adventurer.getRandomData(this);
         return this.createAdventurerFromData(randomData);
     }
 

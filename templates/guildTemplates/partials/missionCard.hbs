@@ -1,11 +1,13 @@
 <div class="card mission-card" data-mission-id="{{id}}" data-drop="true">
     <div class="card-header collapsible" data-action="toggleCollapse">
+        {{#if stateVars.assigned }}
+        <span data-tooltip="{{stateVars.assigned.tooltip}}">{{stateVars.assigned.label}}</span>
+        {{/if}}
         <span class="name">{{name}}</span>
         <div class="state-display">
-            <i class="{{state.icon}}" data-tooltip="{{state.hint}}"></i>
-            {{#if durationLabel}}
-            <span>{{durationLabel}}</span>
-            {{/if}}
+            <i class="{{stateVars.statusIcon}}" data-tooltip="{{stateVars.statusTooltip}}"></i>
+            <span>{{stateVars.statusLabel}}</span>
+            <span class="dur-est" data-tooltip="{{stateVars.durTooltip}}">{{stateVars.durLabel}}</span>
         </div>
     </div>
     <div class="card-body">
@@ -27,12 +29,14 @@
             {{#if description}}
              <div class="paragraph-with-title">
                 <span>Description</span>
+                <hr>
                 <p>{{description}}</p>
             </div>
             {{/if}}
             <div class="paragraph-with-title">
                 <span>Rewards</span>
-                <p>{{{reward}}}</p>
+                <hr>
+                {{{reward}}}
             </div>
         </div>
         <hr>

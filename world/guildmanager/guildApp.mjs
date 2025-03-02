@@ -149,7 +149,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         new ContextMenu(this.element, ".mission-card", this._getMissionCardContextMenuItems());
         new ContextMenu(this.element, ".adventurer-card", this._getAdventurerCardContextMenuItems());
     }
-
+/* 
     _prepareSubmitData(event, form, formData) {
         const submitData = foundry.utils.expandObject(formData.object);
 
@@ -157,7 +157,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         this.guild.updateSource(submitData);
         return {flags: { [MODULE.ID]: { Guild: this.guild.toObject() }}};
     }
-
+ */
     //#region Cross client sync
 
     #updateHookId = null;
@@ -251,10 +251,12 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     }
 
     async _prepareContext(options) {
+        this.guild.syncWithDocument();
+
         const tabs = {
             general: { label: "Guild Hall" },
-            graveyard: { label: "Graveyard" },
-            //log: { label: "Mission Log" },
+            graveyard: { label: "Graveyard" },    //todo: graveyard
+            //log: { label: "Mission Log" },        //todo: log
         };
         for (const [k, v] of Object.entries(tabs)) {
             v.cssClass = (this.tabGroups.main === k) ? "active" : "";
@@ -290,7 +292,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         const act = []
         const log = [];
 
-        for(const mission of this.guild.missions) {
+        for(const mission of Object.values(this.guild._missions)) {
             if(mission.hasFinished) log.push(mission);
             else act.push(mission);
         }
@@ -366,28 +368,40 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      * @property {string} img
      */
 
+
+    /**
+     * 
+     * @param {Mission} mis 
+     */
+    static _getMissionRewardsHTMLString(mis) {
+        const rewards = mis?.rewards;
+        if(!rewards) return "";
+
+        const parts = [];
+        if(rewards.gp) parts.push(`<li>${rewards.gp}gp</li>`);
+
+        const itemRecordPart = Object.values(rewards.itemRecords)
+            .filter(v => v.uuid)
+            .map(v => `<li>${v.quantity}x ${v.name}</li>`)
+            .join("");
+        if(itemRecordPart) parts.push(itemRecordPart);
+
+        const otherPart = Array.from(rewards.other)
+            .map(str => `<li>${str}</li>`)
+            .join("");
+        if(otherPart) parts.push(otherPart);
+
+        const allJoined = parts.join("");
+        
+        if(!allJoined) return "";
+        return `<ul>${allJoined}</ul>`;
+    }
+
     /**
      * 
      * @param {Mission} mis 
      */
     getMissionCardContext(mis) {
-        const reward = (() => {
-            const parts = [];
-
-            if(mis.rewards.gp) parts.push(`${mis.rewards.gp}gp`);
-
-            const itemRecordPart = Object.values(mis.rewards.itemRecords)
-                .filter(v => v.uuid)
-                .map(v => `${v.quantity}x ${v.name}`)
-                .join(", ");
-            if(itemRecordPart) parts.push(itemRecordPart);
-
-            const otherPart = Array.from(mis.rewards.other).join(", ");
-            if(otherPart) parts.push(otherPart);
-
-            return parts.join(`<br>`)
-        })();
-
         const dcDataRaw = Object.entries(mis.dc)
             .reduce((acc, [attr, dc]) => {
                 acc[attr] = {
@@ -423,35 +437,88 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             }
         });
 
-        const state = mis.state;
-        const missionButton = {};
-        if(state.key === "ready") {
-            missionButton.display = true;
-            missionButton.action = "startMission";
-            missionButton.label = "Start Mission";
-        } else if(state.key === "returned") {
-            missionButton.display = true;
-            missionButton.action = "finishMission";
-            missionButton.label = "View Mission Report";
+        const missionButtonStates = {
+            ready: {
+                display: true,
+                action: "startMission",
+                label: "Start Mission",
+            },
+            returned: {
+                display: true,
+                action: "finishMission",
+                label: "Receive Mission Report",
+            }
+        }
+        const missionButton = missionButtonStates[mis.state.key] ?? {};
+
+
+        const assignmentsDisplay = {
+            label: `${mis.assignedAdventurers.size}/${Mission.CONFIG.maxAdventurers}`,
+            tooltip: `Each mission must have between ${Mission.CONFIG.minAdventurers} and ${Mission.CONFIG.maxAdventurers} adventurers.`,
         }
 
-        const durationLabel = state.numeric <= 1 
-            ? `${mis.duration.total} days`
-            : state.numeric === 2 
-                ? `${mis.duration.remaining} days until return`
-                : state.numeric === 3
-                    ? "Returned"
-                    : "";
+
+        const getStateVars = () => {
+            const assigned = {
+                label: `${mis.assignedAdventurers.size}/${Mission.CONFIG.maxAdventurers}`,
+                tooltip: `Each mission must have between ${Mission.CONFIG.minAdventurers} and ${Mission.CONFIG.maxAdventurers} adventurers.`,
+            }
+
+            const ret = {}
+            switch (mis.state.key) {
+                case "logged":  
+                    ret.durLabel = ``;
+                    ret.durTooltip = `Report received on ${mis.returnDate.displayString}`;
+                    ret.statusLabel = ``;
+                    ret.statusTooltip = `The report has been reviewed and logged.`;
+                    ret.statusIcon = GuildApp.ICONS.mission.logged;
+                    break;
+                case "returned": 
+                    ret.durLabel = ``;
+                    ret.durTooltip = `Report received on ${mis.returnDate.displayString}`;
+                    ret.statusLabel = `Report ready`;
+                    ret.statusTooltip = `The report for this mission is ready for you to review.`;
+                    ret.statusIcon = GuildApp.ICONS.mission.returned;
+                    break;
+                case "ongoing": 
+                    ret.durLabel = `~ ${mis.estimatedReturnDate.displayString}`;
+                    ret.durTooltip = `Expected to return by ${mis.estimatedReturnDate.displayString}`;
+                    ret.statusLabel = `Ongoing`;
+                    ret.statusTooltip = `Currently still ongoing`;
+                    ret.statusIcon = GuildApp.ICONS.mission.ongoing;
+                    break;
+                case "ready": 
+                    ret.assigned = assigned;
+                    ret.durLabel = `~ ${mis.estimatedDurationInDays} days`;
+                    ret.durTooltip = `Estimated duration: ${mis.estimatedDurationInDays} days`;
+                    ret.statusLabel = `Ready`;
+                    ret.statusTooltip = `Ready to start`;
+                    ret.statusIcon = GuildApp.ICONS.mission.ready;
+                    break;
+                case "none":
+                    ret.assigned = assigned;
+                    ret.durLabel = `~ ${mis.estimatedDurationInDays} days`;
+                    ret.durTooltip = `Estimated duration: ${mis.estimatedDurationInDays} days`;
+                    ret.statusLabel = ``;
+                    ret.statusTooltip = `To start this mission, assign at least ${Mission.CONFIG.minAdventurers} adventurers to it.`;
+                    ret.statusIcon = GuildApp.ICONS.mission.none;
+                    break;
+            }
+
+            return ret;
+        }
+        //show estimated time if the mission hasn't returned yet
         
         return {
             id: mis.id,
             name: mis.name,
             description: mis.description,
-            durationLabel,
+            stateVars: getStateVars(),
+            hasReturned: mis.hasReturned,
             durationInDays: mis.durationInDays,
             state: mis.state,
             risk: mis.risk,
-            reward,
+            reward: GuildApp._getMissionRewardsHTMLString(mis),
             dcDataRaw,
             daysUntilReturn: mis.daysUntilReturn > 0 ? mis.daysUntilReturn : null,
             results: mis.results,
@@ -460,6 +527,25 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         }
     }
     //#endregion
+
+    static ICONS = {
+        edit: "fa-solid fa-pen-to-square",
+        delete: "fa-solid fa-trash",
+        mission: {
+            logged: "fa-solid fa-book",
+            returned: "fa-solid fa-book-open",
+            ongoing: "fa-solid fa-route",
+            ready: "fa-solid fa-clipboard-list",
+            none: "fa-regular fa-clipboard",
+            unassignAll: "fa-solid fa-users-slash",
+            returnNow: "fa-solid fa-forward-fast",
+        },
+        adventurer: {
+            unassign: "fa-solid fa-user-minus",
+            revive: "fa-solid fa-heart-pulse",
+            dead: "fa-solid fa-skull",
+        }
+    }
 
     //#region Adventurer Context
 
@@ -541,12 +627,14 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
 
     //#endregion
 
+
     //#region Mission Context Menu
     _getMissionCardContextMenuItems() {
+        const ic = GuildApp.ICONS;
         return [
             {
                 name: "Unassign All Adventurers",
-                icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                icon: `<i class="${ic.mission.unassignAll}"></i>`,
                 condition: (jq) => {
                     const mission = this._getMissionFromJQ(jq);
                     return !!mission.assignedAdventurers.size && !mission.hasStarted;
@@ -555,19 +643,19 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             },
             {
                 name: "(GM) Edit",
-                //icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                icon: `<i class="${ic.edit}"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: this._onEditMission.bind(this)
             },
             {
                 name: "(GM) Delete",
-                icon: `<i class="fa-solid fa-trash"></i>`,
+                icon: `<i class="${ic.delete}"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: this._onDeleteMission.bind(this)
             },
             {
-                name: "(GM) Force Return",
-                //icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                name: "(GM) Return Now",
+                icon: `<i class="${ic.mission.returnNow}"></i>`,
                 condition: (jq) => {
                     const mission = this._getMissionFromJQ(jq);
                     return game.user.isGM && !!mission.hasStarted && !mission.hasReturned
@@ -590,25 +678,21 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     async _onUnassignAll(jq) {
         const mission = this._getMissionFromJQ(jq);
         await mission.unassignAll();
-        this.render();
     }
 
     async _onEditMission(jq) {
         const mission = this._getMissionFromJQ(jq);
         await mission.edit();
-        this.render();
     }
 
     async _onDeleteMission(jq) {
         const mission = this._getMissionFromJQ(jq);
-        await this.guild.deleteEmbedded([mission.id]);
-        this.render();
+        await mission.delete();
     }
 
     async _onForceReturn(jq) {
         const mission = this._getMissionFromJQ(jq);
         await mission.update({returnDate: TaliaDate.now()});
-        this.render();
     }
 
     //#endregion
@@ -616,12 +700,46 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     //#region Adventurer Context Menu
 
     _getAdventurerCardContextMenuItems() {
+        const ic = GuildApp.ICONS;
         return [
             {
+                name: "Unassign",
+                icon: `<i class="${ic.adventurer.unassign}"></i>`,
+                condition: (jq) => {
+                    const adv = this._getAdventurerFromJQ(jq);
+                    return adv.state === "assigned"
+                },
+                callback: this._onUnassignAdventurer.bind(this)
+            },
+            {
                 name: "(GM) Edit",
-                //icon: `<i class="fa-regular fa-circle-xmark"></i>`,
+                icon: `<i class="${ic.edit}"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: this._onEditAdventurer.bind(this)
+            },
+            {
+                name: "(GM) Delete",
+                icon: `<i class="${ic.delete}"></i>`,
+                condition: (jq) => game.user.isGM,
+                callback: this._onDeleteAdventurer.bind(this)
+            },
+            {
+                name: "(GM) Revive",
+                icon: `<i class="${ic.adventurer.revive}"></i>`,
+                condition: (jq) => {
+                    const adv = this._getAdventurerFromJQ(jq);
+                    return game.user.isGM && adv.isDead
+                },
+                callback: this._onReviveAdventurer.bind(this)
+            },
+            {
+                name: "(GM) Kill",
+                icon: `<i class="${ic.adventurer.dead}"></i>`,
+                condition: (jq) => {
+                    const adv = this._getAdventurerFromJQ(jq);
+                    return game.user.isGM && adv.state === "waiting"
+                },
+                callback: this._onKillAdventurer.bind(this)
             },
         ]
     }
@@ -629,7 +747,26 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     async _onEditAdventurer(jq) {
         const adventurer = this._getAdventurerFromJQ(jq);
         await adventurer.edit();
-        this.render();
+    }
+
+    async _onDeleteAdventurer(jq) {
+        const adventurer = this._getAdventurerFromJQ(jq);
+        await adventurer.delete();
+    }
+
+    async _onUnassignAdventurer(jq) {
+        const adventurer = this._getAdventurerFromJQ(jq);
+        await adventurer.unassign();
+    }
+
+    async _onReviveAdventurer(jq) {
+        const adventurer = this._getAdventurerFromJQ(jq);
+        await adventurer.revive();
+    }
+
+    async _onKillAdventurer(jq) {
+        const adventurer = this._getAdventurerFromJQ(jq);
+        await adventurer.kill();
     }
 
     /** 

@@ -6,6 +6,7 @@ import shared from "./shared.mjs";
 import { MODULE } from "../../scripts/constants.mjs";
 import { MappingField } from "../../utils/mappingField.mjs";
 import { Resolver } from "./Resolver.mjs";
+import GuildApp from "./guildApp.mjs";
 
 /** @typedef {import("../../foundry/common/utils/collection.mjs").default} Collection */
 
@@ -29,7 +30,7 @@ export default class Mission extends foundry.abstract.DataModel {
             min: 10,
             max: 25
         },
-        durationDays: {
+        durationInDays: {
             min: 30,
             max: 90,
         },
@@ -252,6 +253,39 @@ export default class Mission extends foundry.abstract.DataModel {
         return anyMainSuccess && anySurvivorWithReliability;
     }
 
+
+    /**
+     * Computes a deterministic floating-point seed value between 0 and 1 
+     * based on the FNV-1a hash of `this.id`. The same `id` will always 
+     * produce the same seed, while different `id`s will produce 
+     * different values with low collision probability.
+     * 
+     * @returns {number} A floating-point number in the range [0, 1).
+     */
+    get seed() {
+        let hash = 2166136261; // FNV-1a 32-bit offset basis
+        for (let i = 0; i < this.id.length; i++) {
+            hash ^= this.id.charCodeAt(i);
+            hash = ( hash * 16777619 ) >>> 0; // Multiply by FNV prime and ensure unsigned 32-bit
+        }
+        return hash / 0x100000000; // Normalize to range [0, 1)
+    }
+
+    get estimatedReturnDate() {
+        const cStartDays = this.startDate?.inDays;
+        if (!cStartDays) return null;
+        const est = cStartDays + this.estimatedDurationInDays;
+        return TaliaDate.fromDays(est);
+    }
+
+    get estimatedDurationInDays() {
+        const lowerBound = 1;
+        const upperBound = Math.floor(this.durationInDays * 1.5);
+
+        const scaledValue = Math.floor(lowerBound + ( this.seed * (upperBound - lowerBound)) );
+        return scaledValue;
+    }
+
     //#endregion
 
     /**
@@ -383,7 +417,7 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     static _getRandomDuration() {
-        const { min, max } = Mission.CONFIG.durationDays;
+        const { min, max } = Mission.CONFIG.durationInDays;
         return Helpers.getRandomInt(min, max);
     }
 
@@ -417,7 +451,9 @@ export default class Mission extends foundry.abstract.DataModel {
             adventurerResults: resolver.adventurerResults
         };
 
-        return this.update({ results, startDate, returnDate });
+        await this.update({ results, startDate, returnDate });
+
+        await this.guild.app.render(true);
     }
 
     async finish() {
@@ -431,11 +467,12 @@ export default class Mission extends foundry.abstract.DataModel {
         await Promise.all(promises);
 
         //then display results
-        await this.displayResults();    //todo displayResults()
+        await this.displayResults(); 
         
-
         //then grant rewards
-        await this.grantRewards();  //todo grantRewards()
+        //await this.grantRewards();  //todo grantRewards()
+
+        await this.guild.app.render(true);
     }
 
     //#endregion
@@ -481,24 +518,31 @@ export default class Mission extends foundry.abstract.DataModel {
 
         if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
 
+        const msgHeader = `<h2>Mission Report: ${this.isSuccess ? `${_getIcon("success")} Success` : `${_getIcon("fail")} Failure`}</h2>`;
+        const flavorMsg = `<p>${this.getSummaryFlavor()}</p>`;
+
         // Sort by adventurer name
-        const adventurerSummery = Object.values(this.adventurerResults)
+        const adventurerSummeryParts = Object.values(this.adventurerResults)
             .sort((a, b) => a.name.localeCompare(b.name))
             .map(advRes => {
                 const parts = [];
                 if(advRes.died) parts.push(_getIcon("death"));
-                parts.push(`${advRes.name} +${advRes.expGained} exp`);
+                parts.push(`<strong>${advRes.name}</strong> +${advRes.expGained} exp`);
                 if(advRes.causedLevelUp) parts.push(`(${_getIcon("levelUp")} ${advRes.checkResults[0].adventurerLevel + 1})`);
 
                 const joined = parts.join(" ");
-                return `<p>${joined}</p>`;
+                return `<li>${joined}</li>`;
             })
             .join("");
+        const adventurerSummery = `<ul>${adventurerSummeryParts}</ul>`;
 
-        const msgHeader = `<h2>Mission Report: ${this.isSuccess ? `${_getIcon("success")} Success` : `${_getIcon("fail")} Failure`}</h2>`;
-        const flavorMsg = `<p>${this.getSummaryFlavor()}</p>`;
+        const adventurerPart = `<h3>Members</h3>${adventurerSummery}`;
 
-        const content = msgHeader + flavorMsg + adventurerSummery;  //todo: rewards summary
+        const rewardsPart = this.isSuccess 
+            ? `<h3>Rewards</h3>${GuildApp._getMissionRewardsHTMLString(this)}`
+            : "";
+
+        const content = msgHeader + flavorMsg + adventurerPart + rewardsPart;
 
         return ChatMessage.implementation.create({
             content,
@@ -506,22 +550,34 @@ export default class Mission extends foundry.abstract.DataModel {
         });
     }
 
+    /**
+     * @returns {Promise<ChatMessage[]>}
+     */
     async displayRolls() {
         if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
         
         const sorted = Object.values(this.adventurerResults)
             .sort((a, b) => a.name.localeCompare(b.name));
 
+        const allChatMessages = [];
         for(const advRes of sorted) {
             const promises = advRes.checkResults.map(checkRes => this._createSingleRollMessage(checkRes.id));
-            await Promise.all(promises);
+            const ret = await Promise.all(promises);
+            allChatMessages.push(...ret);
         }
+
+        return allChatMessages;
     }
 
     async displayResults() {    // called from 'Mission#finish' when a mission is first finished and via a button in the mission log ui 
         if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
 
-        await this.displayRolls();
+        const rollDisplays = await this.displayRolls();
+
+        //wait for dice roll animations
+        const promises = rollDisplays.map(m => game.dice3d.waitFor3DAnimationByMessageID(m.id));
+        await Promise.all(promises);
+
         await this.displaySummaryMessage();
         
     }
@@ -618,5 +674,9 @@ export default class Mission extends foundry.abstract.DataModel {
 
         if(!changes) return;
         return this.update(changes);
+    }
+
+    async delete() {
+        return this.guild.deleteEmbedded([this.id]);
     }
 }

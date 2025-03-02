@@ -160,7 +160,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     static defineSchema() {
         const {
-            StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField, BooleanField, FilePathField, ObjectField
+            StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField, BooleanField, FilePathField, ObjectField, ArrayField
         } = foundry.data.fields;
 
         return {
@@ -175,6 +175,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
             _missionResults: new ObjectField({initial: {}}),
             baseExp: new NumberField({ integer: true, initial: 0, min: 0, label: "Base Exp" }),
             _deathDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
+            _pastDeathDates: new ArrayField( new EmbeddedDataField( TaliaDate )),
             img: new FilePathField({ categories: ["IMAGE"], label: "Image" }),
         }
     }
@@ -214,6 +215,11 @@ export default class Adventurer extends foundry.abstract.DataModel {
     /** @returns {Mission | undefined} */
     get assignedMission() { 
         return this.guild.missions.find(mis => !mis.hasFinished && mis.assignedAdventurers.has(this.id)) 
+    }
+
+    /** @returns {Mission[]} All missions that have this character assigned. */
+    get allAssignedMissions() {
+        return this.guild.missions.filter(mis => mis.assignedAdventurers.has(this.id)) 
     }
 
     get isAssigned() { return !!this.assignedMission; }
@@ -290,13 +296,14 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     /**
      * Randomly generates data for an adventurer.
+     * @param {Guild} guild 
      */
-    static async getRandomData() {
+    static async getRandomData(guild) {
         const sex = Adventurer._getRandomSex();
         const charClass = Adventurer._getRandomCharClass();
         const race = Adventurer._getRandomRace();
         const name = await Adventurer._getRandomName( sex, race );
-        const img = Adventurer._getRandomImg( charClass, sex, race );
+        const img = Adventurer._getRandomImg( guild, sex, race );
         const attributes = Adventurer._getRandomAttributes( charClass );
 
         return {
@@ -343,8 +350,26 @@ export default class Adventurer extends foundry.abstract.DataModel {
         return race;
     }
 
-    //TODO _getRandomImg implementation
-    static _getRandomImg( charClass, sex, race ) {
+    // todo: test if image is possible
+    static _getRandomImg( guild, sex, race ) {
+
+        const formatToFourDigits = (num) => {
+            // Ensure the number is treated as an integer
+            const integer = Math.floor(num);
+            
+            // Use String's padStart method to add leading zeros
+            return integer.toString().padStart(4, '0');
+        }
+        const basePath = `TaliaCampaignCustomAssets/c_Icons/Adventurer_Tokens/${race}/${sex}/${race}_${sex}_`;
+        const takenImages = new Set( 
+            guild.adventurers.filter(adv => adv.details.sex === sex && adv.details.race === race)
+                .map(adv => adv.img)
+        );
+
+        for(let i = 1; i < 50; i++) {
+            const testPath = `${basePath}${formatToFourDigits(i)}.png`;
+            if(!takenImages.has(testPath)) return testPath;
+        }
         return "icons/svg/cowled.svg";
     }
 
@@ -437,5 +462,32 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
         if(!changes) return;
         return this.update(changes);
+    }
+
+    async delete() {
+        const allAssigned = this.allAssignedMissions;
+        if(allAssigned.length) {
+            console.error({allAssignedMissions: allAssigned});
+            throw new Error("Assigned adventurers cannot be deleted.");
+        }
+        return this.guild.deleteEmbedded([this.id]);
+    }
+
+    async unassign() {
+        if(this.state === "assigned") return this.assignedMission.unassignAdventurer(this);
+    }
+
+    async revive() {
+        if(this.state !== "dead") throw new Error("Only a dead adventurer can be revived.");
+
+        const newPastDeaths = this._pastDeathDates;
+        const death = this._deathDate.toObject();
+        newPastDeaths.push(death);
+        return this.update({"_deathDate": null, "_pastDeathDates": newPastDeaths});
+    }
+
+    async kill() {
+        if(this.state !== "waiting") throw new Error("Only a waiting adventurer can be killed.");
+        return this.update({"_deathDate": TaliaDate.now()});
     }
 }

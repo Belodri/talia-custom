@@ -67,11 +67,6 @@
                 text-align: center;
                 align-self: center;
             }
-
-            & p {
-                border-top: 1px inset var(--button-border-color);
-                padding-top: 2px;
-            }
         }
     }
 
