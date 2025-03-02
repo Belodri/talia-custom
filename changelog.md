@@ -1,4 +1,4 @@
-# 1.21.0 - 2025/02/23
+# 1.22.0 - 2025/03/02
 
 - Added first functional implementation of GuildManager. A some features are missing and a few bugs are to be expected but the core is working.
 
