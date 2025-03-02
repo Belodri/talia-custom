@@ -1,0 +1,80 @@
+<div class="card mission-card" data-mission-id="{{id}}" data-drop="true">
+    <div class="card-header collapsible" data-action="toggleCollapse">
+        {{#if stateVars.assigned }}
+        <span data-tooltip="{{stateVars.assigned.tooltip}}">{{stateVars.assigned.label}}</span>
+        {{/if}}
+        <span class="name">{{name}}</span>
+        <div class="state-display">
+            <i class="{{stateVars.statusIcon}}" data-tooltip="{{stateVars.statusTooltip}}"></i>
+            <span>{{stateVars.statusLabel}}</span>
+            <span class="dur-est" data-tooltip="{{stateVars.durTooltip}}">{{stateVars.durLabel}}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <hr>
+        <div class="attributes">
+            {{#each dcDataRaw}}
+            <div class="attribute-full" data-tooltip="{{explanation}}">
+                <span class="label">{{label}} DC</span>
+                <span class="total">{{dc}}</span>
+            </div>
+            {{/each}}
+            <div class="attribute-full side-panel" data-tooltip="{{risk.explanation}}">
+                <span class="label">Risk Level</span>
+                <span class="total smaller">{{risk.label}}</span>
+            </div>
+        </div>
+        <hr>
+        <div class="text-content">
+            {{#if description}}
+             <div class="paragraph-with-title">
+                <span>Description</span>
+                <hr>
+                <p>{{description}}</p>
+            </div>
+            {{/if}}
+            <div class="paragraph-with-title">
+                <span>Rewards</span>
+                <hr>
+                {{{reward}}}
+            </div>
+        </div>
+        <hr>
+        {{#if assigned}}
+        <div class="assignments">
+            <span class="title">Assignments</span>
+            <div class="not-a-table">
+                <div class="row header">
+                    <div class="cell"></div>
+                    <div class="cell"><span>Brawn</span></div>
+                    <div class="cell"><span>Cunning</span></div>
+                    <div class="cell"><span>Spellcraft</span></div>
+                    <div class="cell"><span>Influence</span></div>
+                    <div class="cell"><span>Reliability</span></div>
+                </div>
+                {{#each assigned}}
+                <div class="row" data-adventurer-id="{{id}}" data-action="unassign">
+                    <div class="cell name-img">
+                        <img class="slot-img" src="{{img}}" alt="{{name}}">
+                        <span>{{name}}</span>
+                    </div>
+                    {{#each attributes}}
+                    <div class="cell">
+                        <span class="{{spanClass}}">{{totalBonus}}</span>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+        {{#if missionButton.display}}
+        <button 
+            class="mission-button"
+            type="button"
+            data-action="{{missionButton.action}}"
+            data-mission-id="{{id}}"
+        >{{missionButton.label}}</button>
+        {{/if}}
+    </div>
+</div>

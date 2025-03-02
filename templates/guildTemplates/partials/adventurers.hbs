@@ -1,0 +1,17 @@
+<div class="half-column adventurers scrollable">
+    <span class="column-title">Mustering Hall</span>
+    {{#each adventurers.alive}}
+    {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurerCard.hbs' }}
+    {{/each}}
+
+    {{#if isGM}}
+    <div class="gm-buttons">
+        <button 
+            class="gm-button"
+            type="button"
+            data-action="createNewAdventurer"
+        >Create New Adventurer</button>
+    </div>
+    {{/if}}
+</div>
+

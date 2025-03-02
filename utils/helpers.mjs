@@ -205,6 +205,35 @@ export class Helpers {
     }
 
     /**
+     * Grants items to an actor, stacking them if applicable.
+     * @param {Actor} actor 
+     * @param {object[]} itemDataArray          An array of itemData objects.
+     * @param {object} [options]   
+     * @param {boolean} [options.stack=true]    Should the granted items be stacked with other, items of the same name in the actor's inventory? 
+     */
+    static async grantItems(actor, itemDataArray, { stack=true }={}) {
+        const promises = [];
+        const create = [];
+        for(const itemData of itemDataArray) {
+            const /** @type {Item} */ existing = actor.items.find(i => i.name === itemData.name);
+
+            // Stack existing items of the same name 
+            if( existing 
+                && stack 
+                && foundry.utils.hasProperty(existing, "system.quantity")
+                && foundry.utils.hasProperty(itemData, "system.quantity") 
+            ) {
+                const newQuant = existing.system.quantity + itemData.system.quantity;
+                promises.push( existing.update({"system.quantity": newQuant}) );
+            } else {
+                create.push( itemData );
+            }
+        }
+        if(create.length) promises.push( actor.createEmbeddedDocuments("Item", create) );
+        return Promise.all(promises);
+    }
+
+    /**
      * Inserts new list items into an HTML string containing a ul element with class "card-footer pills unlist".
      * Each new item is added only if its label doesn't already exist in the list.
      * 
@@ -387,6 +416,85 @@ export class Helpers {
         const jEntry = game.journal.getName(journalName);
         const jPage = jEntry?.pages?.getName(pageName);
         if(jPage) return jEntry.sheet.render(true, {pageId: jPage.id});
+    }
+
+    /**
+     * Returns an array of a number of unique, random elements from an array.
+     * The passed array is not modified.
+     * @param {any[]} arr 
+     * @param {number} [count=1]    The number of elements to be returned. 
+     *                              Cannot be smaller than 1 or larger than `arr.length`, otherwise an error is thrown.
+     * @returns {any[]}             An array of the randomly chosen elements.
+     */
+    static getRandomArrayElements(arr, count = 1) {
+        if (!Array.isArray(arr)) throw new TypeError("First argument must be an array.");
+        if (typeof count !== "number" || count < 1 || count > arr.length) {
+            throw new RangeError("Count must be between 1 and the length of the array.");
+        }
+
+        const results = [];
+        const seen = new Set();
+
+        while (results.length < count) {
+            const randIndex = Math.floor(Math.random() * arr.length);
+            if (!seen.has(randIndex)) {
+                seen.add(randIndex);
+                results.push(arr[randIndex]);
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Returns an array of randomly selected keys from a weighted object.
+     * Keys may repeat based on their weights.
+     * @param {object} weights      An object where keys are items and values are their weights.
+     * @param {number} count        The number of keys to return.
+     * @returns {string[]}          An array of randomly selected keys, respecting weights.
+     */
+    static getWeightedRandomKeys(weights, count) {
+        if (typeof count !== "number" || count < 1) {
+            throw new RangeError("Count must be a positive number.");
+        }
+
+        const entries = Object.entries(weights);
+        const totalWeight = entries.reduce((sum, [_, weight]) => sum + weight, 0);
+
+        const result = [];
+
+        for (let i = 0; i < count; i++) {
+            let random = Math.random() * totalWeight;
+
+            for (const [key, weight] of entries) {
+                if (random < weight) {
+                    result.push(key);
+                    break;
+                }
+                random -= weight;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Replaces placeholders in a string with corresponding values from an object.
+     *
+     * Placeholders are defined in the format `[placeholderName]` within the string.
+     * If a matching key exists in the provided object, it replaces the placeholder with the corresponding value.
+     * If a key is not found in the object, the placeholder remains unchanged.
+     *
+     * @param {string} str      The input string containing placeholders.
+     * @param {object} values   An object containing key-value pairs to replace placeholders.
+     * @returns {string}        The formatted string with replaced placeholders.
+     *
+     * @example
+     * const result = Helpers.replacePlaceholders("This is a [animal] named [name].", { animal: "dog", name: "foo" });
+     * console.log(result); // "This is a dog named foo."
+     */
+    static replacePlaceholders(str, values) {
+        return str.replace(/\[([a-zA-Z0-9_]+)\]/g, (match, key) => values[key] !== undefined ? values[key] : match);
     }
 }
 

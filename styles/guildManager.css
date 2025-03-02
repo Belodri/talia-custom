@@ -1,0 +1,234 @@
+
+
+.talia-custom.guild {
+    --button-border-color: var(--color-light-5);
+    --color-text-main: var(--color-light-2);
+    --color-text-highlight: var(--dnd5e-highlight-45);
+
+
+    min-width: 1200px;
+    min-height: 500px;
+    color: var(--color-text-main);
+    background: rgba(11, 10, 19, 0.95);
+
+    & hr {
+        margin: 0.5em;
+    }
+
+    .header {
+        display: flex;
+        flex-direction: row;
+        flex-basis: 0;
+        align-items: center;
+
+        .guild-name {
+            display: block;
+            font-size: xx-large;
+            font-weight: bold;
+            text-align: center;
+        }
+    }
+
+
+
+    .general {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+        .half-column {
+            flex: 1;
+            
+            .column-title {
+                display: block;
+                font-size: x-large;
+                font-weight: bold;
+                text-align: center;
+                
+                position: -webkit-sticky;
+                position: sticky;
+            }
+        }
+    }
+
+    .text-content {
+        display: flex;
+        flex-direction: row;
+
+        .paragraph-with-title {
+            flex: 1;
+
+            display: flex;
+            flex-direction: column;
+
+            margin-inline: 5px;
+    
+            & span {
+                text-align: center;
+                align-self: center;
+            }
+        }
+    }
+
+    
+
+    .card {
+        display: flex;
+        flex-direction: column;
+
+        border: 1px solid var(--button-border-color);
+        border-radius: 5px;
+
+        margin-bottom: 1em;
+        padding: 0.3em;
+
+
+        background-color: var(--color-cool-5);
+
+        .attributes {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            font-size: large;
+
+            .attribute-full {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                .label {
+                    font-size: 0.8em;
+                }
+
+                .total {
+                    font-size: 1.1em;
+                    font-weight: bold;
+                }
+
+                .mod-display {
+                    font-size: 0.8em;
+                }
+            }
+
+            .attribute-full.side-panel {
+                border-left: 1px solid var(--button-border-color);
+                padding-left: 1em;
+
+                .total.smaller {
+                    font-weight: normal;
+                    font-size: 1em;
+                }
+            }
+
+
+        }
+    }
+
+    .card-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        font-size: large;
+    }
+
+    .card-body {
+        display: flex;
+        flex-direction: column;
+
+        & p {
+            flex-wrap: wrap;
+        }
+    }
+
+    .assignments {
+        .title {
+            font-size: large;
+            text-align: center;
+        }
+    }
+
+    .not-a-table {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+
+        .row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: 3px;
+        }
+
+        .cell {
+            flex: 1;
+            text-align: center;
+            border-radius: 3px;
+        }
+
+        .header {
+            font-weight: bold;
+        }
+
+        .name-img {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .greyed {
+            color: var(--color-text-highlight)
+        }
+
+        .highlighted {
+            text-decoration: underline;
+            color: var(--color-text-main);
+        }
+    }
+
+    .mission-card {
+        .slot-img {
+            height: 30px;
+            width: 30px;
+        }
+
+        .assignments {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .adventurer-card {
+        .portrait {
+            height: 90px;
+            width: 90px;
+        }
+
+        .data-header {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+
+            .overview-bar {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+
+                margin-inline: 0.5em;
+
+                .name {
+                    font-size: 1.1em;
+                }
+            }
+
+            & hr {
+                margin: 2px;
+            }
+        }
+    }
+
+    .card-header.collapsed + .card-body {
+        display: none;
+    }
+}

@@ -1,0 +1,9 @@
+{{#if isGM}}
+<div class="tab graveyard {{tabs.graveyard.cssClass}} scrollable" data-tab="graveyard" data-group="main">
+    <span class="column-title">Graveyard</span>
+    {{#each adventurers.dead}}
+
+    {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurerCard.hbs' }}
+    {{/each}}
+</div>
+{{/if}}
