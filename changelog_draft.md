@@ -4,3 +4,18 @@
 - In case of merge conflicts, **retain all entries** to ensure no changes are lost.
 - During release preparation, entries from this file are reviewed, organized, and moved into the main `changelog.md`.
 # Drafts
+- added new buildings:
+    - Shrine
+    - Temple
+    - Monastery
+    - Cathedral
+    - Engineer's Workshop
+    - Airship Dockyard
+    - Gallows
+    - Market Square
+    - Training Grounds
+    - Homeless Shelter
+    - Courthouse
+    - City Walls
+    - Stocks
+- fixed synchronisation issues between existing settlements and the database

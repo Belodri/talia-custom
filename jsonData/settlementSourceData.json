@@ -1,926 +1,1357 @@
 {
-    "buildingsData": [
-      {
-        "id": "farm",
-        "name": "Farm",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 1,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Nestled amidst open fields, the farm is a lifeline for the town, producing fresh crops and bringing families together in shared labor and celebration of the land.",
-        "effectText": ""
+  "buildingsData": [
+    {
+      "id": "farm",
+      "name": "Farm",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 1,
+          "progress": 0,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "inn",
-        "name": "Inn",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": -1,
-            "economy": 1,
-            "community": 1,
-            "progress": 0,
-            "intrigue": 1
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "A haven for locals and travellers alike, the inn stands as a cornerstone of the community, a place where the weary find respite and the curious find intrigue. ",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "barracks",
-        "name": "Barracks",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 1,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Inside the barracks, the clamor of armor and weapons is constant, a reassuring sound for some and a reminder of authority's ever-watchful presence for others.",
-        "effectText": ""
+      "flavorText": "Nestled amidst open fields, the farm is a lifeline for the town, producing fresh crops and bringing families together in shared labor and celebration of the land.",
+      "effectText": ""
+    },
+    {
+      "id": "inn",
+      "name": "Inn",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -1,
+          "economy": 1,
+          "community": 1,
+          "progress": 0,
+          "intrigue": 1
+        }
       },
-      {
-        "id": "smithy",
-        "name": "Smithy",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 1,
-            "progress": 0,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Billowing smoke and glowing embers mark the heart of the smithy, where metal meets fire to create everything from horseshoes to blades.",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "brothel",
-        "name": "Brothel",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 1,
-            "community": -1,
-            "progress": 0,
-            "intrigue": 1
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Whispers of discontent fill the streets as the brothel flourishes, a gilded cage where the powerful indulge while the common folk see their dignity sold one night at a time.",
-        "effectText": ""
+      "flavorText": "A haven for locals and travellers alike, the inn stands as a cornerstone of the community, a place where the weary find respite and the curious find intrigue.",
+      "effectText": ""
+    },
+    {
+      "id": "barracks",
+      "name": "Barracks",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 1,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "watchtower",
-        "name": "Watchtower",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 3,
-            "economy": 0,
-            "community": -1,
-            "progress": -1,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": ["barracks"],
-          "unlocked": []
-        },
-        "flavorText": "Perched on high, the watchtower offers a clear view of the horizon, but its cold, unyielding gaze leaves many feeling watched rather than protected.",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "orphanage",
-        "name": "Orphanage",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": -1,
-            "community": 2,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "A place of refuge for those without families, the orphanage provides care for the town’s lost children, though whispers from the guilds bemoan the loss of cheap labor.",
-        "effectText": ""
+      "flavorText": "Inside the barracks, the clamor of armor and weapons is constant, a reassuring sound for some and a reminder of authority's ever-watchful presence for others.",
+      "effectText": ""
+    },
+    {
+      "id": "smithy",
+      "name": "Smithy",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 1,
+          "progress": 0,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "monument",
-        "name": "Monument",
-        "scale": 3,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 2,
-            "economy": 2,
-            "community": -1,
-            "progress": -1,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 4,
-            "economy": 4,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "A symbol of the town’s might and wealth, the monument inspires awe in some but frustration in others, who see it as an unnecessary display of vanity.",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "graveyard",
-        "name": "Graveyard",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 1,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "The graveyard stands as a solemn reminder of lives past, a quiet place of reflection that fosters unity among the living through shared grief and memory.",
-        "effectText": ""
+      "flavorText": "Billowing smoke and glowing embers mark the heart of the smithy, where metal meets fire to create everything from horseshoes to blades.",
+      "effectText": ""
+    },
+    {
+      "id": "brothel",
+      "name": "Brothel",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 1,
+          "community": -1,
+          "progress": 0,
+          "intrigue": 1
+        }
       },
-      {
-        "id": "library",
-        "name": "Library",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 2,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "The library stands as a testament to the value of knowledge, where every book and tome represents a step toward a brighter, more enlightened future.",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "sewer_system",
-        "name": "Sewer System",
-        "scale": 4,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 1,
-            "community": 3,
-            "progress": 2,
-            "intrigue": 1
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 8,
-            "community": 0,
-            "progress": 8,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Beneath the town, the newly constructed sewer system flows—a marvel of engineering that improves health and cleanliness, though its hidden depths harbor unseen secrets.",
-        "effectText": ""
+      "flavorText": "Whispers of discontent fill the streets as the brothel flourishes, a gilded cage where the powerful indulge while the common folk see their dignity sold one night at a time.",
+      "effectText": ""
+    },
+    {
+      "id": "watchtower",
+      "name": "Watchtower",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 3,
+          "economy": 0,
+          "community": -1,
+          "progress": -1,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "school",
-        "name": "School",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": -1,
-            "economy": 0,
-            "community": 1,
-            "progress": 2,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "While the school strengthens the community and pushes for progress, it also teaches the value of questioning authority—something not all are eager to see.",
-        "effectText": ""
+        "buildings": ["barracks"],
+        "unlocked": []
       },
-      {
-        "id": "jail",
-        "name": "Jail",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 1,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Behind its barred windows, the jail holds those who defy the law, its presence a quiet warning to any who might challenge the town’s authority.",
-        "effectText": ""
+      "flavorText": "Perched on high, the watchtower offers a clear view of the horizon, but its cold, unyielding gaze leaves many feeling watched rather than protected.",
+      "effectText": ""
+    },
+    {
+      "id": "orphanage",
+      "name": "Orphanage",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": -1,
+          "community": 2,
+          "progress": 0,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "stables",
-        "name": "Stables",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 2,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 3,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "The stables provide not only shelter for horses but also serve as a hub for the town’s mounted forces, ensuring swift responses to any threats.",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "fighting_pit",
-        "name": "Fighting Pit",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 1,
-            "economy": 2,
-            "community": 0,
-            "progress": -1,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "The fighting pit draws crowds and coin alike, but some fear its focus on bloodsport dulls the town’s desire for anything more meaningful.",
-        "effectText": ""
+      "flavorText": "A place of refuge for those without families, the orphanage provides care for the town’s lost children, though whispers from the guilds bemoan the loss of cheap labor.",
+      "effectText": ""
+    },
+    {
+      "id": "monument",
+      "name": "Monument",
+      "scale": 3,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 2,
+          "economy": 2,
+          "community": -1,
+          "progress": -1,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "dwarven_brewery",
-        "name": "Dwarven Brewery",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 1,
-            "economy": 2,
-            "community": 0,
-            "progress": -1,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 4,
+          "economy": 4,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": ["Dwarven Brewmaster"]
-        },
-        "flavorText": "The air around the Dwarven Brewery is always thick with the smell of brewing ale. It is a place where dwarven tradition meets celebration, its warm hearth a beacon on cold nights.",
-        "effectText": "8 bottles of the legendary Bugman’s Ale are available for purchase each month."
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "private_laboratory",
-        "name": "Private Laboratory",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 1,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": ["glasshouse"],
-          "unlocked": []
-        },
-        "flavorText": "A modest workshop of bubbling flasks and pungent fumes, the alchemist's laboratory is a sanctuary for discovery, where one mind's quiet pursuit of knowledge might yield wonders.",
-        "effectText": "Reduces the time to craft potions by 30 minutes."
+      "flavorText": "A symbol of the town’s might and wealth, the monument inspires awe in some but frustration in others, who see it as an unnecessary display of vanity.",
+      "effectText": ""
+    },
+    {
+      "id": "graveyard",
+      "name": "Graveyard",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 1,
+          "progress": 0,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "park",
-        "name": "Park",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": -1,
-            "community": 1,
-            "progress": 1,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Amidst the city's bustle, the park offers a serene retreat where nature flourishes and minds find inspiration, though its upkeep demands a toll on the city's coffers.",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "black_market",
-        "name": "Black Market",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": -3,
-            "economy": 1,
-            "community": -2,
-            "progress": 1,
-            "intrigue": 4
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 2
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Hidden behind unmarked doors and veiled glances, the black market thrives in defiance of law and morality, a realm where rare and illicit goods, services, and secrets are only a matter of coin.",
-        "effectText": ""
+      "flavorText": "The graveyard stands as a solemn reminder of lives past, a quiet place of reflection that fosters unity among the living through shared grief and memory.",
+      "effectText": ""
+    },
+    {
+      "id": "library",
+      "name": "Library",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 2,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "construction_yard",
-        "name": "Construction Yard",
-        "scale": 3,
-        "modifiers": {
-          "capacity": 1,
-          "attributes": {
-            "authority": 0,
-            "economy": 1,
-            "community": -3,
-            "progress": 0,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": ["smithy", "carpenters_workshop", "stonemasons_workshop"],
-          "unlocked": []
-        },
-        "flavorText": "A hive of hammering, shouting, and relentless movement, the construction yard turns raw resources into grand visions, though its clamor often drowns out the city's quieter joys.",
-        "effectText": ""
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "granary",
-        "name": "Granary",
-        "scale": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 2,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": ["farm"],
-          "unlocked": []
-        },
-        "flavorText": "A towering symbol of plenty, the granary secures the fruits of the harvest, ensuring that even in scarcity, no family need go without.",
-        "effectText": ""
+      "flavorText": "The library stands as a testament to the value of knowledge, where every book and tome represents a step toward a brighter, more enlightened future.",
+      "effectText": ""
+    },
+    {
+      "id": "sewer_system",
+      "name": "Sewer System",
+      "scale": 4,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 1,
+          "community": 3,
+          "progress": 2,
+          "intrigue": 1
+        }
       },
-      {
-        "id": "glasshouse",
-        "name": "Glasshouse",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 2,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 8,
+          "community": 0,
+          "progress": 8,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": ["Glassblower"]
-        },
-        "flavorText": "From humble drinking vessels to intricate lenses, the Glasshouse provides the city with objects of both utility and exquisite beauty.",
-        "effectText": "Activity: Apprenticeship (Gain proficiency with glassblower's tools after spending 2d4 extended rests on this activity.)"
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "carpenters_workshop",
-        "name": "Carpenter's Workshop",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 1,
-            "community": 1,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": ["Carpenter"]
-        },
-        "flavorText": "From dawn to dusk, the hum of saws and the scent of fresh timber define the carpenter’s workshop, a place where craftsmanship turns rough wood into everything from simple furniture to the grand beams of the city’s halls",
-        "effectText": "Activity: Apprenticeship (Gain proficiency with carpenter's tools after spending 2d4 extended rests on this activity.)"
+      "flavorText": "Beneath the town, the newly constructed sewer system flows—a marvel of engineering that improves health and cleanliness, though its hidden depths harbor unseen secrets.",
+      "effectText": ""
+    },
+    {
+      "id": "school",
+      "name": "School",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -1,
+          "economy": 0,
+          "community": 1,
+          "progress": 2,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "stonemasons_workshop",
-        "name": "Stonemason's Workshop",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 1,
-            "community": 1,
-            "progress": 0,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": ["Mason"]
-        },
-        "flavorText": "Chisels strike stone with rhythmic precision, echoing through the city as calloused hands carve the foundation of its future.",
-        "effectText": "Activity: Apprenticeship (Gain proficiency with mason's tools after spending 2d4 extended rests on this activity.)"
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "academy",
-        "name": "Academy",
-        "scale": 4,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": -4,
-            "economy": 1,
-            "community": -3,
-            "progress": 4,
-            "intrigue": 1
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 12,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Within its halls of thought, scholars question the old ways and craft the new, the academy’s influence rippling through the city as it births both wisdom and unrest.",
-        "effectText": "Unlocks Loremaster position"
+      "flavorText": "While the school strengthens the community and pushes for progress, it also teaches the value of questioning authority—something not all are eager to see.",
+      "effectText": ""
+    },
+    {
+      "id": "jail",
+      "name": "Jail",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 1,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "pathfinder_society_lodge",
-        "name": "Pathfinder Society Lodge",
-        "scale": 3,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": -2,
-            "economy": 2,
-            "community": -2,
-            "progress": 1,
-            "intrigue": 2
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 8,
-            "community": 0,
-            "progress": 8,
-            "intrigue": 8
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Within its sturdy walls, the lodge fosters daring ventures and questionable alliances, attracting mercenaries, explorers, and the intrigue that inevitably follows in their wake.",
-        "effectText": "Enables hiring adventurers for missions"
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "goblin_quarters",
-        "name": "Goblin Quarters",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": -4,
-            "economy": -4,
-            "community": -4,
-            "progress": 8,
-            "intrigue": 6
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": []
-        },
-        "flavorText": "Chaotic, noisy, and endlessly inventive, the goblin quarters overflow with peculiar contraptions and questionable experiments, their ingenuity both a marvel and a menace.",
-        "effectText": ""
+      "flavorText": "Behind its barred windows, the jail holds those who defy the law, its presence a quiet warning to any who might challenge the town’s authority.",
+      "effectText": ""
+    },
+    {
+      "id": "stables",
+      "name": "Stables",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 2,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "botanical_garden",
-        "name": "Botanical Garden",
-        "scale": 3,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 2,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 3,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": ["glasshouse"],
-          "unlocked": ["Botanist"]
-        },
-        "flavorText": "Nestled in vibrant greenery, the botanical garden blends nature and science, its carefully tended plants offering rare resources to those who know how to harvest their potential.",
-        "effectText": "Enables the planting and farming of various herbs."
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "architects_guild",
-        "name": "Architect’s Guild",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 1,
-          "attributes": {
-            "authority": 0,
-            "economy": 1,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": ["Architect"]
-        },
-        "flavorText": "Here, within halls lined with models and plans, architects refine construction methods, making ambitious projects achievable with less effort.",
-        "effectText": ""
+      "flavorText": "The stables provide not only shelter for horses but also serve as a hub for the town’s mounted forces, ensuring swift responses to any threats.",
+      "effectText": ""
+    },
+    {
+      "id": "fighting_pit",
+      "name": "Fighting Pit",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 1,
+          "economy": 2,
+          "community": 0,
+          "progress": -1,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "nexus_of_binding",
-        "name": "Nexus of Binding",
-        "scale": 6,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 4,
-            "economy": -4,
-            "community": 0,
-            "progress": -2,
-            "intrigue": -2
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": ["Nullstone Monolith"]
-        },
-        "flavorText": "Built around the Nullstone Monolith, the nexus sacrifices innovation and trade to create a sanctuary impervious to magical intrusion.",
-        "effectText": "While bound, the Nullstone Monolith prevents teleportation magic in and out of a 10 mile radius sphere."
+        "buildings": [],
+        "unlocked": []
       },
-      {
-        "id": "glims_emporium_of_exotic_flavours",
-        "name": "Glim's Emporium of Exotic Flavours",
-        "scale": 2,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 2,
-            "community": -2,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "requirements": {
-          "attributes": {
-            "authority": 0,
-            "economy": 12,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          },
-          "buildings": [],
-          "unlocked": ["Glim Billowdwaddle"]
-        },
-        "flavorText": "Glim Billowdwaddle’s bustling emporium draws spice merchants and food enthusiasts alike, though its extravagance has stirred resentment among the common folk.",
-        "effectText": "Trader: Spices; The number of spices for sale each month scales with the settlement's Economy."
-      }
-    ],
-    "effectsData": [
-      {
-        "id": "plentiful_harvest",
-        "name": "Plentiful Harvest",
-        "monthsDuration": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 2,
-            "community": 2,
-            "progress": 0,
-            "intrigue": 0
-          }
-        },
-        "effectText": "",
-        "flavorText": "The gods have smiled upon the land, blessing it with an extraordinary harvest."
+      "flavorText": "The fighting pit draws crowds and coin alike, but some fear its focus on bloodsport dulls the town’s desire for anything more meaningful.",
+      "effectText": ""
+    },
+    {
+      "id": "dwarven_brewery",
+      "name": "Dwarven Brewery",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 1,
+          "economy": 2,
+          "community": 0,
+          "progress": -1,
+          "intrigue": 0
+        }
       },
-      {
-        "id": "trader_of_spices",
-        "name": "Trader of Spices",
-        "monthsDuration": 1,
-        "modifiers": {
-          "capacity": 0,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          }
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "effectText": "Unlocks Trader",
-        "flavorText": "A caravan of spice merchants has arrived in town, bringing exotic flavors from faraway lands."
+        "buildings": [],
+        "unlocked": ["Dwarven Brewmaster"]
       },
-      {
-        "id": "stonemasons_festival",
-        "name": "Stonemason's Festival",
-        "monthsDuration": 1,
-        "modifiers": {
-          "capacity": 1,
-          "attributes": {
-            "authority": 0,
-            "economy": 0,
-            "community": 0,
-            "progress": 0,
-            "intrigue": 0
-          }
+      "flavorText": "The air around the Dwarven Brewery is always thick with the smell of brewing ale. It is a place where dwarven tradition meets celebration, its warm hearth a beacon on cold nights.",
+      "effectText": "8 bottles of the legendary Bugman’s Ale are available for purchase each month."
+    },
+    {
+      "id": "private_laboratory",
+      "name": "Private Laboratory",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 1,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
         },
-        "effectText": "",
-        "flavorText": "Abadar watches over the settlement, ensuring that all construction efforts are swift and successful."
-      }
-    ]
-  }
-  
+        "buildings": ["glasshouse"],
+        "unlocked": []
+      },
+      "flavorText": "A modest workshop of bubbling flasks and pungent fumes, the alchemist's laboratory is a sanctuary for discovery, where one mind's quiet pursuit of knowledge might yield wonders.",
+      "effectText": "Reduces the time to craft potions by 30 minutes."
+    },
+    {
+      "id": "park",
+      "name": "Park",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": -1,
+          "community": 1,
+          "progress": 1,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "Amidst the city's bustle, the park offers a serene retreat where nature flourishes and minds find inspiration, though its upkeep demands a toll on the city's coffers.",
+      "effectText": ""
+    },
+    {
+      "id": "black_market",
+      "name": "Black Market",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -3,
+          "economy": 1,
+          "community": -2,
+          "progress": 1,
+          "intrigue": 4
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 2
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "Hidden behind unmarked doors and veiled glances, the black market thrives in defiance of law and morality, a realm where rare and illicit goods, services, and secrets are only a matter of coin.",
+      "effectText": ""
+    },
+    {
+      "id": "construction_yard",
+      "name": "Construction Yard",
+      "scale": 3,
+      "modifiers": {
+        "capacity": 1,
+        "attributes": {
+          "authority": 0,
+          "economy": 1,
+          "community": -3,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["smithy", "carpenters_workshop", "stonemasons_workshop"],
+        "unlocked": []
+      },
+      "flavorText": "A hive of hammering, shouting, and relentless movement, the construction yard turns raw resources into grand visions, though its clamor often drowns out the city's quieter joys.",
+      "effectText": ""
+    },
+    {
+      "id": "granary",
+      "name": "Granary",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 2,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["farm"],
+        "unlocked": []
+      },
+      "flavorText": "A towering symbol of plenty, the granary secures the fruits of the harvest, ensuring that even in scarcity, no family need go without.",
+      "effectText": ""
+    },
+    {
+      "id": "glasshouse",
+      "name": "Glasshouse",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 2,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": ["Glassblower"]
+      },
+      "flavorText": "From humble drinking vessels to intricate lenses, the Glasshouse provides the city with objects of both utility and exquisite beauty.",
+      "effectText": "Activity: Apprenticeship (Gain proficiency with glassblower's tools after spending 2d4 extended rests on this activity.)"
+    },
+    {
+      "id": "carpenters_workshop",
+      "name": "Carpenter's Workshop",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 1,
+          "community": 1,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": ["Carpenter"]
+      },
+      "flavorText": "From dawn to dusk, the hum of saws and the scent of fresh timber define the carpenter’s workshop, a place where craftsmanship turns rough wood into everything from simple furniture to the grand beams of the city’s halls",
+      "effectText": "Activity: Apprenticeship (Gain proficiency with carpenter's tools after spending 2d4 extended rests on this activity.)"
+    },
+    {
+      "id": "stonemasons_workshop",
+      "name": "Stonemason's Workshop",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 1,
+          "community": 1,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": ["Mason"]
+      },
+      "flavorText": "Chisels strike stone with rhythmic precision, echoing through the city as calloused hands carve the foundation of its future.",
+      "effectText": "Activity: Apprenticeship (Gain proficiency with mason's tools after spending 2d4 extended rests on this activity.)"
+    },
+    {
+      "id": "academy",
+      "name": "Academy",
+      "scale": 4,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -4,
+          "economy": 1,
+          "community": -3,
+          "progress": 4,
+          "intrigue": 1
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 12,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "Within its halls of thought, scholars question the old ways and craft the new, the academy’s influence rippling through the city as it births both wisdom and unrest.",
+      "effectText": "Unlocks Loremaster position"
+    },
+    {
+      "id": "pathfinder_society_lodge",
+      "name": "Pathfinder Society Lodge",
+      "scale": 3,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -2,
+          "economy": 2,
+          "community": -2,
+          "progress": 1,
+          "intrigue": 2
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 8,
+          "community": 0,
+          "progress": 8,
+          "intrigue": 8
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "Within its sturdy walls, the lodge fosters daring ventures and questionable alliances, attracting mercenaries, explorers, and the intrigue that inevitably follows in their wake.",
+      "effectText": "Enables hiring adventurers for missions"
+    },
+    {
+      "id": "goblin_quarters",
+      "name": "Goblin Quarters",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -4,
+          "economy": -4,
+          "community": -4,
+          "progress": 8,
+          "intrigue": 6
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "Chaotic, noisy, and endlessly inventive, the goblin quarters overflow with peculiar contraptions and questionable experiments, their ingenuity both a marvel and a menace.",
+      "effectText": ""
+    },
+    {
+      "id": "botanical_garden",
+      "name": "Botanical Garden",
+      "scale": 3,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 2,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["glasshouse"],
+        "unlocked": ["Botanist"]
+      },
+      "flavorText": "Nestled in vibrant greenery, the botanical garden blends nature and science, its carefully tended plants offering rare resources to those who know how to harvest their potential.",
+      "effectText": "Enables the planting and farming of various herbs."
+    },
+    {
+      "id": "architects_guild",
+      "name": "Architect’s Guild",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 1,
+        "attributes": {
+          "authority": 0,
+          "economy": 1,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": ["Architect"]
+      },
+      "flavorText": "Here, within halls lined with models and plans, architects refine construction methods, making ambitious projects achievable with less effort.",
+      "effectText": ""
+    },
+    {
+      "id": "nexus_of_binding",
+      "name": "Nexus of Binding",
+      "scale": 6,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 4,
+          "economy": -4,
+          "community": 0,
+          "progress": -2,
+          "intrigue": -2
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": ["Nullstone Monolith"]
+      },
+      "flavorText": "Built around the Nullstone Monolith, the nexus sacrifices innovation and trade to create a sanctuary impervious to magical intrusion.",
+      "effectText": "While bound, the Nullstone Monolith prevents teleportation magic in and out of a 10 mile radius sphere."
+    },
+    {
+      "id": "glims_emporium_of_exotic_flavours",
+      "name": "Glim's Emporium of Exotic Flavours",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 2,
+          "community": -2,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 12,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": ["Glim Billowdwaddle"]
+      },
+      "flavorText": "Glim Billowdwaddle’s bustling emporium draws spice merchants and food enthusiasts alike, though its extravagance has stirred resentment among the common folk.",
+      "effectText": "Trader: Spices; The number of spices for sale each month scales with the settlement's Economy."
+    },
+    {
+      "id": "shrine",
+      "name": "Shrine",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 1,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "A small but meaningful landmark, the shrine serves as a gathering place for those who seek comfort in faith and tradition.",
+      "effectText": ""
+    },
+    {
+      "id": "temple",
+      "name": "Temple",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 2,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["shrine"],
+        "unlocked": []
+      },
+      "flavorText": "The temple is more than a place of prayer—it is a cornerstone of the community, where traditions are upheld and the people find unity.",
+      "effectText": ""
+    },
+    {
+      "id": "monastery",
+      "name": "Monastery",
+      "scale": 3,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 1,
+          "community": 3,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["temple"],
+        "unlocked": []
+      },
+      "flavorText": "Within these walls, monks devote themselves to prayer and labor, their careful craftsmanship supporting both their faith and the city beyond.",
+      "effectText": "Trader"
+    },
+    {
+      "id": "cathedral",
+      "name": "Cathedral",
+      "scale": 6,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 6,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 12,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["monastery"],
+        "unlocked": ["Patron Deity"]
+      },
+      "flavorText": "Towering over the city as a fortress of faith, the cathedral is both a place of worship and a symbol of divine protection. Few dare challenge a city under the watchful gaze of its patron deity.",
+      "effectText": "Grants the patron deity's blessing to the city as long as its edicts are followed."
+    },
+    {
+      "id": "engineers_workshop",
+      "name": "Engineer's Workshop",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -1,
+          "economy": 1,
+          "community": -1,
+          "progress": 3,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["goblin_quarters"],
+        "unlocked": []
+      },
+      "flavorText": "A noisy, chaotic space where problems are solved with gears, levers, and the occasional explosion. Some see it as the future—others see it as a disaster waiting to happen.",
+      "effectText": "Trader"
+    },
+    {
+      "id": "airship_dockyard",
+      "name": "Airship Dockyard",
+      "scale": 4,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": -6,
+          "economy": 8,
+          "community": -3,
+          "progress": 4,
+          "intrigue": 4
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["goblin_quarters"],
+        "unlocked": []
+      },
+      "flavorText": "A bustling hub of towering scaffolds and massive mooring lines, the dockyard is where skyships are built, loaded, and launched. Merchants and smugglers alike strike deals beneath the towering hulls, while city officials struggle to keep control of what goes in and out.",
+      "effectText": "Enables travel and trade via airships."
+    },
+    {
+      "id": "gallows",
+      "name": "Gallows",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 6,
+          "economy": 0,
+          "community": -1,
+          "progress": -3,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "Few things enforce authority like the sight of a hanging body. The gallows keep the city in line, though the weight of fear dampens ambition and sows unease among the people.",
+      "effectText": ""
+    },
+    {
+      "id": "market_square",
+      "name": "Market Square",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 2,
+          "community": 2,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "Vendors call out their wares, children weave through the crowds, and deals are struck with firm handshakes. The old ways of trade and barter hold strong in this lively square.",
+      "effectText": ""
+    },
+    {
+      "id": "training_grounds",
+      "name": "Training Grounds",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 3,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["barracks"],
+        "unlocked": []
+      },
+      "flavorText": "A place where warriors are made, not through words, but through sweat, bruises, and unwavering discipline.",
+      "effectText": "Activity: Training (Gain proficiency with a weapon of your choice after spending 2d4 extended rests on this activity.)"
+    },
+    {
+      "id": "homeless_shelter",
+      "name": "Homeless Shelter",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": -3,
+          "community": 5,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "A humble sanctuary for the destitute, where kindness outweighs profit, though not without resentment from those who see generosity as wasteful.",
+      "effectText": ""
+    },
+    {
+      "id": "courthouse",
+      "name": "Courthouse",
+      "scale": 2,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 6,
+          "economy": 0,
+          "community": 0,
+          "progress": -2,
+          "intrigue": -1
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": ["jail"],
+        "unlocked": []
+      },
+      "flavorText": "Fair trials, strict rulings—this is where disputes are settled and criminals face judgment. It keeps the city in order, even if it stifles progress.",
+      "effectText": ""
+    },
+    {
+      "id": "city_walls",
+      "name": "City Walls",
+      "scale": 3,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 6,
+          "economy": -3,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "A city well-defended is a city that endures. The walls ensure safety, though merchants grumble at the restricted flow of goods.",
+      "effectText": ""
+    },
+    {
+      "id": "stocks",
+      "name": "Stocks",
+      "scale": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 4,
+          "economy": 0,
+          "community": 0,
+          "progress": -3,
+          "intrigue": 0
+        }
+      },
+      "requirements": {
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        },
+        "buildings": [],
+        "unlocked": []
+      },
+      "flavorText": "A relic of old justice—crude, effective, and a stark reminder of the consequences of breaking the law.",
+      "effectText": ""
+    }
+  ],
+  "effectsData": [
+    {
+      "id": "plentiful_harvest",
+      "name": "Plentiful Harvest",
+      "monthsDuration": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 2,
+          "community": 2,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "effectText": "",
+      "flavorText": "The gods have smiled upon the land, blessing it with an extraordinary harvest."
+    },
+    {
+      "id": "trader_of_spices",
+      "name": "Trader of Spices",
+      "monthsDuration": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "effectText": "Unlocks Trader",
+      "flavorText": "A caravan of spice merchants has arrived in town, bringing exotic flavors from faraway lands."
+    },
+    {
+      "id": "stonemasons_festival",
+      "name": "Stonemason's Festival",
+      "monthsDuration": 1,
+      "modifiers": {
+        "capacity": 1,
+        "attributes": {
+          "authority": 0,
+          "economy": 0,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "effectText": "",
+      "flavorText": "Abadar watches over the settlement, ensuring that all construction efforts are swift and successful."
+    },
+    {
+      "id": "meteor_showers",
+      "name": "Meteor Showers",
+      "monthsDuration": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": 2,
+          "community": 0,
+          "progress": 4,
+          "intrigue": 0
+        }
+      },
+      "effectText": "",
+      "flavorText": "Flaming stones rain from the heavens, leaving behind fragments of rare and valuable minerals. Merchants and artisans alike scramble to make use of the newfound bounty."
+    },
+    {
+      "id": "plague_outbreak",
+      "name": "Plague Outbreak",
+      "monthsDuration": 6,
+      "modifiers": {
+        "capacity": -1,
+        "attributes": {
+          "authority": 0,
+          "economy": -3,
+          "community": -3,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "effectText": "",
+      "flavorText": "Merchants close their doors, families barricade themselves inside, and the sick overwhelm the healers. The city weathers the storm, but not without scars."
+    },
+    {
+      "id": "stormfront",
+      "name": "Stormfront ",
+      "monthsDuration": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 0,
+          "economy": -2,
+          "community": 0,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "effectText": "",
+      "flavorText": "Dark clouds gather, and fierce winds bring chaos. Markets close, shipments are delayed, and the city's economy falters under nature’s fury."
+    },
+    {
+      "id": "heroic_deed",
+      "name": "Heroic Deed",
+      "monthsDuration": 1,
+      "modifiers": {
+        "capacity": 0,
+        "attributes": {
+          "authority": 2,
+          "economy": 0,
+          "community": 2,
+          "progress": 0,
+          "intrigue": 0
+        }
+      },
+      "effectText": "",
+      "flavorText": "An act of valor brings the city together, restoring faith in its protectors and fostering a newfound sense of camaraderie."
+    }
+  ]
+}
