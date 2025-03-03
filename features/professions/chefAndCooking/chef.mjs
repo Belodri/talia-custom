@@ -18,8 +18,76 @@ export default {
             }
         };
         TaliaCustomAPI.add({chefFeat_chatButton: Cooking.itemButtonMacro}, "ItemMacros");
+        Hooks.once("ready", () => {
+            if(game.user.name !== "Shalkoc") return;
+
+            Hooks.on("renderContainerSheet", (app, html, data) => {
+                if(data.document?.name === "Snack Pack") {
+                    updateSpiceListJournal(data.document);
+                }
+            });
+
+        });
     }
 }
+
+/**
+ * 
+ * @param {Item} container 
+ * @returns 
+ */
+async function updateSpiceListJournal(container) {
+    const CONFIG = {
+        journalName: "Shalkoc's Notes",
+        pageName: "Spice List",
+    }
+
+    const extractBetweenCurlyBraces = (str) => {
+        const openingIndex = str.indexOf('{');
+        if (openingIndex === -1) return '';
+
+        const closingIndex = str.indexOf('}', openingIndex + 1);
+        if (closingIndex === -1)  return '';
+        return str.substring(openingIndex + 1, closingIndex);
+    }
+
+    const itemCol = new foundry.utils.Collection();
+    container.actor.items
+        .filter(i => i.system.type?.value === "spice")
+        .forEach(i => {
+            const quant = i.system.quantity;
+            const existing = itemCol.get(i.name) ?? 0;
+            const newQuant = quant + existing;
+
+            itemCol.set(i.name, newQuant);
+        });
+
+    const journal = game.journal.getName(CONFIG.journalName);
+    const entryPage = journal.pages.getName(CONFIG.pageName);
+
+    const doc = new DOMParser()
+        .parseFromString(entryPage.text.content, "text/html");
+    
+    const table = doc.querySelector('table');
+    if (!table) {
+        ui.notifications.error(`No table found in "${CONFIG.journalName}" journal, page "${CONFIG.pageName}"`);
+        return;
+    }
+
+    table.querySelector('tbody')
+        ?.querySelectorAll('tr')
+        ?.forEach(row => {
+            const cols = row.querySelectorAll('td');
+            const innerText = cols[0].textContent;
+            const name = extractBetweenCurlyBraces(innerText);
+
+            const quant = itemCol.get(name) ?? 0;
+            cols[1].textContent = quant;
+        });
+
+    const replacementString = doc.body.innerHTML;
+    entryPage.update({"text.content": replacementString});  //async
+} 
 
 /*
     WORKFLOW

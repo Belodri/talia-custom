@@ -19,3 +19,4 @@
     - City Walls
     - Stocks
 - fixed synchronisation issues between existing settlements and the database
+- add: auto update spice list journal when snack pack is opened by Shalkoc
