@@ -2,6 +2,18 @@ import { _defineDateSchema, _defineModifiersSchema } from "./sharedSchemas.mjs";
 import TaliaDate from "../../utils/TaliaDate.mjs";
 
 export default class Effect extends foundry.abstract.DataModel {
+    static updateFields = [
+        "effectText",
+        "flavorText", 
+        "modifiers.attributes.authority",
+        "modifiers.attributes.community",
+        "modifiers.attributes.economy",
+        "modifiers.attributes.progress",
+        "modifiers.attributes.intrigue",
+        "modifiers.capacity",
+        "monthsDuration",
+    ];
+
     static defineSchema() {
         const {
             SchemaField, HTMLField, NumberField, StringField, EmbeddedDataField

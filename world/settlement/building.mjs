@@ -2,6 +2,24 @@ import { _defineDateSchema, _defineModifiersSchema, _defineAttributesSchema } fr
 import TaliaDate from "../../utils/TaliaDate.mjs";
 
 export default class Building extends foundry.abstract.DataModel {
+    static updateFields = [
+        "effectText", 
+        "flavorText", 
+        "modifiers.attributes.authority",
+        "modifiers.attributes.community",
+        "modifiers.attributes.economy",
+        "modifiers.attributes.progress",
+        "modifiers.attributes.intrigue",
+        "modifiers.capacity",
+        "requirements.attributes.authority",
+        "requirements.attributes.community",
+        "requirements.attributes.economy",
+        "requirements.attributes.progress",
+        "requirements.attributes.intrigue",
+        "requirements.buildings",
+        "requirements.unlocked"
+    ];
+
     static defineSchema() {
         const {
             StringField, SetField, SchemaField, HTMLField, NumberField, EmbeddedDataField

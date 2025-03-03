@@ -215,4 +215,54 @@ export default class Settlement extends foundry.abstract.DataModel {
             available: maxCapacity - takenCapacity,
         }
     }
+
+    async syncWithDatabase() {
+        const changes = this.getChangesFromDatabase();
+        return this.update(changes);
+    }
+
+    getChangesFromDatabase() {
+        const getChange = (database) => {
+            return database.reduce((acc, dbEntry) => {
+                const existing = this.buildings[dbEntry.id];
+                acc[dbEntry.id] = existing 
+                    ? this.#getChangesForExisting(existing, dbEntry)
+                    : dbEntry;
+                return acc;
+            }, {});
+        }
+
+        const changes = {
+            buildings: getChange(Building.database),
+            effects: getChange(Effect.database)
+        };
+
+        return foundry.utils.diffObject(this._source, changes);
+    }
+
+    /**
+     * Compares an existing Effect or Building to its corresponding entry in the database 
+     * and returns an object with the allowed changes that need to be applied to the existing 
+     * Building or Effect to synchronize it with the database entry.
+     * @param {Building | Effect} existing 
+     * @param {object} dbEntry 
+     * @returns {object}                    An object with flattened changes.
+     */
+    #getChangesForExisting(existing, dbEntry) {
+        if( !( existing instanceof Building || existing instanceof Effect ) 
+        ) throw new Error(`Existing must be an instance of either Building or Effect.`);
+
+        const diffs = foundry.utils.diffObject(existing._source, dbEntry);
+        const flatDiffs = foundry.utils.flattenObject(diffs);
+
+        const allowedFields = new Set(existing.constructor.updateFields);
+        const changes = Object.entries(flatDiffs)
+            .filter(([k, v]) => allowedFields.has(k))
+            .reduce((acc, [k, v]) => {
+                acc[k] = v;
+                return acc;
+            }, {});
+
+        return changes;
+    }
 }
