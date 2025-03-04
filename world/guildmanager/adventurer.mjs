@@ -156,6 +156,8 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     static ATTRIBUTE_KEYS = ["brawn", "cunning", "spellcraft", "influence", "reliability"];
 
+    static DEFAULT_IMG = "icons/svg/cowled.svg";
+
     static #NAMES = null;
 
     static defineSchema() {
@@ -303,7 +305,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
         const charClass = Adventurer._getRandomCharClass();
         const race = Adventurer._getRandomRace();
         const name = await Adventurer._getRandomName( sex, race );
-        const img = Adventurer._getRandomImg( guild, sex, race );
+        const img = await Adventurer._getNextAvailableImg( guild, sex, race );
         const attributes = Adventurer._getRandomAttributes( charClass );
 
         return {
@@ -350,40 +352,42 @@ export default class Adventurer extends foundry.abstract.DataModel {
         return race;
     }
 
-    // todo: test if image is possible
-    static _getRandomImg( guild, sex, race ) {
-
-        const formatToFourDigits = (num) => {
-            // Ensure the number is treated as an integer
-            const integer = Math.floor(num);
-            
-            // Use String's padStart method to add leading zeros
-            return integer.toString().padStart(4, '0');
-        }
-        const basePath = `TaliaCampaignCustomAssets/c_Icons/Adventurer_Tokens/${race}/${sex}/${race}_${sex}_`;
+    /**
+     * @param {Guild} guild 
+     * @param {string} sex 
+     * @param {string} race 
+     * @returns {string}
+     */
+    static async _getNextAvailableImg(guild, sex, race) {
         const takenImages = new Set( 
-            guild.adventurers.filter(adv => adv.details.sex === sex && adv.details.race === race)
-                .map(adv => adv.img)
+            guild.adventurers.filter(adv => 
+                adv.details.sex === sex 
+                && adv.details.race === race
+                && adv.img !== Adventurer.DEFAULT_IMG
+            ).map(adv => adv.img)
         );
 
-        for(let i = 1; i < 50; i++) {
-            const testPath = `${basePath}${formatToFourDigits(i)}.png`;
-            if(!takenImages.has(testPath)) return testPath;
-        }
-        return "icons/svg/cowled.svg";
+        const target = `TaliaCampaignCustomAssets/c_Icons/Adventurer_Tokens/${race}/${sex}`;
+        const extensions = Object.keys(CONST.IMAGE_FILE_EXTENSIONS)
+            .map(t => `.${t.toLowerCase()}`);
+        const data = await FilePicker.browse("data", target, { extensions });
+        if(!data?.files?.length) return Adventurer.DEFAULT_IMG;
+
+        return data.files.find(path => !takenImages.has(path)) 
+            ?? Adventurer.DEFAULT_IMG;
     }
 
     /**
-     * Returns a random name for a given type and race.
-     * @param {"male" | "female" | "family"} type 
+     * Returns a random name for a given sex and race.
+     * @param {"male" | "female"} sex 
      * @param {string} race
      * @returns {Promise<string>}
      */
-    static async _getRandomName(type, race) {
+    static async _getRandomName(sex, race) {
         const names = await Adventurer._fetchNames();
 
-        const raceNames = names?.[type]?.[race];
-        if(!raceNames) return Adventurer.CONFIG.defaultNames[type];
+        const raceNames = names?.[sex]?.[race];
+        if(!raceNames) return Adventurer.CONFIG.defaultNames[sex];
 
         const [name] = Helpers.getRandomArrayElements(raceNames, 1);
         return name;
