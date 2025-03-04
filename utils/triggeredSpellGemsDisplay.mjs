@@ -1,91 +1,92 @@
+import Collection from "../foundry/common/utils/collection.mjs";
 import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
 
 export default {
     register() {
-        Hooks.on("getSceneControlButtons", (controls) => {
-            const bar = controls.find(c => c.name === "token");
-            bar.tools.push({
-                name: "trigger-gem-display",
-                title: "Spell Gem Triggers",
-                icon: "fas fa-gem",
-                visible: game.user.isGM,
-                onClick: async () => GemDisplay.toggleDisplay(),
-                button: true
-            });
-        });
-
-        Hooks.once("ready", () => {
-            if(!game.user.isGM) return;
-            GemDisplay.init();
-        });
+        GemDisplay.init();
     }
 }
 
 class GemDisplay {
-    /** An object with actor names as keys, and a collection of item uuids with their respective items as values*/
-    static itemLog = {};
-
     static displayOptions = {
-        anchorId: "hotbar",
+        anchorId: "hotbar-page-controls",
         styles: {
-            position: "absolute",
-            bottom: 0,
-            left: "610px",
-            display: 'inline-block',
+            "min-width": "fit-content",
             "padding-inline": '10px',
             backgroundColor: 'rgba(0, 0, 0, 0.7)',
             color: 'white',
             borderRadius: '10px',
-            marginLeft: '10px',
+            "align-self": "end",
         },
     }
 
-    static element = null;
+    static #active = true;
 
-    static init() {
-        GemDisplay.initPlayerChars();
-        GemDisplay.registerHooks();
-        GemDisplay.initDisplay();
-    }
+    static get active() { return GemDisplay.#active; }
 
-    static initPlayerChars() {
-        for(const player of game.users.players) {
-            const actor = player.character;
-            if(actor.type !== "character") continue;
+    static set active(value) {
+        if(typeof value !== "boolean") throw new TypeError(`Value must be boolean`);
 
-            GemDisplay.itemLog[actor.name] = new foundry.utils.Collection();
+        GemDisplay.#active = value;
 
-            actor.itemTypes.consumable
-                .filter(i => i.system.type.value === "spellGem" && i.system.equipped && i.name.startsWith("Triggered"))
-                .forEach(i => GemDisplay.addItem(i));
+        if(GemDisplay.element) {
+            GemDisplay.element.style.display = value 
+                ? "block"
+                : "none";
         }
     }
 
-    static isActorPC(actorOrName) {
-        return !!GemDisplay.itemLog[actorOrName instanceof Actor ? actorOrName.name : actorOrName];
+    /** @type {HTMLDivElement} */
+    static element = null;
+
+    /** @type {Set<string>} */
+    static pcUuids = new Set();
+
+    /** 
+     * A map with actorUuids of player characters as keys and the corresponding display string as values
+     * @type {Collection<string, string>} 
+     */
+    static actorTexts = new foundry.utils.Collection();
+
+    static init() {
+        Hooks.on("getSceneControlButtons", GemDisplay._onGetSceneControlButtonsHook);
+        Hooks.once("ready", GemDisplay._onReadyHook);
     }
 
-    static registerHooks() {
-        Hooks.on("updateItem", (item, data, options, userId) => {
-            const equipped = data.system?.equipped;
-            if(typeof equipped !== "boolean" || !GemDisplay.isActorPC(item.actor)) return;
+    static _onReadyHook() {
+        GemDisplay.pcUuids = new Set( 
+            game.users.players.map(u => u.character.uuid) 
+        );
 
-            if(equipped === true ) GemDisplay.addItem(item);
-            else if(equipped === false) GemDisplay.removeItem(item);
+        game.users.players
+            .map(u => u.character)
+            .filter(a => game.user.isGM || a.uuid === game.user.character?.uuid)
+            .forEach(a => GemDisplay.setActorText(a));
 
-            GemDisplay.updateText();
-        });
+        GemDisplay.updateDisplayText();
+        
+        Hooks.on("updateItem", (item, data, options, userId) => GemDisplay._onItemChange(item, userId));
+        Hooks.on("createItem", (item, options, userId) => GemDisplay._onItemChange(item, userId));
+        Hooks.on("deleteItem", (item, options, userId) => GemDisplay._onItemChange(item, userId));
+    }
 
-        Hooks.on("deleteItem", (item, options, userId) => {
-            if(GemDisplay.isActorPC(item.actor)) {
-                GemDisplay.removeItem(item);
-                GemDisplay.updateText();
-            }
+    /** @param {SceneControl} controls*/
+    static _onGetSceneControlButtonsHook(controls) {
+        const bar = controls.find(c => c.name === "token");
+        bar.tools.push({
+            name: "trigger-gem-display",
+            title: "Display Spell Gem Triggers",
+            icon: "fas fa-gem",
+            toggle: true,
+            active: GemDisplay.active,
+            onClick: toggled => GemDisplay.active = toggled,
+            button: true
         });
     }
 
-    static initDisplay() {
+
+    static initDisplayElement() {
         const opts = GemDisplay.displayOptions;
 
         // Find the anchor element
@@ -107,66 +108,75 @@ class GemDisplay {
         } else {
             anchorElement.parentNode.appendChild(GemDisplay.element);
         }
-
-        GemDisplay.updateText();
     }
 
-    static toggleDisplay() {
-        if (GemDisplay.element.style.display === "none") {
-            GemDisplay.element.style.display = "block";
-        } else {
-            GemDisplay.element.style.display = "none";
+    static updateDisplayText() {
+        if(!GemDisplay.element) {
+            GemDisplay.initDisplayElement();
         }
-    }
 
-    static addItem(item) { GemDisplay.itemLog[item.actor.name].set(item.uuid, item) }
-
-    static removeItem(item) { GemDisplay.itemLog[item.actor.name]?.delete(item.uuid) }
-
-    static updateText() {
-        if (GemDisplay.element) {
-            GemDisplay.element.innerHTML = GemDisplay.getDisplayText();
-        }
-    }
-
-    static getDisplayText() {
-        const htmlString = Object.entries(GemDisplay.itemLog)
-            .reduce((acc, [actorName, itemCollection]) => {
-                if(!itemCollection.size) {
-                    return acc;
-                }
-
-                const firstName = actorName.split(" ")[0];
-                const firstPart = `${firstName}(${itemCollection.size})`;
-
-                let secondPart = "";
-                if(itemCollection.size === 1) {
-                    const item = itemCollection.contents[0];
-                    secondPart = `: ${GemDisplay._getItemString(item)}`
-                }
-
-                acc += `<p>${firstPart}${secondPart}</p>`;
-                return acc;
-            }, "");
-        return htmlString || "<p>None</p>";
-    }
-
-    static _getItemString(item) {
-        const htmlString = item.system.description.value;
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlString, "text/html");
-
-        // Select the second row of the table (tbody > tr:nth-of-type(2))
-        const secondRow = doc.querySelector("table tbody tr:nth-of-type(2)");
+        const displayText = GemDisplay.actorTexts
+            .filter(Boolean)
+            .map(v => v)
+            .join("</br>");
         
-        let triggerCond = "";
-        // Extract the text from the <p> tag inside the second row's <td>
-        if (secondRow) {
-            const paragraph = secondRow.querySelector("td p");
-            triggerCond = paragraph ? paragraph.textContent.trim() : "No trigger";
+        GemDisplay.element.innerHTML = `<p>${displayText}</p>` || "<p>None</p>"
+    }
+
+    /** 
+     * @param {Item} item 
+     * @param {object} data
+     * @param {object} options
+     * @param {string} userId   
+     */
+    static _onItemChange(item, data, options, userId) {
+        //only gm should track others
+        if(userId !== game.userId && !game.user.isGM) return;   
+
+        if( GemDisplay.#isItemSpellGem(item) && GemDisplay.#isItemOnPC(item) ) {
+            GemDisplay.setActorText(item.actor);
+            GemDisplay.updateDisplayText();
+        }
+    }
+
+    /** @param {Item} item */
+    static #isItemOnPC(item) { return GemDisplay.pcUuids.has(item.actor.uuid); }
+
+    /** @param {Item} item */
+    static #isItemSpellGem(item) { return item?.system.type?.value === "spellGem"; }
+
+    /** 
+     * @param {Actor} actor 
+     * @returns {Item[]}
+     */
+    static getEquippedTriggeredSpellGems(actor) {
+        return actor.items.filter(i => 
+            i.type === "consumable" 
+            && i.system.type?.value === "spellGem" 
+            && i.system.equipped 
+            && i.name.startsWith("Triggered: ")
+        );
+    }
+
+    /** @param {Actor} actor */
+    static setActorText(actor) {
+        const gems = GemDisplay.getEquippedTriggeredSpellGems(actor);
+        const firstName = actor.name.split(" ")[0];
+
+        let displayText = "";
+        if(gems.length === 1) {
+            const triggerCond = gems[0].getFlag("talia-custom", "spellGem.triggerCondition") ?? "NO TRIGGER CONDITION";
+            const trimmedName = gems[0].name.replace("Triggered: ", "");
+
+            displayText = game.user.isGM 
+                ? `${firstName} (1): ${trimmedName} ["${triggerCond}"]`
+                : `${trimmedName} ["${triggerCond}"]`;
+        } else if(gems.length > 1) {
+            displayText = game.user.isGM 
+                ? `${firstName} (${gems.length}): INVALID (more than 1 triggered spell gem equipped)`
+                : `INVALID (You cannot have more than 1 triggered spell gem equipped!)`;
         }
 
-        const trimmedName = item.name.replace("Triggered: ", "");
-        return `${trimmedName} ["${triggerCond}"]`;
+        GemDisplay.actorTexts.set(actor.uuid, displayText);
     }
 }

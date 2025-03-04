@@ -33,12 +33,13 @@ export async function createSpellGem(actor, chosenArgs) {
 function getChanges(actor, chosenArgs) {
     const rollData = actor.getRollData();
 
-    //get spell level level for name (0th, 1st, 2nd,...9th)
+    //get spell level level for name (Cantrip, 1st, 2nd,...9th)
     const titleSpellLevelString = 
-        chosenArgs.selectedSpellSlotLevel === 1 ? " - 1st" :
-            chosenArgs.selectedSpellSlotLevel === 2 ? " - 2nd" :
-                chosenArgs.selectedSpellSlotLevel === 3 ? " - 3rd" :
-                    ` - ${chosenArgs.selectedSpellSlotLevel}th`;
+        chosenArgs.selectedSpellSlotLevel === 0 ? " - Cantrip" :
+            chosenArgs.selectedSpellSlotLevel === 1 ? " - 1st" :
+                chosenArgs.selectedSpellSlotLevel === 2 ? " - 2nd" :
+                    chosenArgs.selectedSpellSlotLevel === 3 ? " - 3rd" :
+                        ` - ${chosenArgs.selectedSpellSlotLevel}th`;
 
     //general changes first
     const name = chosenArgs.isTrigger ? `Triggered: ${chosenArgs.chosenSpell.name}${titleSpellLevelString}` : `Activated: ${chosenArgs.chosenSpell.name}${titleSpellLevelString}`;
@@ -52,6 +53,8 @@ function getChanges(actor, chosenArgs) {
         "system.price.value": chosenArgs.chosenGem.system.price.value,
         "system.weight.value": chosenArgs.chosenGem.system.weight.value,
         "flags.talia-custom.spellGem.school": chosenArgs.chosenSpell.system.school,
+        "flags.talia-custom.spellGem.spellLevel": chosenArgs.selectedSpellSlotLevel,
+        "flags.talia-custom.spellGem.triggerCondition": chosenArgs.triggerConditions ?? undefined,
     };
 
     //attack changes
