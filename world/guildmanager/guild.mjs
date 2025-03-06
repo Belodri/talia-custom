@@ -68,7 +68,7 @@ export default class Guild extends foundry.abstract.DataModel {
             ),
             _missions: new MappingField( 
                 new EmbeddedDataField(  Mission, { nullable: true } ), { initial: {}, nullable: false }
-            )
+            ),
         }
     }
 
@@ -190,7 +190,8 @@ export default class Guild extends foundry.abstract.DataModel {
     }
 
     async createRandomAdventurer() {
-        const randomData = await Adventurer.getRandomData(this);
+        const choices = await Adventurer.createAdventurerDataDialog() ?? {};
+        const randomData = await Adventurer.getRandomData(this, choices);
         return this.createAdventurerFromData(randomData);
     }
 
@@ -236,6 +237,26 @@ export default class Guild extends foundry.abstract.DataModel {
         return this.update(changes);
     }
 
+    /**
+     * Gets an existing item pile actor of this guild or creates one if none exists.
+     * @returns {Promise<Actor>}
+     */
+    async getVaultActor() {
+        const itemPileActor = game.actors.find(a => a.flags["talia-custom"]?.vaultOfGuildName === this.name);
+        if(itemPileActor) return itemPileActor;
+
+        const pack = game.packs.get("talia-custom.talia-actors");
+        const [packActorDoc] = await pack.getDocuments({name: "DefaultGuildVault"});
+        if(!packActorDoc) throw new Error("Unable to find actor 'DefaultGuildVault' in pack 'talia-custom.talia-actors'.");
+
+        const changes = {
+            "flags.talia-custom.vaultOfGuildName": this.name,
+            "name": `${this.name} Vault`
+        }
+        const obj = foundry.utils.mergeObject(packActorDoc.toObject(), changes);
+        return await Actor.implementation.create(obj);
+    }
+
     //#endregion
 
     //#region Data preparation
@@ -248,9 +269,13 @@ export default class Guild extends foundry.abstract.DataModel {
         this.adventurers = new foundry.utils.Collection(
             Object.values(this._adventurers).map(adv => [adv.id, adv])
         );
+
         this.missions = new foundry.utils.Collection(
             Object.values(this._missions).map(mission => [mission.id, mission])
         );
+
+        this.currentDate = TaliaDate.now();
+        
     }
     //#endregion
 

@@ -12,6 +12,7 @@ import { Helpers } from "../../utils/helpers.mjs";
  * @property {string} adventurerName    The name of the adventurer who rolled this result.
  * @property {number} adventurerLevel   The level of the adventurer at the time of the roll.
  * @property {number} adventurerExp     The exp of the adventurer at the time of the roll.
+ * @property {string} adventurerImg     The image of the adventurer.
  * @property {string} attributeKey      The attribute that this roll is for.
  * @property {string} missionId         The id of the mission
  * @property {string} missionName       The name of the mission
@@ -36,6 +37,7 @@ import { Helpers } from "../../utils/helpers.mjs";
  * @property {CheckResult[]} checkResults   The CheckResult objects of each of the checks the adventurer made.
  * @property {number} expGained             How much exp did the adventurer gain from these checks?
  * @property {boolean} causedLevelUp        Did the exp the adventurer gained from this cause a levelup?
+ * @property {number} newLevelAfterLevelUp  If this caused a levelup, what is the level afterwards?
  */
 
 /**
@@ -76,6 +78,20 @@ export class Resolver {
         this.adventurers = mission.assignedAdventurers;
     }
 
+    get checkResults() {
+        if(!this.#isEvaluated) throw new Error("This resolver has not yet been evaluated.");
+        return this.#checkResults;
+    }
+
+    get adventurerResults() {
+        if(!this.#isEvaluated) throw new Error("This resolver has not yet been evaluated.");
+        return this.#adventurerResults;
+    }
+
+    get results() {
+        return { checkResults: this.checkResults, adventurerResults: this.adventurerResults }
+    }
+
     /**
      * A unique identifier for a result. `${adventurerId}_${attributeKey}`
      * @param {string} attributeKey
@@ -85,20 +101,35 @@ export class Resolver {
 
     /**
      * Gets the adventurer that's best suited for making a check.
-     * @param {Mission} mission
      * @param {string} attributeKey
+     * @param {Adventurer[]} adventurers    An array or a Collection of adventurers
      * @returns {Adventurer | null} The best adventurer or null if none is assigned to the mission.
      * @interface
      */
-    static getBestForCheck(mission, attributeKey) {
+    static getBestForCheck(attributeKey, adventurers) {
         let best = null;
-        for (const adv of mission.assignedAdventurers) {
+        for (const adv of adventurers) {
             if (!best
                 || adv.attributes[attributeKey].totalRollMod > best.attributes[attributeKey].totalRollMod) {
                 best = adv;
             }
         }
         return best;
+    }
+
+    /**
+     * Gets the adventurers best suited for each main check.
+     * @param {Adventurer[]} adventurers    An array or a Collection of adventurers
+     * @returns {{[attributeKey: string]: Adventurer}}  An object with each main attribute 
+     *                              as keys and the respective best adventurers as values.
+     * @interface
+     */
+    static getBestForMainChecks(adventurers) {
+        return Object.fromEntries(
+            Object.values(Resolver.CONFIG.attributes)
+                .filter(attr => attr.isMain)
+                .map(attr => [attr.key, Resolver.getBestForCheck(attr.key, adventurers)])
+        );
     }
 
     /**
@@ -124,16 +155,6 @@ export class Resolver {
 
         this.#isEvaluated = true;
         return this;
-    }
-
-    get checkResults() {
-        if(!this.#isEvaluated) throw new Error("This resolver has not yet been evaluated.");
-        return this.#checkResults;
-    }
-
-    get adventurerResults() {
-        if(!this.#isEvaluated) throw new Error("This resolver has not yet been evaluated.");
-        return this.#adventurerResults;
     }
 
     //#endregion
@@ -167,7 +188,10 @@ export class Resolver {
             critsCount,
             checkResults,
             expGained,
-            causedLevelUp: expGained >= adv.expForLevelUp
+            newLevelAfterLevelUp: expGained >= adv.exp.missing 
+                ? adv.exp.level + 1
+                : 0,
+            causedLevelUp: expGained >= adv.exp.missing
         }
 
         this.#adventurerResults[adv.id] = advResult;
@@ -181,7 +205,7 @@ export class Resolver {
         for (const attrCfg of Object.values(Resolver.CONFIG.attributes)) {
             if (attrCfg.isMain) {
                 // main checks are each rolled once by the best adventurer
-                const adv = Resolver.getBestForCheck(this.mission, attrCfg.key);
+                const adv = Resolver.getBestForCheck(attrCfg.key, this.mission.assignedAdventurers);
                 if(!adv) throw new Error("No adventurer is assigned to this mission."); //should never happen but just in case
 
                 promises.push(this.#setCheckResult(attrCfg.key, adv));
@@ -210,8 +234,9 @@ export class Resolver {
             id: checkId,
             adventurerId: adventurer.id,
             adventurerName: adventurer.name,
-            adventurerLevel: adventurer.level,
-            adventurerExp: adventurer.exp,
+            adventurerLevel: adventurer.exp.level,
+            adventurerExp: adventurer.exp.total,
+            adventurerImg: adventurer.img,
             missionId: this.mission.id,
             missionName: this.mission.name,
             attributeKey: attributeKey,
@@ -245,14 +270,14 @@ export class Resolver {
      * @returns {Promise<D20Roll>}  Promise that resolves to a D20Roll
      */
     async #createRoll(attributeKey, adventurer) {
-        const dc = this.mission.dc[attributeKey];
+        const dc = this.mission.dc[attributeKey].value;
         const rollData = {
             mod: adventurer.attributes[attributeKey].mod,
-            exp: adventurer.expBonus,
+            level: adventurer.attributes[attributeKey].bonus,
         };
 
         return dnd5e.dice.d20Roll({
-            parts: ["@mod", "@exp"],
+            parts: ["@mod", "@level"],
             data: rollData,
             targetValue: dc,
             fastForward: true,
@@ -260,7 +285,7 @@ export class Resolver {
             messageData: {
                 rollMode: CONST.DICE_ROLL_MODES.PUBLIC,
                 speaker: { alias: adventurer.name, },
-                flags: { "talia-custom": { missionId: this.mission.id, adventurerId: adventurer.id } }
+                flags: { "talia-custom": { missionId: this.mission.id, adventurerId: adventurer.id, adventurerImg: adventurer.img } }
             }
         });
     }

@@ -1,38 +1,56 @@
-<div class="card adventurer-card" data-adventurer-id="{{id}}" data-drag="true">
-    <div class="card-header collapsible {{cssClasses}}" data-action="toggleCollapse">
-        <img class="portrait" src="{{img}}" alt="{{name}}"></img>
+
+<div class="card adventurer-card {{#if adventurer.hidden}}mark-hidden{{/if}}" data-adventurer-id="{{adventurer.id}}" data-drag="true">
+    <div class="card-header collapsible {{#if context.defaultCollapse}}collapsed{{/if}}" data-action="toggleCollapse">
+        <img class="portrait" src="{{adventurer.img}}" alt="{{adventurer.name}}"></img>
         <div class="data-header">
             <div class="overview-bar">
-                <span class="name">{{name}}</span>
-                <i class="{{state.icon}}" data-tooltip="{{state.hint}}"></i>
+                <span class="name">{{adventurer.name}}</span>
                 
+                
+                <div>
+                    <i class="{{context.status.icon}}" data-tooltip="{{context.status.tooltip}}"></i>
+                    <span>{{adventurer.assignedMission.name}}</span>
+                </div>
             </div>
             <hr>
             <div class="attributes">
-                {{#each attributes}}
+
+                {{#each adventurer.attributes}}
                 <div class="attribute-full">
                     <span class="label" data-tooltip="{{explanation}}">{{label}}</span>
                     <span class="total">{{total}}</span>
-                    <span class="mod-display">{{modDisplay}}</span>
+                    <span class="mod-display" data-tooltip="{{mod}} + {{bonus}}">{{modDisplay}}</span>
                 </div>
                 {{/each}}
-                <div class="attribute-full side-panel">
-                    <span class="label" data-tooltip="{{level.explanation}}">Level</span>
-                    <span class="total">{{level.current}}</span>
-                    <span class="mod-display" data-tooltip="{{exp.explanation}}">{{exp.current}}/{{exp.forNext}}</span>
+
+                {{#with adventurer.exp}}
+                <div class="attribute-full side-panel" >
+                    <span class="label" data-tooltip="Each level grants a +1 bonus to all checks.">Level</span>
+                    <span class="total">{{level}}</span>
+
+                    {{#if isMax}}
+                    <span class="mod-display" data-tooltip="Maximum level reached!">max</span>
+                    {{else}}
+                    <span class="mod-display" data-tooltip="Each successful mission and each natural 20 grant +1 exp.">{{total}}/{{forNext}} exp</span>
+                    {{/if}}
+
                 </div>
+                {{/with}}
+
             </div>
         </div>
     </div>
     <div class="card-body">
         <hr>
+        {{#if adventurer.description}}
         <div class="about">
-            <p class="description">{{description}}</p>
+            <p class="description">{{adventurer.description}}</p>
         </div>
-        
-        {{#if assignedMission}}
+        {{/if}}
+
+        {{#if adventurer.assignedMission}}
         <div class="assigned-mission">
-            <span class="name">{{assignedMission.name}}</span>
+            <span class="name">Assigned to: "{{adventurer.assignedMission.name}}"</span>
         </div>
         {{/if}}
     </div>

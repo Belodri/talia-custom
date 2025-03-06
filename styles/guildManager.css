@@ -5,9 +5,12 @@
     --color-text-main: var(--color-light-2);
     --color-text-highlight: var(--dnd5e-highlight-45);
 
+    height: 1000px;
+    width: 1500px;
 
-    min-width: 1200px;
-    min-height: 500px;
+    min-width: 1500px;
+    min-height: 1000px;
+
     color: var(--color-text-main);
     background: rgba(11, 10, 19, 0.95);
 
@@ -27,68 +30,84 @@
             font-weight: bold;
             text-align: center;
         }
+
+        .current-date {
+            display: block;
+            font-size: x-large;
+            font-weight: bold;
+            text-align: center;
+        }
     }
 
-
-
-    .general {
+    .tab {
         display: flex;
-        flex-direction: row;
-        justify-content: space-between;
+        flex-direction: column;
 
-        .half-column {
-            flex: 1;
-            
+        .tab-header {
+            flex: 0;
+            display: flex;
+
             .column-title {
+                flex: 1;
                 display: block;
                 font-size: x-large;
                 font-weight: bold;
                 text-align: center;
-                
-                position: -webkit-sticky;
-                position: sticky;
+                position: sticky; 
             }
         }
     }
 
-    .text-content {
+    .column-container {
+        flex: 1;
+        
         display: flex;
         flex-direction: row;
+        justify-content: space-between;
 
-        .paragraph-with-title {
-            flex: 1;
-
-            display: flex;
-            flex-direction: column;
-
-            margin-inline: 5px;
-    
-            & span {
-                text-align: center;
-                align-self: center;
-            }
+        .adventurers {
+            margin-left: 1.2em;
         }
     }
 
-    
 
-    .card {
+    .card-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        
+    }
+
+    .gm-info {
         display: flex;
         flex-direction: column;
 
         border: 1px solid var(--button-border-color);
         border-radius: 5px;
-
         margin-bottom: 1em;
         padding: 0.3em;
+        background-color: var(--color-cool-5);
 
+        .info-header {
+            text-align: center;
+        }
+    }
 
+ 
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--button-border-color);
+        border-radius: 5px;
+        margin-bottom: 1em;
+        padding: 0.3em;
         background-color: var(--color-cool-5);
 
         .attributes {
             flex: 1;
             display: flex;
-            flex-direction: row;
             justify-content: space-around;
             font-size: large;
 
@@ -124,6 +143,27 @@
 
         }
     }
+
+    .text-content {
+        display: flex;
+        flex-direction: row;
+
+        .paragraph-with-title {
+            flex: 1;
+
+            display: flex;
+            flex-direction: column;
+
+            margin-inline: 5px;
+    
+            & span {
+                text-align: center;
+                align-self: center;
+            }
+        }
+    }
+
+    
 
     .card-header {
         display: flex;
@@ -230,5 +270,9 @@
 
     .card-header.collapsed + .card-body {
         display: none;
+    }
+
+    .card.mark-hidden {
+        background-color: rgba(32, 0, 0, 0.459);
     }
 }

@@ -17,6 +17,10 @@ import GuildApp from "./guildApp.mjs";
 
 
 export default class Mission extends foundry.abstract.DataModel {
+    static init() {
+        Hooks.on("dnd5e.renderChatMessage", Mission.onDnd5eRenderChatMessageHook);
+    }
+
     constructor(...args) {
         
         super(...args);
@@ -124,7 +128,8 @@ export default class Mission extends foundry.abstract.DataModel {
         return {
             id: new StringField({ required: true, nullable: false, blank: false }),
             name: new StringField({ blank: true, initial: "", label: "Name" }),
-            dc: new SchemaField( shared.defineAttributesSchema(), {label: "DC"}),
+            _dc: new SchemaField( shared.defineAttributesSchema(), {label: "DC"}),
+            hidden: new BooleanField({ label: "Hidden"}),
             _risk: new StringField({ 
                 initial: "low", required: true, label: "Risk",
                 choices: Object.entries(Mission.CONFIG.risk)
@@ -138,6 +143,7 @@ export default class Mission extends foundry.abstract.DataModel {
                 items: new SchemaField( getRewardItemsSchema(), {label: "Items"} ),
                 other: new SetField( new StringField(), { label: "Other rewards" })
             }, { label: "Rewards" }),
+            _grantedRewards: new BooleanField(),
             durationInDays: new NumberField({ integer: true, initial: 1, positive: true, label: "Duration (days)"}),
             description: new StringField({ required: false, blank: true, initial: "", label: "Description" }),
             summaryFlavor: new StringField({ required: false, blank: true, initial: "", label: "Summary Flavor", hint: "The parameters [missionName], [duration], [startDate], [returnDate], [assigned], and [survived] are replaced with the mission's values in the final text." }),
@@ -147,10 +153,13 @@ export default class Mission extends foundry.abstract.DataModel {
                 checkResults: new ObjectField(),
                 /** @type {import("./Resolver.mjs").AdventurerResults} */
                 adventurerResults: new ObjectField(),
+                summary: new StringField(),
+                isSuccess: new BooleanField(),
             }, { required: false, initial: undefined }),
             startDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null } ), 
             returnDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null } ), 
             finishDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
+            _creationDate: new EmbeddedDataField( TaliaDate, { initial: TaliaDate.now() }),
         }
     }
 
@@ -177,19 +186,12 @@ export default class Mission extends foundry.abstract.DataModel {
 
     /** Has this mission returned? */
     get hasReturned() { 
-        const retDays = this.daysUntilReturn;
+        const retDays = this.duration.remaining;
         return retDays !== null && retDays <= 0;
     }
 
     /** Has this mission been finished, finalized, and logged? */
     get hasFinished() { return !!this.finishDate; }
-
-    /** The number of days until the mission returns. Returns null if the mission hasn't started. Returns a negative number if the mission has returned already.*/
-    get daysUntilReturn() { 
-        return this.hasStarted
-            ? this.returnDate.inDays - this.startDate.inDays
-            : null;
-    }
 
     /** Does this mission have results? */
     get hasResults() { 
@@ -221,14 +223,6 @@ export default class Mission extends foundry.abstract.DataModel {
         return Mission.CONFIG.risk[r];
     }
 
-    get bestForMainChecks() {
-        return Object.fromEntries(
-            Object.values(Resolver.CONFIG.attributes)
-                .filter(attr => attr.isMain)
-                .map(attr => [attr.key, Resolver.getBestForCheck(this, attr.key)])
-        );
-    }
-
     /** Checks whether the mission was a success. Returns undefined if the mission hasn't started yet. */
     get isSuccess() {
         if (!this.hasStarted) return undefined;
@@ -253,39 +247,6 @@ export default class Mission extends foundry.abstract.DataModel {
         return anyMainSuccess && anySurvivorWithReliability;
     }
 
-
-    /**
-     * Computes a deterministic floating-point seed value between 0 and 1 
-     * based on the FNV-1a hash of `this.id`. The same `id` will always 
-     * produce the same seed, while different `id`s will produce 
-     * different values with low collision probability.
-     * 
-     * @returns {number} A floating-point number in the range [0, 1).
-     */
-    get seed() {
-        let hash = 2166136261; // FNV-1a 32-bit offset basis
-        for (let i = 0; i < this.id.length; i++) {
-            hash ^= this.id.charCodeAt(i);
-            hash = ( hash * 16777619 ) >>> 0; // Multiply by FNV prime and ensure unsigned 32-bit
-        }
-        return hash / 0x100000000; // Normalize to range [0, 1)
-    }
-
-    get estimatedReturnDate() {
-        const cStartDays = this.startDate?.inDays;
-        if (!cStartDays) return null;
-        const est = cStartDays + this.estimatedDurationInDays;
-        return TaliaDate.fromDays(est);
-    }
-
-    get estimatedDurationInDays() {
-        const lowerBound = 1;
-        const upperBound = Math.floor(this.durationInDays * 1.5);
-
-        const scaledValue = Math.floor(lowerBound + ( this.seed * (upperBound - lowerBound)) );
-        return scaledValue;
-    }
-
     //#endregion
 
     /**
@@ -306,34 +267,130 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     prepareDerivedData() {
-        const getItemNameFromUuid = (uuid) => {
-            if(!uuid) return "";
-            const { name } = fromUuidSync(uuid);
-            return name;
-        };
+        this.seed = this._prepareSeed();
+        this.duration = this._prepareDuration();
+        this.estimated = this._prepareEstimated();
+        this.rewards.itemRecords = this._prepareItemRecords();
+        this.dc = this._prepareDC();
 
+        // Adventurers already have their derived data prepared at this point!
         this.assignedAdventurers = new foundry.utils.Collection(
             this._assignedAdventurerIds.map(id => {
                 const adv = this.parent._adventurers[id];
                 return [id, adv];
             }) 
         );
+        this.assignmentsData = this._prepareAssignmentsData();
 
-        this.duration = {
-            total: this.durationInDays,
-            remaining: this.daysUntilReturn
+    }
+
+    /**
+     * Computes a deterministic floating-point seed value between 0 and 1 
+     * based on the FNV-1a hash of `this.id`. The same `id` will always 
+     * produce the same seed, while different `id`s will produce 
+     * different values with low collision probability.
+     * 
+     * @returns {number} A floating-point number in the range [0, 1).
+     */
+    _prepareSeed() {
+        let hash = 2166136261; // FNV-1a 32-bit offset basis
+        for (let i = 0; i < this.id.length; i++) {
+            hash ^= this.id.charCodeAt(i);
+            hash = ( hash * 16777619 ) >>> 0; // Multiply by FNV prime and ensure unsigned 32-bit
+        }
+        return hash / 0x100000000; // Normalize to range [0, 1)
+    }
+
+    _prepareDuration() {
+        const total = this.durationInDays;
+        const remaining = this.startDate && this.returnDate 
+            ? this.returnDate.inDays - this.startDate.inDays
+            : undefined;
+
+        return { total, remaining };
+    }
+
+    _prepareEstimated() {
+        const lowerBound = 1;
+        const upperBound = Math.floor(this.durationInDays * 1.5);
+        const durationInDays = Math.floor(lowerBound + ( this.seed * (upperBound - lowerBound)) );
+
+        const returnDate = this.startDate 
+            ? TaliaDate.fromDays(this.startDate.inDays + durationInDays)
+            : undefined;
+
+        const remaining = returnDate 
+            ? returnDate.inDays - this.startDate.inDays
+            : undefined;
+
+        return {
+            durationInDays, returnDate, remaining
         };
+    }
 
-        this.rewards.itemRecords = Object.entries(this.rewards.items)
+    _prepareItemRecords() {
+        return Object.entries(this.rewards.items)
             .reduce((acc, [key, values]) => {
+                let name = "";
+                if(values.uuid) {
+                    const record = fromUuidSync(values.uuid);
+                    name = record.name;
+                }
+
                 acc[key] = {
                     uuid: values.uuid,
-                    name: getItemNameFromUuid(values.uuid),
+                    name,
                     quantity: values.quantity
                 };
                 return acc;
             }, {});
     }
+
+    /**
+     * @typedef {object} DCObject
+     * @property {string} attribute     The attribute key of the DC 
+     * @property {number} value         The DC itself
+     * @property {string} label
+     * @property {string} explanation
+     */
+
+    /** @returns {{[attributeKey: string]: DCObject}} */
+    _prepareDC() {
+        const entryArray = Object.entries(this._dc)
+            .map(([attrKey, numberValue]) => {
+                const dcObject = {
+                    value: numberValue,
+                    attribute: attrKey,
+                    label: Adventurer.ATTRIBUTE_LABELS[attrKey].label,
+                    explanation: Adventurer.ATTRIBUTE_LABELS[attrKey].explanation,
+                };
+                return [attrKey, dcObject]
+            })
+
+        return Object.fromEntries( entryArray );
+    }
+
+    _prepareAssignmentsData() {
+        const bestForMainChecks = Resolver.getBestForMainChecks(this.assignedAdventurers);
+        return this.assignedAdventurers.map(adv => ({
+            id: adv.id,
+            name: adv.name,
+            img: adv.img,
+            attributes: Object.values(Resolver.CONFIG.attributes)
+                .reduce((acc, curr) => {
+                    const makesRoll = curr.isMain
+                        ? bestForMainChecks[curr.key]?.id === adv.id
+                        : true;
+                    
+                    acc[curr.key] = {
+                        totalBonus: adv.attributes[curr.key].totalRollModDisplay,
+                        makesRoll,
+                    }
+                    return acc;
+                }, {}),
+        }));
+    }
+
     //#endregion
 
 
@@ -408,7 +465,7 @@ export default class Mission extends foundry.abstract.DataModel {
     static getRandomData() {
         const data = {
             name: "DEFAULT MISSION NAME",
-            dc: Mission._getRandomDCs(),
+            _dc: Mission._getRandomDCs(),
             durationInDays: Mission._getRandomDuration(),
             _risk: Mission._getRandomRisk(),
         }
@@ -437,7 +494,7 @@ export default class Mission extends foundry.abstract.DataModel {
     }
     //#endregion
 
-    //#region Start & Finish
+    //#region Start
 
     async start() {
         if(!this.canStart) throw new Error(`Unable to start mission id "${this.id}".`);
@@ -446,106 +503,133 @@ export default class Mission extends foundry.abstract.DataModel {
         const returnDate = TaliaDate.fromOffset(startDate, {days: this.durationInDays});
 
         const resolver = await new Resolver(this).evaluate();
-        const results = {
-            checkResults: resolver.checkResults,
-            adventurerResults: resolver.adventurerResults
-        };
+        const { adventurerResults, checkResults } = resolver.results;
 
-        await this.update({ results, startDate, returnDate });
+        const isSuccess = this.#determineSuccess({ adventurerResults, checkResults });
+        const summary = this.#getSummaryFlavor({ adventurerResults, startDate, returnDate, isSuccess });
 
-        await this.guild.app.render(true);
+        const changes = {
+            results: {
+                adventurerResults, 
+                checkResults,
+                summary,
+                isSuccess
+            },
+            startDate,
+            returnDate
+        }
+        await this.update(changes);
     }
 
-    async finish() {
-        if( !this.hasReturned || this.hasFinished ) throw new Error(`Unable to finish mission id "${this.id}".`);
-
-        // perform updates
-        const promises = [
-            ...this.assignedAdventurers.map(adv => adv._onMissionFinish(this)),
-            this.update({ finishDate: TaliaDate.now() })
-        ];
-        await Promise.all(promises);
-
-        //then display results
-        await this.displayResults(); 
+    #determineSuccess({checkResults, adventurerResults}) {
+        // Get all main attribute keys
+        const mainAttKeys = Object.values(Resolver.CONFIG.attributes)
+            .filter(att => att.isMain)
+            .map(att => att.key);
         
-        //then grant rewards
-        //await this.grantRewards();  //todo grantRewards()
-
-        await this.guild.app.render(true);
+        // Check if at least one main attribute check was successful
+        const anyMainSuccess = Object.values(checkResults)
+            .some(res => res.isSuccess && mainAttKeys.includes(res.attributeKey));
+        
+        // Check if at least one adventurer with successful reliability check survived
+        const anySurvivorWithReliability = Object.values(checkResults)
+            .some(res => 
+                res.isSuccess && 
+                res.attributeKey === 'reliability' && 
+                !adventurerResults[res.adventurerId].died
+            );
+        
+        return anyMainSuccess && anySurvivorWithReliability;
     }
 
-    //#endregion
-
-    //#region ChatMessages
+    static ICONS = {
+        crit: "fa-light fa-dice-d20",
+        death: "fa-solid fa-skull-crossbones",
+        success: "fa-solid fa-check",
+        fail: "fa-solid fa-xmark",
+        levelUp: "fa-solid fa-star"
+    }
 
     static FAIL_SUMMARIES = {
         survivors: `The mission was unsuccessful over [duration] days, from [startDate] to [returnDate]. The returned members report of significant obstacles that prevented completion of the primary objective. The guild has recorded all relevant details for future reference and risk assessment. This contract is formally closed as unfulfilled.`,
         noSurvivors: `The mission is recorded as failed after [duration] days from its commencement on [startDate]. None of the [assigned] dispatched members returned by [returnDate]. Search parties discovered evidence confirming the loss of all personnel. The guild has documented available information and formally closed this contract as unfulfilled with complete casualties.`,
     }
 
-    getSummaryFlavor() {
-        if(!this.hasResults) return "";
-
+    #getSummaryFlavor({adventurerResults, startDate, returnDate, isSuccess}) {
         const args = {
             duration: this.duration.total,
-            startDate: this.startDate.displayString,
-            returnDate: this.returnDate.displayString,
+            startDate: startDate.displayString,
+            returnDate: returnDate.displayString,
             assigned: this.assignedAdventurers.size,
         }
 
-        const rawString = this.isSuccess 
+        const rawString = isSuccess 
             ? this.summaryFlavor
-            : Object.values(this.adventurerResults).some(advRes => !advRes.died)
+            : Object.values(adventurerResults).some(advRes => !advRes.died)
                 ? Mission.FAIL_SUMMARIES.survivors
                 : Mission.FAIL_SUMMARIES.noSurvivors;
 
         return Helpers.replacePlaceholders(rawString, args);
     }
 
-    async displaySummaryMessage() {
+    //#endregion
 
-        const _getIcon = (key) => {
-            const icons = {
-                crit: "fa-light fa-dice-d20",
-                death: "fa-solid fa-skull-crossbones",
-                success: "fa-solid fa-check",
-                fail: "fa-solid fa-xmark",
-                levelUp: "fa-solid fa-star"
+    //#region Finish
+
+    async finish() {
+        if( !this.hasReturned || this.hasFinished ) throw new Error(`Unable to finish mission id "${this.id}".`);
+
+        await this.grantRewards();
+        const promises = [
+            ...this.assignedAdventurers.map(adv => adv._onMissionFinish(this)),
+            this.update({ finishDate: TaliaDate.now() })
+        ];
+        await Promise.all(promises);
+        await this.displayResults(); 
+    }
+
+    /**
+     * Grants the mission's rewards to the guild's vault actor.
+     * @param {boolean} [force=false]   Grant rewards even if rewards have already been granted?
+     */
+    async grantRewards(force=false) {
+        if(this._grantedRewards && !force) throw new Error(`Rewards for mission id "${this.id}" have already been granted.`);
+
+        const itemDataObjects= [];
+        for(const {uuid, quantity} of Object.values(this.rewards.items)) {
+            if(!uuid || !quantity) continue;
+
+            const item = await fromUuid(uuid);
+            if(!item) throw new Error(`Invalid item uuid "${uuid}" in mission id ${this.id}.`);
+
+            const itemObj = item.toObject();
+
+            if(foundry.utils.hasProperty(itemObj, "system.quantity")) {
+                itemObj.system.quantity = quantity;
+                itemDataObjects.push(itemObj);
+            } else {    // If the item doesn't have a quantity, just add that many items.
+                for(let i = 0; i < quantity; i++) itemDataObjects.push(itemObj);
             }
-            return `<i class="${icons[key]}"></i>`;
         }
 
-        if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
+        const vaultActor = await this.guild.getVaultActor();
 
-        const msgHeader = `<h2>Mission Report: ${this.isSuccess ? `${_getIcon("success")} Success` : `${_getIcon("fail")} Failure`}</h2>`;
-        const flavorMsg = `<p>${this.getSummaryFlavor()}</p>`;
+        if(this.rewards.gp) await vaultActor.update({"system.currency.gp": vaultActor.system.currency.gp + this.rewards.gp})
+        if(itemDataObjects.length) await Helpers.grantItems(vaultActor, itemDataObjects);
 
-        // Sort by adventurer name
-        const adventurerSummeryParts = Object.values(this.adventurerResults)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map(advRes => {
-                const parts = [];
-                if(advRes.died) parts.push(_getIcon("death"));
-                parts.push(`<strong>${advRes.name}</strong> +${advRes.expGained} exp`);
-                if(advRes.causedLevelUp) parts.push(`(${_getIcon("levelUp")} ${advRes.checkResults[0].adventurerLevel + 1})`);
+        await this.update({_grantedRewards: true});
+    }
 
-                const joined = parts.join(" ");
-                return `<li>${joined}</li>`;
-            })
-            .join("");
-        const adventurerSummery = `<ul>${adventurerSummeryParts}</ul>`;
+    //#endregion
 
-        const adventurerPart = `<h3>Members</h3>${adventurerSummery}`;
+    //#region ChatMessages
 
-        const rewardsPart = this.isSuccess 
-            ? `<h3>Rewards</h3>${GuildApp._getMissionRewardsHTMLString(this)}`
-            : "";
+    async displaySummaryMessage() {
+        const path = 'modules/talia-custom/templates/guildTemplates/partials/missionReportMessage.hbs';
+        const template = await renderTemplate(path, this);
 
-        const content = msgHeader + flavorMsg + adventurerPart + rewardsPart;
-
-        return ChatMessage.implementation.create({
-            content,
+        await ChatMessage.implementation.create({
+            content: template,
             speaker: { alias: this.parent.name },
         });
     }
@@ -591,7 +675,7 @@ export default class Mission extends foundry.abstract.DataModel {
         const /** @type {CheckResult} */ result = this.checkResults[resultId];
         if(!result) throw new Error(`Result id "${resultId}" not found in mission id "${this.id}".`);
 
-        const { rollObj, attributeKey, dc, adventurerName } = result;
+        const { rollObj, attributeKey, dc, adventurerName, adventurerId, adventurerImg } = result;
 
         const roll = dnd5e.dice.D20Roll.fromData(rollObj);
         const flavor = `DC ${dc} ${attributeKey.capitalize()} Check`;
@@ -601,9 +685,26 @@ export default class Mission extends foundry.abstract.DataModel {
             speaker: {
                 alias: adventurerName,
             },
+            flags: { "talia-custom": { checkResult: result } }
         };
 
         return await roll.toMessage(messageData, { rollMode: CONST.DICE_ROLL_MODES.PUBLIC });
+    }
+
+    /**
+     * Hook on dnd5e.renderChatMessage for chat messages with the "talia-custom.checkResult" flag
+     * to modify the avatar image to match the adventurer image
+     * @param {ChatMessage5e} chatMessage 
+     * @param {HTMLElement} html 
+     */
+    static onDnd5eRenderChatMessageHook(chatMessage, html, messageData) {
+        const result = chatMessage.flags?.["talia-custom"]?.checkResult;
+        if(!result) return;
+
+        const { adventurerName, adventurerImg } = result;
+
+        const imgEle = html.querySelector(`img[alt="${adventurerName}"]`);
+        if(imgEle) imgEle.setAttribute("src", adventurerImg);
     }
 
 
@@ -646,8 +747,9 @@ export default class Mission extends foundry.abstract.DataModel {
 
         // Fields that don't require special handling
         const fieldPaths = [
-            "name", "dc.brawn", "dc.cunning", "dc.spellcraft", "dc.influence", "dc.reliability",
-            "_risk", "rewards.gp", "rewards.other", "durationInDays", "description", "summaryFlavor"
+            "name", "_dc.brawn", "_dc.cunning", "_dc.spellcraft", "_dc.influence", "_dc.reliability",
+            "_risk", "rewards.gp", "rewards.other", "durationInDays", "description", "summaryFlavor",
+            "hidden"
         ];
 
         // Paths for item fields
@@ -678,5 +780,9 @@ export default class Mission extends foundry.abstract.DataModel {
 
     async delete() {
         return this.guild.deleteEmbedded([this.id]);
+    }
+
+    async toggleHidden() {
+        return this.update({hidden: !this.hidden});
     }
 }
