@@ -17,8 +17,6 @@ import Mission from "./mission.mjs";
  * @property {number} reliability      Accountability, perseverance, and loyalty.
  */
 
-
-
 export default class Adventurer extends foundry.abstract.DataModel {
     constructor(...args) {
         super(...args);
