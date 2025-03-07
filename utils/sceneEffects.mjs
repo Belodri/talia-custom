@@ -40,7 +40,7 @@ class SceneEffectManager {
     /**
      * Hook renderSceneConfig; adds a field to add effects via the gui.
      * @param {Application} app             The Application instance being rendered
-     * @param {jQuery} html                 The inner HTML of the document that will be displayed and may be modified
+     * @param {JQuery} html                 The inner HTML of the document that will be displayed and may be modified
      * @param {object} data                 The object of data used when rendering the application
      */
     static renderSceneConfigHook(app, html, data) {
