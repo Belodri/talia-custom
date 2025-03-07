@@ -1,0 +1,51 @@
+{{#if results}}
+<div class="mission-summary">
+
+    <h2>Mission Report</h2>
+    <p>Mission: <b>{{name}}</b></p>
+    {{#if results.isSuccess}}
+    <p>Result: <b><i class="fa-solid fa-check"></i> Success</b></p>
+    {{else}}
+    <p>Result: <b><i class="fa-solid fa-xmark"></i> Failure</b></p>
+    {{/if}}
+
+    <h3>Report</h3>
+    <p>{{results.summary}}</p>
+
+    <h3>Members</h3>
+    <ul>
+        {{#each results.adventurerResults}}
+        {{#if died}}
+        <li>
+            <i class="fa-solid fa-skull-crossbones"></i><span> <b>{{name}}</b>
+        </li>
+        {{else}}
+        <li>
+            <span><b>{{name}}</b> (+{{expGained}} exp){{#if newLevelAfterLevelUp}} <i class="fa-solid fa-star"></i> &rarr; {{newLevelAfterLevelUp}}{{/if}}
+        </li>
+        {{/if}}
+        {{/each}}
+    </ul>
+    
+    <h3>Rewards</h3>
+    <ul>
+        {{#if rewards.gp}}
+        <li {{#unless isSuccess}}style="text-decoration: line-through"{{/unless}}>{{rewards.gp}}gp</li>
+        {{/if}}
+
+        {{#each rewards.itemRecords}}
+        {{#if uuid}}
+
+        <li {{#unless ../isSuccess}}style="text-decoration: line-through"{{/unless}}
+        >{{quantity}}x {{name}}</li>
+
+        {{/if}}
+        {{/each}}
+
+        {{#each rewards.other}}
+        <li {{#unless ../isSuccess}}style="text-decoration: line-through"{{/unless}}>{{this}}</li>
+        {{/each}}
+    </ul>
+    <p>Material rewards have been received and stored in the vault.</p>
+</div>
+{{/if}}

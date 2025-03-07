@@ -1,0 +1,16 @@
+<div class="tab log scrollable {{tabs.log.cssClass}}" data-tab="log" data-group="main">
+     <div class="tab-header">
+        <span class="column-title">Mission Archive</span>
+    </div>
+    <div class="column-container scrollable">
+        <div class="card-column scrollable">
+            
+            {{#each missions}}
+            {{#if mission.hasFinished}}
+            {{> 'modules/talia-custom/templates/guildTemplates/partials/missionCard.hbs' }}
+
+            {{/if}}
+            {{/each}}
+        </div>
+    </div>
+</div>

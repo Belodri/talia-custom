@@ -1,80 +1,174 @@
-<div class="card mission-card" data-mission-id="{{id}}" data-drop="true">
-    <div class="card-header collapsible" data-action="toggleCollapse">
-        {{#if stateVars.assigned }}
-        <span data-tooltip="{{stateVars.assigned.tooltip}}">{{stateVars.assigned.label}}</span>
-        {{/if}}
-        <span class="name">{{name}}</span>
-        <div class="state-display">
-            <i class="{{stateVars.statusIcon}}" data-tooltip="{{stateVars.statusTooltip}}"></i>
-            <span>{{stateVars.statusLabel}}</span>
-            <span class="dur-est" data-tooltip="{{stateVars.durTooltip}}">{{stateVars.durLabel}}</span>
-        </div>
+<div class="card mission-card {{#if mission.hidden}}mark-hidden{{/if}}" data-mission-id="{{mission.id}}" data-drop="true">
+    <div class="card-header collapsible {{#if (eq mission.state.key 'ongoing')}}collapsed{{/if}}" data-action="toggleCollapse">
+
+        {{#with context.assignmentContext}}
+        <span data-tooltip="{{tooltip}}">{{count}}/{{max}}</span>
+        {{/with}}
+
+        <span class="name">{{mission.name}}</span>
+
+        {{#with context.status}}
+        <div class="status-display" data-tooltip="{{tooltip}}">
+            <i class="{{icon}}"></i>
+            <span>{{label}}</span>
+        </div>  
+        {{/with}}
     </div>
+
     <div class="card-body">
         <hr>
         <div class="attributes">
-            {{#each dcDataRaw}}
+
+            {{#each mission.dc}}
             <div class="attribute-full" data-tooltip="{{explanation}}">
                 <span class="label">{{label}} DC</span>
-                <span class="total">{{dc}}</span>
+                <span class="total">{{value}}</span>
             </div>
             {{/each}}
-            <div class="attribute-full side-panel" data-tooltip="{{risk.explanation}}">
+
+            {{#with mission.risk}}
+            <div class="attribute-full side-panel" data-tooltip="{{explanation}}">
                 <span class="label">Risk Level</span>
-                <span class="total smaller">{{risk.label}}</span>
+                <span class="total smaller">{{label}}</span>
             </div>
+            {{/with}}
+
+            {{#with context.duration}}
+            <div class="attribute-full side-panel" data-tooltip="{{tooltip}}">
+                <span class="label">{{title}}</span>
+                <span class="total smaller">{{label}}</span>
+            </div>
+            {{/with}}
         </div>
+
         <hr>
+
         <div class="text-content">
-            {{#if description}}
-             <div class="paragraph-with-title">
+            <div class="paragraph-with-title">
                 <span>Description</span>
                 <hr>
-                <p>{{description}}</p>
+                <p class="lore-text">{{mission.description}}</p>
+            </div>
+
+            {{#if mission.hasFinished}}
+            <div class="paragraph-with-title">
+                <span>Report</span>
+                <hr>
+                <p class="lore-text">{{mission.results.summary}}</p>
             </div>
             {{/if}}
+
             <div class="paragraph-with-title">
                 <span>Rewards</span>
                 <hr>
-                {{{reward}}}
+                <ul>
+                    {{#if mission.rewards.gp}}
+                    <li class="{{ifThen (and mission.hasFinished (not mission.isSuccess)) "crossed" ""}}">{{mission.rewards.gp}}gp</li>
+                    {{/if}}
+
+                    {{#each mission.rewards.itemRecords}}
+                    {{#if uuid}}
+                    <li class="{{ifThen (and ../mission.hasFinished (not ../mission.isSuccess)) "crossed" ""}}">{{quantity}}x {{name}}</li>
+                    {{/if}}
+                    {{/each}}
+
+                    {{#each mission.rewards.other}}
+                    <li class="{{ifThen (and ../mission.hasFinished (not ../mission.isSuccess)) "crossed" ""}}">{{this}}</li>
+                    {{/each}}
+                </ul>
             </div>
         </div>
-        <hr>
-        {{#if assigned}}
+
+        
+        {{#if mission.hasFinished}}
+
         <div class="assignments">
-            <span class="title">Assignments</span>
+
+            <span class="title">Check Results</span>
+            <hr>
             <div class="not-a-table">
                 <div class="row header">
-                    <div class="cell"></div>
+                    <div class="cell first-cell"></div>
                     <div class="cell"><span>Brawn</span></div>
                     <div class="cell"><span>Cunning</span></div>
                     <div class="cell"><span>Spellcraft</span></div>
                     <div class="cell"><span>Influence</span></div>
                     <div class="cell"><span>Reliability</span></div>
                 </div>
-                {{#each assigned}}
+
+                {{#each mission.results.adventurerResults}}
+
+                <div class="row" data-adventurer-id="{{id}}">
+                    <div class="cell first-cell" data-tooltip="{{#if causedLevelUp}}Leveled up to level {{newLevelAfterLevelUp}}{{/if}}">
+                        <img class="slot-img" src="{{img}}" alt="{{name}}">
+                        <span>{{#if died}}<i class="fa-solid fa-skull"></i> {{/if}}{{name}}{{#unless died}}(+{{expGained}} exp){{#if causedLevelUp}} <i class="fa-solid fa-star"></i> &rarr; {{newLevelAfterLevelUp}}{{/if}}{{/unless}}</span>
+                    </div>
+                    {{#each checkResults}} {{!-- checkResults with a value of null are still looped over --}}
+
+                    {{#if id}}
+
+                    <div class="cell">
+                        <span class="highlighted {{ifThen isSuccess "success" "fail"}}">{{total}}</span>
+                    </div>
+
+                    {{else}}
+                    <div class="cell">
+                        <span class="greyed">-</span>
+                    </div>
+
+                    {{/if}}
+
+                    {{/each}}
+                </div>
+
+                {{/each}}
+            </div>
+        </div>
+
+        {{else}}
+
+        {{#if mission.assignedAdventurers.size}}
+        <div class="assignments">
+            <span class="title">Assignments</span>
+            <div class="not-a-table">
+                <div class="row header">
+                    <div class="cell first-cell"></div>
+                    <div class="cell"><span>Brawn</span></div>
+                    <div class="cell"><span>Cunning</span></div>
+                    <div class="cell"><span>Spellcraft</span></div>
+                    <div class="cell"><span>Influence</span></div>
+                    <div class="cell"><span>Reliability</span></div>
+                </div>
+
+                {{#each mission.assignmentsData}}
+
                 <div class="row" data-adventurer-id="{{id}}" data-action="unassign">
-                    <div class="cell name-img">
+                    <div class="cell first-cell">
                         <img class="slot-img" src="{{img}}" alt="{{name}}">
                         <span>{{name}}</span>
                     </div>
                     {{#each attributes}}
                     <div class="cell">
-                        <span class="{{spanClass}}">{{totalBonus}}</span>
+                        <span class="{{#if makesRoll}}highlighted{{else}}greyed{{/if}}">{{totalBonus}}</span>
                     </div>
                     {{/each}}
                 </div>
+
                 {{/each}}
             </div>
         </div>
         {{/if}}
-        {{#if missionButton.display}}
+
+        {{/if}}
+
+        {{#if (and context.button context.allowInteraction) }}
         <button 
             class="mission-button"
             type="button"
-            data-action="{{missionButton.action}}"
-            data-mission-id="{{id}}"
-        >{{missionButton.label}}</button>
+            data-action="{{context.button.action}}"
+            data-mission-id="{{mission.id}}"
+        >{{context.button.label}}</button>
         {{/if}}
+
     </div>
 </div>

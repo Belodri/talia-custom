@@ -17,20 +17,6 @@ import Mission from "./mission.mjs";
  * @property {number} reliability      Accountability, perseverance, and loyalty.
  */
 
-/**
- * @typedef {object} EvaluatedAttribute
- * @property {string} attributeKey
- * @property {string} label
- * @property {string} explanation
- * @property {number} base
- * @property {number} total
- * @property {number} mod
- * @property {number} expBonus
- * @property {number} totalRollMod
- * @property {string} modDisplay
- * @property {string} totalRollModDisplay
- */
-
 export default class Adventurer extends foundry.abstract.DataModel {
     constructor(...args) {
         super(...args);
@@ -63,72 +49,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
             diceSize: 6,
             charClassBonus: 3,
         },
-        levels: {
-            0: {
-                level: 0,
-                rollBonus: 0,
-                expMin: 0,
-                icon: "fa-solid fa-kiwi-bird",
-                hint: "Level 0"
-            },
-            1: {
-                level: 1,
-                rollBonus: 1,
-                expMin: 2,
-                icon: "fa-solid fa-dice-one",
-                hint: "Level 1"
-            },
-            2: {
-                level: 2,
-                rollBonus: 2,
-                expMin: 5,
-                icon: "fa-solid fa-dice-two",
-                hint: "Level 2"
-            },
-            3: {
-                level: 3,
-                rollBonus: 3,
-                expMin: 9,
-                icon: "fa-solid fa-dice-three",
-                hint: "Level 3"
-            },
-            4: {
-                level: 4,
-                rollBonus: 4,
-                expMin: 14,
-                icon: "fa-solid fa-dice-four",
-                hint: "Level 4"
-            },
-            5: {
-                level: 5,
-                rollBonus: 5,
-                expMin: 20,
-                icon: "fa-solid fa-dice-five",
-                hint: "Level 5"
-            },
-        },
-        states: {
-            waiting: {
-                icon: "fa-solid fa-user",
-                hint: "Waiting to be assigned",
-                key: "waiting",
-            },
-            assigned: {
-                icon: "fa-solid fa-user-check",
-                hint: "Assigned to a mission",
-                key: "assigned",
-            },
-            away: {
-                icon: "fa-solid fa-route",
-                hint: "On a mission",
-                key: "away",
-            },
-            dead: {
-                icon: "fa-solid fa-skull",
-                hint: "Dead",
-                key: "dead",
-            }
-        }
+        expThresholds: [0, 2, 5, 9, 14, 20],    // how much exp is needed for a given level, starting with level 0.
     }
 
     static ATTRIBUTE_LABELS = {
@@ -156,6 +77,8 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     static ATTRIBUTE_KEYS = ["brawn", "cunning", "spellcraft", "influence", "reliability"];
 
+    static DEFAULT_IMG = "icons/svg/cowled.svg";
+
     static #NAMES = null;
 
     static defineSchema() {
@@ -176,7 +99,9 @@ export default class Adventurer extends foundry.abstract.DataModel {
             baseExp: new NumberField({ integer: true, initial: 0, min: 0, label: "Base Exp" }),
             _deathDate: new EmbeddedDataField( TaliaDate, { required: false, nullable: true, initial: null }),
             _pastDeathDates: new ArrayField( new EmbeddedDataField( TaliaDate )),
+            _creationDate: new EmbeddedDataField( TaliaDate, { initial: TaliaDate.now() }),
             img: new FilePathField({ categories: ["IMAGE"], label: "Image" }),
+            hidden: new BooleanField({label: "Is Hidden?"}),
         }
     }
 
@@ -184,25 +109,6 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     /** @type {Guild} */
     get guild() { return this.parent; }
-
-    get expForLevelUp() { 
-        const expMinNext = Adventurer.CONFIG.levels[this.level + 1]?.expMin;
-        return expMinNext 
-            ? expMinNext - this.exp
-            : Infinity;  
-    }
-
-    get level() { 
-        const levels = Adventurer.CONFIG.levels;
-
-        let lastLevel = levels[0];
-        for (const level of Object.values(levels)) {
-            if (level.expMin > this.exp) return lastLevel.level;
-            lastLevel = level;
-        }
-
-        return lastLevel.level;
-    }
 
     get state() {
         if(this.isDead) return "dead";
@@ -226,12 +132,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     get isDead() { return !!this._deathDate; }
 
-    /**
-     * @returns {number} The exp bonus this adventurer adds to rolls.
-     */
-    get expBonus() {
-        return Adventurer.CONFIG.levels[this.level].rollBonus;
-    }
+    get deathDate() { return this._deathDate; }
 
     //#endregion
 
@@ -246,25 +147,69 @@ export default class Adventurer extends foundry.abstract.DataModel {
     }
 
     //#region Data preparation
+
     _initialize(...args) {
         super._initialize(...args);
         this.prepareDerivedData();
     }
 
     prepareDerivedData() {
-        // Mission results
-        this.missionResults = new foundry.utils.Collection();
-        this.criticalRolls = 0;
-        this.exp = this.baseExp;
+        this.missionResults = this._prepareMissionResults();
+        this.exp = this._prepareExp();
+        this.attributes = this._prepareAttributes();
+    }
 
-        for(const [k, res] of Object.entries( this._missionResults )) {
-            this.missionResults.set(k, res);
-            this.criticalRolls += res.critsCount;
-            this.exp += res.expGained;
+    /** @returns {Collection<string, import("./Resolver.mjs").AdventurerResult} */
+    _prepareMissionResults() {
+        return new foundry.utils.Collection( 
+            Object.entries(  this._missionResults )
+        );
+    }
+
+    _prepareExp() {
+        const expThresholds = Adventurer.CONFIG.expThresholds;
+
+        const exp = this.missionResults
+            .reduce((acc, res) => acc += res.expGained , this.baseExp);
+
+        let level = 0;
+        for(level; level <= expThresholds.length; level++) {
+            if( !expThresholds[level + 1] || expThresholds[level + 1] > exp ) break;
         }
 
-        // Attributes
-        this.attributes = Object.entries(this._attributes)
+        let forNext = expThresholds[level + 1] ?? Infinity;
+        const isMax = forNext === Infinity; 
+        const missing = isMax ? Infinity : forNext - expThresholds[level];
+
+        return {
+            total: exp,
+            level,
+            missing,
+            isMax,
+            forNext
+        }
+    }
+
+    /**
+     * @typedef {object} EvaluatedAttribute
+     * @property {string} attributeKey
+     * @property {string} label
+     * @property {string} explanation
+     * @property {number} base
+     * @property {number} total
+     * @property {number} mod
+     * @property {number} bonus
+     * @property {number} totalRollMod
+     * @property {string} modDisplay
+     * @property {string} totalRollModDisplay
+     */
+
+    /** @returns {{[attributeKey: string]: EvaluatedAttribute }} */
+    _prepareAttributes() {
+        /** @type {{[attributeKey: string]: number}} */
+        const initAttr = this._attributes;
+
+        return Object.entries( initAttr)
             .reduce((acc, [attr, value]) => {
                 const getDisplayMod = (modifier) => `${modifier >= 0 ? "+" : ""}${modifier}`;
 
@@ -272,8 +217,8 @@ export default class Adventurer extends foundry.abstract.DataModel {
                 const total = base;     // to allow for easy expansion in the future
 
                 const mod = Math.floor( ( total - 10 ) / 2 );
-                const expBonus = this.expBonus;
-                const totalRollMod = mod + expBonus;
+                const bonus = this.exp.level;
+                const totalRollMod = mod + bonus;
 
                 acc[attr] = {
                     attributeKey: attr,
@@ -282,7 +227,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
                     base, 
                     total, 
                     mod, 
-                    expBonus,
+                    bonus,
                     totalRollMod, 
                     modDisplay: getDisplayMod(mod),
                     totalRollModDisplay: getDisplayMod(totalRollMod),
@@ -290,6 +235,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
                 return acc;
             }, {});
     }
+
     //#endregion
 
     //#region Random Generation
@@ -297,13 +243,19 @@ export default class Adventurer extends foundry.abstract.DataModel {
     /**
      * Randomly generates data for an adventurer.
      * @param {Guild} guild 
+     * @param {object} [options={}] 
+     * @param {string} options.sex 
+     * @param {string} options.race 
+     * @param {string} options.charClass 
+     * @param {string} options.name 
      */
-    static async getRandomData(guild) {
-        const sex = Adventurer._getRandomSex();
-        const charClass = Adventurer._getRandomCharClass();
-        const race = Adventurer._getRandomRace();
-        const name = await Adventurer._getRandomName( sex, race );
-        const img = Adventurer._getRandomImg( guild, sex, race );
+    static async getRandomData(guild, {sex, race, charClass, name} = {}) {
+        if(!sex) sex = Adventurer._getRandomSex();
+        if(!charClass) charClass = Adventurer._getRandomCharClass();
+        if(!race) race = Adventurer._getRandomRace();
+        if(!name) name = await Adventurer._getRandomName( sex, race );
+
+        const img = await Adventurer._getNextAvailableImg( guild, sex, race );
         const attributes = Adventurer._getRandomAttributes( charClass );
 
         return {
@@ -316,23 +268,9 @@ export default class Adventurer extends foundry.abstract.DataModel {
         }
     }
 
-    static _getRandomAttributes(charClass) {
-        return Adventurer.ATTRIBUTE_KEYS.reduce((acc, curr) => {
-            acc[curr] = Adventurer._getRandomAttributeValue(curr, charClass);
-            return acc;
-        }, {});
-    }
-
-    static _getRandomAttributeValue(attribute, charClass) {
-        const { diceCount, diceSize, charClassBonus } = Adventurer.CONFIG.baseAttributeRoll;
-        
-        let sum = attribute === charClass 
-            ? charClassBonus 
-            : 0;
-        for(let i = 0; i < diceCount; i++) {
-            sum += Helpers.getRandomInt(1, diceSize);
-        }
-        return sum;
+    static _getRandomSex() { 
+        const [sex] = Helpers.getRandomArrayElements(Adventurer.CONFIG.sex, 1);
+        return sex;
     }
 
     static _getRandomCharClass() {
@@ -340,57 +278,76 @@ export default class Adventurer extends foundry.abstract.DataModel {
         return charClass;
     }
 
-    static _getRandomSex() { 
-        const [sex] = Helpers.getRandomArrayElements(Adventurer.CONFIG.sex, 1);
-        return sex;
-    }
-
     static _getRandomRace() {
         const [race] = Helpers.getWeightedRandomKeys(Adventurer.CONFIG.raceWeights, 1);
         return race;
     }
 
-    // todo: test if image is possible
-    static _getRandomImg( guild, sex, race ) {
+    static _getRandomAttributes(charClass) {
+        const { diceCount, diceSize, charClassBonus } = Adventurer.CONFIG.baseAttributeRoll;
 
-        const formatToFourDigits = (num) => {
-            // Ensure the number is treated as an integer
-            const integer = Math.floor(num);
-            
-            // Use String's padStart method to add leading zeros
-            return integer.toString().padStart(4, '0');
-        }
-        const basePath = `TaliaCampaignCustomAssets/c_Icons/Adventurer_Tokens/${race}/${sex}/${race}_${sex}_`;
-        const takenImages = new Set( 
-            guild.adventurers.filter(adv => adv.details.sex === sex && adv.details.race === race)
-                .map(adv => adv.img)
-        );
+        return Adventurer.ATTRIBUTE_KEYS.reduce((acc, curr) => {
+            let sum = curr === charClass ? charClassBonus : 0;
 
-        for(let i = 1; i < 50; i++) {
-            const testPath = `${basePath}${formatToFourDigits(i)}.png`;
-            if(!takenImages.has(testPath)) return testPath;
-        }
-        return "icons/svg/cowled.svg";
+            for(let i = 0; i < diceCount; i++) {
+                sum += Helpers.getRandomInt(1, diceSize);
+            }
+
+            acc[curr] = sum;
+            return acc;
+        }, {});
     }
 
     /**
-     * Returns a random name for a given type and race.
-     * @param {"male" | "female" | "family"} type 
+     * @param {Guild} guild 
+     * @param {string} sex 
+     * @param {string} race 
+     * @returns {string}
+     */
+    static async _getNextAvailableImg(guild, sex, race) {
+        const takenImages = new Set( 
+            guild.adventurers.filter(adv => 
+                adv.details.sex === sex 
+                && adv.details.race === race
+                && adv.img !== Adventurer.DEFAULT_IMG
+            ).map(adv => adv.img)
+        );
+
+        const target = `TaliaCampaignCustomAssets/c_Icons/Adventurer_Tokens/${race}/${sex}`;
+        const extensions = Object.keys(CONST.IMAGE_FILE_EXTENSIONS)
+            .map(t => `.${t.toLowerCase()}`);
+        const data = await FilePicker.browse("data", target, { extensions });
+        if(!data?.files?.length) return Adventurer.DEFAULT_IMG;
+
+        return data.files.find(path => !takenImages.has(path)) 
+            ?? Adventurer.DEFAULT_IMG;
+    }
+
+    /**
+     * Returns a random name for a given sex and race.
+     * @param {"male" | "female"} sex 
      * @param {string} race
      * @returns {Promise<string>}
      */
-    static async _getRandomName(type, race) {
+    static async _getRandomName(sex, race) {
         const names = await Adventurer._fetchNames();
 
-        const raceNames = names?.[type]?.[race];
-        if(!raceNames) return Adventurer.CONFIG.defaultNames[type];
+        const firstNames = names?.[sex]?.[race];
+        const lastNames = names?.family?.[race];
 
-        const [name] = Helpers.getRandomArrayElements(raceNames, 1);
-        return name;
+        if(!firstNames || !lastNames) {
+            const defaults = Adventurer.CONFIG.defaultNames;
+            return `${defaults[sex]} ${defaults.family}`;
+        }
+
+        const [firstName] = Helpers.getRandomArrayElements(firstNames, 1);
+        const [lastName] = Helpers.getRandomArrayElements(lastNames, 1);
+
+        return `${firstName} ${lastName}`;
     }
 
     static async _fetchNames() {
-        if( Adventurer.NAMES ) return Adventurer.#NAMES;
+        if( Adventurer.#NAMES ) return Adventurer.#NAMES;
 
         const path = `modules/${MODULE.ID}/jsonData/fantasyNames.json`;
 
@@ -441,7 +398,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
             "name", 
             "_attributes.brawn", "_attributes.cunning", "_attributes.spellcraft", "_attributes.influence", "_attributes.reliability",
             "details.sex", "details.race", "details.charClass",
-            "baseExp", "img",
+            "baseExp", "img", "hidden"
         ];
 
         const mainFields = fieldPaths.reduce((acc, curr) => {
@@ -464,12 +421,21 @@ export default class Adventurer extends foundry.abstract.DataModel {
         return this.update(changes);
     }
 
-    async delete() {
-        const allAssigned = this.allAssignedMissions;
-        if(allAssigned.length) {
-            console.error({allAssignedMissions: allAssigned});
-            throw new Error("Assigned adventurers cannot be deleted.");
+    async delete({force=false}={}) {
+        let assignedIds = new Set();
+
+        for(const mis of this.guild.missions) {
+            if(mis?.assignedAdventurerIds?.has?.(this.id)) {
+                if(force) await mis.unassignAdventurer(this.id);
+                else assignedIds.add(mis.id);
+            }
         }
+
+        if(assignedIds.size) {
+            console.error({assignedIds});
+            throw new Error("To delete assigned adventurers, pass '{force=true}' argument.");
+        }
+
         return this.guild.deleteEmbedded([this.id]);
     }
 
@@ -489,5 +455,62 @@ export default class Adventurer extends foundry.abstract.DataModel {
     async kill() {
         if(this.state !== "waiting") throw new Error("Only a waiting adventurer can be killed.");
         return this.update({"_deathDate": TaliaDate.now()});
+    }
+
+    async toggleHidden() {
+        return this.update({hidden: !this.hidden});
+    }
+
+    static async createAdventurerDataDialog() {
+        const { DialogV2 } = foundry.applications.api;
+        const { StringField } = foundry.data.fields;
+
+        const { sex, charClass, race } = Adventurer.CONFIG;
+
+        const sexField = new StringField({
+            label: "Sex",
+            choices: sex.reduce((acc, curr) => {
+                acc[curr] = curr;
+                return acc;
+            }, {}),
+            required: false,
+            blank: true
+        }).toFormGroup({}, { name: "sex" }).outerHTML;
+
+        const charClassField = new StringField({
+            label: "Character Class",
+            choices: charClass.reduce((acc, curr) => {
+                acc[curr] = curr;
+                return acc;
+            }, {}),
+            required: false,
+            blank: true
+        }).toFormGroup({}, { name: "charClass" }).outerHTML;
+
+        const raceField = new StringField({
+            label: "Race",
+            choices: race.reduce((acc, curr) => {
+                acc[curr] = curr;
+                return acc;
+            }, {}),
+            required: false,
+            blank: true
+        }).toFormGroup({}, { name: "race" }).outerHTML;
+
+        const nameField = new StringField({
+            label: "Name",
+            required: false,
+            blank: true
+        }).toFormGroup({}, {name: "name"}).outerHTML;
+
+        const choices = await DialogV2.prompt({
+            window: { title: "Adventurer Creator" },
+            position: { width: 500, height: "auto" },
+            content: `<p>Any blank fields are generated randomly.</p>` + sexField + raceField + charClassField + nameField, 
+            modal: false, 
+            rejectClose: false, 
+            ok: { callback: (event, button) => new FormDataExtended(button.form).object }
+        });
+        return choices;
     }
 }

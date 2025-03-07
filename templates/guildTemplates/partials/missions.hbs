@@ -1,8 +1,12 @@
-<div class="half-column missions scrollable">
+<div class="missions scrollable">
     <span class="column-title">Mission Board</span>
-    {{#each missions.active}}
-    {{> 'modules/talia-custom/templates/guildTemplates/partials/missionCard.hbs' }}
-    {{/each}}
+    <div class="card-column scrollable">
+        {{#each guild._missions}}
+        {{#unless hasFinished}}
+        {{> 'modules/talia-custom/templates/guildTemplates/partials/missionCard.hbs' }}
+        {{/unless}}
+        {{/each}}
+    </div>
 
     {{#if isGM}}
     <div class="gm-buttons">

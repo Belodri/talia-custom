@@ -1,4 +1,44 @@
 <div class="tab general {{tabs.general.cssClass}} scrollable" data-tab="general" data-group="main">
-    {{> 'modules/talia-custom/templates/guildTemplates/partials/missions.hbs' }}
-    {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurers.hbs' }}
+    <div class="tab-header">
+        <span class="column-title">Mission Board</span>
+        <span class="column-title">Mustering Hall</span>
+    </div>
+    <div class="column-container scrollable">
+        <div class="card-column missions scrollable">
+            {{#each missions}}
+            {{#unless ( or mission.hasFinished (and isGM mission.hidden) )}}
+            {{> 'modules/talia-custom/templates/guildTemplates/partials/missionCard.hbs' }}
+            {{/unless}}
+            {{/each}}
+
+            {{#if isGM}}
+            <div class="gm-buttons">
+                <button 
+                    class="gm-button"
+                    type="button"
+                    data-action="createNewMission"
+                >Create New Mission</button>
+            </div>
+            {{/if}}
+        </div>
+
+        <div class="card-column adventurers scrollable">
+            {{#each adventurers}}
+            {{#unless (or adventurer.isDead (and isGM adventurer.hidden) )}}
+            {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurerCard.hbs' }}
+            {{/unless}}
+            {{/each}}
+
+            {{#if isGM}}
+            <div class="gm-buttons">
+                <button 
+                    class="gm-button"
+                    type="button"
+                    data-action="createRandomAdventurer"
+                >Create Random Adventurer</button>
+            </div>
+            {{/if}}
+
+        </div>
+    </div>
 </div>

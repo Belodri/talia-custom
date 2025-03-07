@@ -1,8 +1,10 @@
-<div class="half-column adventurers scrollable">
+<div class="adventurers scrollable">
     <span class="column-title">Mustering Hall</span>
-    {{#each adventurers.alive}}
-    {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurerCard.hbs' }}
-    {{/each}}
+    <div class="card-column scrollable">
+        {{#each adventurers.alive}}
+        {{> 'modules/talia-custom/templates/guildTemplates/partials/adventurerCard.hbs' }}
+        {{/each}}
+    </div>
 
     {{#if isGM}}
     <div class="gm-buttons">

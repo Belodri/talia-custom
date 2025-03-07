@@ -34,6 +34,12 @@ export default class Guild extends foundry.abstract.DataModel {
         this.missions ??= new foundry.utils.Collection();
     }
 
+    static TESTING = {
+        misDesc: "The village of Gloomhollow has been plagued by spectral apparitions that vanish upon confrontation. The guild has traced the source to an ancient crypt beneath the village. Investigate the crypt, identify the cause of the hauntings, and eliminate the threat. Be warned: the crypt is rumored to be riddled with traps and cursed relics.",
+        misSum: "Over [duration] days, from [startDate] to [returnDate], the [assigned] adventurers explored the crypt beneath Gloomhollow. They uncovered a cursed artifact responsible for the hauntings, dispelled the lingering spirits, and neutralized the artifact. The team's efforts restored peace to the village, though further investigation into the crypt's origins is recommended.",
+        misName: "The Phantom Menace of Gloomhollow"
+    }
+
     static FLAG_KEY = "Guild";
 
     /** @type {GuildConfig} */
@@ -45,6 +51,9 @@ export default class Guild extends foundry.abstract.DataModel {
 
         hallSlotsMax: 12,
         hallFillPerRound: 8,
+
+        scribeTitle: "Guild Scribe",
+        scribeImg: "TaliaCampaignCustomAssets/c_Icons/Linzi_token.png",
     }
 
     /** @override */
@@ -68,7 +77,7 @@ export default class Guild extends foundry.abstract.DataModel {
             ),
             _missions: new MappingField( 
                 new EmbeddedDataField(  Mission, { nullable: true } ), { initial: {}, nullable: false }
-            )
+            ),
         }
     }
 
@@ -190,7 +199,8 @@ export default class Guild extends foundry.abstract.DataModel {
     }
 
     async createRandomAdventurer() {
-        const randomData = await Adventurer.getRandomData(this);
+        const choices = await Adventurer.createAdventurerDataDialog() ?? {};
+        const randomData = await Adventurer.getRandomData(this, choices);
         return this.createAdventurerFromData(randomData);
     }
 
@@ -236,6 +246,26 @@ export default class Guild extends foundry.abstract.DataModel {
         return this.update(changes);
     }
 
+    /**
+     * Gets an existing item pile actor of this guild or creates one if none exists.
+     * @returns {Promise<Actor>}
+     */
+    async getVaultActor() {
+        const itemPileActor = game.actors.find(a => a.flags["talia-custom"]?.vaultOfGuildName === this.name);
+        if(itemPileActor) return itemPileActor;
+
+        const pack = game.packs.get("talia-custom.talia-actors");
+        const [packActorDoc] = await pack.getDocuments({name: "DefaultGuildVault"});
+        if(!packActorDoc) throw new Error("Unable to find actor 'DefaultGuildVault' in pack 'talia-custom.talia-actors'.");
+
+        const changes = {
+            "flags.talia-custom.vaultOfGuildName": this.name,
+            "name": `${this.name} Vault`
+        }
+        const obj = foundry.utils.mergeObject(packActorDoc.toObject(), changes);
+        return await Actor.implementation.create(obj);
+    }
+
     //#endregion
 
     //#region Data preparation
@@ -248,9 +278,13 @@ export default class Guild extends foundry.abstract.DataModel {
         this.adventurers = new foundry.utils.Collection(
             Object.values(this._adventurers).map(adv => [adv.id, adv])
         );
+
         this.missions = new foundry.utils.Collection(
             Object.values(this._missions).map(mission => [mission.id, mission])
         );
+
+        this.currentDate = TaliaDate.now();
+        
     }
     //#endregion
 
