@@ -11,6 +11,7 @@ import TaliaDate from "./TaliaDate.mjs";
 import RepeatingEffects from "./RepeatingEffects.mjs";
 import triggeredSpellGemsDisplay from "./triggeredSpellGemsDisplay.mjs";
 import DetectionChecker from "./detectionChecker.mjs";
+import overrideTileOcclusion from "./overrideTileOcclusion.mjs";
 
 export const TaliaUtils = {
     Helpers,
@@ -30,6 +31,7 @@ export default {
         sceneEffects.register();
         RepeatingEffects.register();
         triggeredSpellGemsDisplay.register();
+        overrideTileOcclusion.register();
 
         TaliaCustomAPI.add(TaliaUtils, "none");
     }

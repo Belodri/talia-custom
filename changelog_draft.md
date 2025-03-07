@@ -23,3 +23,4 @@
 - add: Toggleable display for equipped triggered spell gems with trigger condition. For Non-GM users, only spell gems equipped by their character are displayed. 
 - change: Spellgems now track their spell slot level (and trigger condition if they are triggered) in a flag (spellgems created before this patch do not track their spell slot)
 - add: Proper implementation of GuildManager
+- add: Allow gm clients to ignore tile occlusion. Toggleable in Tile config ui.

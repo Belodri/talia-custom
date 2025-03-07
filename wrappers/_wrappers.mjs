@@ -14,6 +14,7 @@ export function registerWrappers() {
     restrictMovement.registerWrapper();
     getRollDataWrapper.registerWrapper();
     libWrapper.register(MODULE.ID, "Actor.prototype.toggleStatusEffect", wrap_Actor_prototype_toggleStatusEffect, "OVERRIDE");
+    libWrapper.register(MODULE.ID, "Tile.prototype._refreshMesh", wrap_Tile_prototype__refreshMesh, "WRAPPER");
 }
 
 /** Lets other parts of the module hook into talia_addToRollData and mutate the taliaObj which is then appended to rollData */
@@ -227,4 +228,19 @@ async function wrap_Actor_prototype_toggleStatusEffect(statusId, {active, overla
     if ( overlay ) effect.updateSource({"flags.core.overlay": true});
     if ( chosenDuration ) effect.updateSource({"duration.seconds": chosenDuration});    //added line
     return ActiveEffect.implementation.create(effect, {parent: this, keepId: true});
+}
+
+/**
+ * If the flag is set, the tile is rendered invisible for gms only.
+ * @this {Tile}
+ */
+function wrap_Tile_prototype__refreshMesh(wrapped, ...args) {
+    const ret = wrapped(...args);
+    if(game.user.isGM 
+        && this.mesh
+        && this.document.flags?.[MODULE.ID]?.gmIgnoreOcclusion
+    ) {
+        this.mesh.unoccludedAlpha = 0;
+    }
+    return ret;
 }
