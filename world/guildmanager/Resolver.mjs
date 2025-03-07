@@ -30,11 +30,14 @@ import { Helpers } from "../../utils/helpers.mjs";
  * @typedef {object} AdventurerResult
  * @property {string} id                    The id of the adventurer
  * @property {string} name                  The name of the adventurer
+ * @property {string} img                   The image of the adventurer
  * @property {string} missionId             The id of the mission
  * @property {string} missionName           The name of the mission
  * @property {boolean} died                 Did the adventurer die from any of the checks?
  * @property {number} critsCount            How many crits did the adventurer roll in the checks they made?
- * @property {CheckResult[]} checkResults   The CheckResult objects of each of the checks the adventurer made.
+ * @property {{[attributeKey: string]: CheckResult | null}} checkResults   Object with attributeKey keys 
+ *                                          to the respective CheckResult the adventurer made, 
+ *                                          or null if the adventurer didn't make that check.
  * @property {number} expGained             How much exp did the adventurer gain from these checks?
  * @property {boolean} causedLevelUp        Did the exp the adventurer gained from this cause a levelup?
  * @property {number} newLevelAfterLevelUp  If this caused a levelup, what is the level afterwards?
@@ -168,20 +171,24 @@ export class Resolver {
     #setAdventurerResult(adv) {
         let died = false;
         let critsCount = 0;
-        let checkResults = [];
+        const checkResults = {};
 
-        for(const result of Object.values(this.#checkResults)) {
-            if(result.adventurerId !== adv.id) continue;
+        //set check results per attribute
+        for(const key of Object.keys(Resolver.CONFIG.attributes)) {
+            const checkKey = Resolver.getCheckId(key, adv.id);
 
-            checkResults.push(result);
-            if (result.causedDeath) died = true;
-            if (result.isCritical) critsCount++;
+            const checkResult = this.#checkResults[checkKey] ?? null;
+            checkResults[key] = checkResult;
+
+            if (checkResult?.causedDeath) died = true;
+            if (checkResult?.isCritical) critsCount++;
         }
 
         const expGained = critsCount + (died ? 0 : Resolver.CONFIG.expGainedForSuccessfulMission); // crits + 1 if survived
         const advResult = {
             id: adv.id,
             name: adv.name,
+            img: adv.img,
             missionId: this.mission.id,
             missionName: this.mission.name,
             died,

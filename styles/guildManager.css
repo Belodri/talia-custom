@@ -159,7 +159,13 @@
             & span {
                 text-align: center;
                 align-self: center;
+                font-weight: bold;
             }
+        }
+
+        .lore-text {
+            /* font-family: Garamond, serif; */
+            font-style: italic;
         }
     }
 
@@ -182,6 +188,9 @@
     }
 
     .assignments {
+        display: flex;
+            flex-direction: column;
+
         .title {
             font-size: large;
             text-align: center;
@@ -210,10 +219,15 @@
             font-weight: bold;
         }
 
-        .name-img {
+        .first-cell {
             display: flex;
             flex-direction: row;
             align-items: center;
+            flex: 2;
+
+            & span {
+                margin-inline-start: 5px;
+            }
         }
 
         .greyed {
@@ -222,7 +236,6 @@
 
         .highlighted {
             text-decoration: underline;
-            color: var(--color-text-main);
         }
     }
 
@@ -232,10 +245,7 @@
             width: 30px;
         }
 
-        .assignments {
-            display: flex;
-            flex-direction: column;
-        }
+
     }
 
     .adventurer-card {
@@ -274,5 +284,17 @@
 
     .card.mark-hidden {
         background-color: rgba(32, 0, 0, 0.459);
+    }
+
+    .crossed {
+        text-decoration: line-through;
+    }
+
+    .success {
+        color: rgb(0, 80, 0);
+    }
+
+    .fail {
+        color: rgb(128, 16, 16);
     }
 }

@@ -5,8 +5,6 @@
         <div class="data-header">
             <div class="overview-bar">
                 <span class="name">{{adventurer.name}}</span>
-                
-                
                 <div>
                     <i class="{{context.status.icon}}" data-tooltip="{{context.status.tooltip}}"></i>
                     <span>{{adventurer.assignedMission.name}}</span>
@@ -14,7 +12,7 @@
             </div>
             <hr>
             <div class="attributes">
-
+        {{ log this }}
                 {{#each adventurer.attributes}}
                 <div class="attribute-full">
                     <span class="label" data-tooltip="{{explanation}}">{{label}}</span>
@@ -42,16 +40,50 @@
     </div>
     <div class="card-body">
         <hr>
-        {{#if adventurer.description}}
-        <div class="about">
-            <p class="description">{{adventurer.description}}</p>
-        </div>
-        {{/if}}
+        <div class="assignments">
 
-        {{#if adventurer.assignedMission}}
-        <div class="assigned-mission">
-            <span class="name">Assigned to: "{{adventurer.assignedMission.name}}"</span>
+            <span class="title">Past Missions</span>
+            <hr>
+
+            {{#if adventurer.missionResults.size}}
+            <div class="not-a-table">
+                <div class="row header">
+                    <div class="cell first-cell"></div>
+                    <div class="cell"><span>Brawn</span></div>
+                    <div class="cell"><span>Cunning</span></div>
+                    <div class="cell"><span>Spellcraft</span></div>
+                    <div class="cell"><span>Influence</span></div>
+                    <div class="cell"><span>Reliability</span></div>
+                </div>
+
+                {{#each adventurer.missionResults}}
+
+                <div class="row" data-mission-id="{{missionId}}">
+                    <div class="cell first-cell">
+                        <span>{{#if died}}<i class="fa-solid fa-skull"></i> {{/if}}{{missionName}}{{#unless died}}(+{{expGained}} exp){{#if causedLevelUp}} <i class="fa-solid fa-star"></i> &rarr; {{newLevelAfterLevelUp}}{{/if}}{{/unless}}</span>
+                    </div>
+                    {{#each checkResults}} {{!-- checkResults with a value of null are still looped over --}}
+
+                    {{#if id}}
+
+                    <div class="cell">
+                        <span class="highlighted {{ifThen isSuccess "success" "fail"}}">{{total}} / {{dc}}</span>
+                    </div>
+
+                    {{else}}
+                    <div class="cell">
+                        <span class="greyed">-</span>
+                    </div>
+
+                    {{/if}}
+
+                    {{/each}}
+                </div>
+
+                {{/each}}
+            </div>
+
+            {{/if}}
         </div>
-        {{/if}}
     </div>
 </div>

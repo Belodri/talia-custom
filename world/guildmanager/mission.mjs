@@ -44,21 +44,21 @@ export default class Mission extends foundry.abstract.DataModel {
         risk: {
             low: {
                 key: "low",
-                explanation: "Failing a check with a natural 1 results in death.",
+                explanation: "On low risk missions, only critical fail spells death for the adventurer.",
                 label: "Low",
                 deathMargin: 99,
             },
             medium: {
                 key: "medium",
-                explanation: "Failing a check by 5 or more results in death.",
+                explanation: "On medium risk missions, critical fails and fails by 10 or more spell death for the adventurer.",
                 label: "Medium",
-                deathMargin: 5,
+                deathMargin: 10,
             },
             high: {
                 key: "high",
-                explanation: "Failing a check results in death.",
+                explanation: "On high risk missions, critical fails and fails by 5 or more spell death for the adventurer.",
                 label: "High",
-                deathMargin: 0,
+                deathMargin: 5,
             }
         },
         states: {
@@ -129,7 +129,7 @@ export default class Mission extends foundry.abstract.DataModel {
             id: new StringField({ required: true, nullable: false, blank: false }),
             name: new StringField({ blank: true, initial: "", label: "Name" }),
             _dc: new SchemaField( shared.defineAttributesSchema(), {label: "DC"}),
-            hidden: new BooleanField({ label: "Hidden"}),
+            hidden: new BooleanField({ initial: true, label: "Is Hidden?"}),
             _risk: new StringField({ 
                 initial: "low", required: true, label: "Risk",
                 choices: Object.entries(Mission.CONFIG.risk)
@@ -149,8 +149,6 @@ export default class Mission extends foundry.abstract.DataModel {
             summaryFlavor: new StringField({ required: false, blank: true, initial: "", label: "Summary Flavor", hint: "The parameters [missionName], [duration], [startDate], [returnDate], [assigned], and [survived] are replaced with the mission's values in the final text." }),
             _assignedAdventurerIds: new SetField( new StringField() ),
             results: new SchemaField({ 
-                /** @type {import("./Resolver.mjs").CheckResults} */
-                checkResults: new ObjectField(),
                 /** @type {import("./Resolver.mjs").AdventurerResults} */
                 adventurerResults: new ObjectField(),
                 summary: new StringField(),
@@ -194,14 +192,7 @@ export default class Mission extends foundry.abstract.DataModel {
     get hasFinished() { return !!this.finishDate; }
 
     /** Does this mission have results? */
-    get hasResults() { 
-        const { isEmpty } = foundry.utils;
-        return !isEmpty(this.checkResults) 
-            && !isEmpty(this.adventurerResults)
-    }
-
-    /** @type {import("./Resolver.mjs").CheckResults} */
-    get checkResults() { return this.results?.checkResults; }
+    get hasResults() { return !foundry.utils.isEmpty(this.adventurerResults) }
 
     /** @type {import("./Resolver.mjs").AdventurerResults} */
     get adventurerResults() { return this.results?.adventurerResults; }
@@ -224,28 +215,7 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     /** Checks whether the mission was a success. Returns undefined if the mission hasn't started yet. */
-    get isSuccess() {
-        if (!this.hasStarted) return undefined;
-    
-        // Get all main attribute keys
-        const mainAttKeys = Object.values(Resolver.CONFIG.attributes)
-            .filter(att => att.isMain)
-            .map(att => att.key);
-        
-        // Check if at least one main attribute check was successful
-        const anyMainSuccess = Object.values(this.checkResults)
-            .some(res => res.isSuccess && mainAttKeys.includes(res.attributeKey));
-        
-        // Check if at least one adventurer with successful reliability check survived
-        const anySurvivorWithReliability = Object.values(this.checkResults)
-            .some(res => 
-                res.isSuccess && 
-                res.attributeKey === 'reliability' && 
-                !this.adventurerResults[res.adventurerId].died
-            );
-        
-        return anyMainSuccess && anySurvivorWithReliability;
-    }
+    get isSuccess() { return this.results?.isSuccess; }
 
     //#endregion
 
@@ -371,6 +341,8 @@ export default class Mission extends foundry.abstract.DataModel {
     }
 
     _prepareAssignmentsData() {
+        if(this.hasFinished) return null;
+
         const bestForMainChecks = Resolver.getBestForMainChecks(this.assignedAdventurers);
         return this.assignedAdventurers.map(adv => ({
             id: adv.id,
@@ -503,15 +475,14 @@ export default class Mission extends foundry.abstract.DataModel {
         const returnDate = TaliaDate.fromOffset(startDate, {days: this.durationInDays});
 
         const resolver = await new Resolver(this).evaluate();
-        const { adventurerResults, checkResults } = resolver.results;
+        const adventurerResults = resolver.adventurerResults;
 
-        const isSuccess = this.#determineSuccess({ adventurerResults, checkResults });
-        const summary = this.#getSummaryFlavor({ adventurerResults, startDate, returnDate, isSuccess });
+        const isSuccess = this.#determineSuccess( adventurerResults );
+        const summary = this.#getSummaryFlavor( adventurerResults, startDate, returnDate, isSuccess );
 
         const changes = {
             results: {
                 adventurerResults, 
-                checkResults,
                 summary,
                 isSuccess
             },
@@ -521,25 +492,27 @@ export default class Mission extends foundry.abstract.DataModel {
         await this.update(changes);
     }
 
-    #determineSuccess({checkResults, adventurerResults}) {
-        // Get all main attribute keys
-        const mainAttKeys = Object.values(Resolver.CONFIG.attributes)
-            .filter(att => att.isMain)
-            .map(att => att.key);
+    /**
+     * @param { import("./Resolver.mjs").AdventurerResults } adventurerResults
+     */
+    #determineSuccess(adventurerResults) {
+        let anyMainSuccessful = false;
+        let survivorWithRel = false;
+
+        for(const advRes of Object.values(adventurerResults)) {
+            for(const [key, checkRes] of Object.entries(advRes.checkResults)) {
+                // Skip empty and unsuccessful checkResults
+                if(!checkRes?.isSuccess) continue; 
+
+                // Check if at least one main attribute check was successful
+                if(Resolver.CONFIG.attributes[key].isMain) anyMainSuccessful = true;
+
+                // Check if at least one adventurer with successful reliability check survived
+                else if( !advRes.died ) survivorWithRel = true;
+            }
+        }
         
-        // Check if at least one main attribute check was successful
-        const anyMainSuccess = Object.values(checkResults)
-            .some(res => res.isSuccess && mainAttKeys.includes(res.attributeKey));
-        
-        // Check if at least one adventurer with successful reliability check survived
-        const anySurvivorWithReliability = Object.values(checkResults)
-            .some(res => 
-                res.isSuccess && 
-                res.attributeKey === 'reliability' && 
-                !adventurerResults[res.adventurerId].died
-            );
-        
-        return anyMainSuccess && anySurvivorWithReliability;
+        return anyMainSuccessful && survivorWithRel;
     }
 
     static ICONS = {
@@ -555,7 +528,14 @@ export default class Mission extends foundry.abstract.DataModel {
         noSurvivors: `The mission is recorded as failed after [duration] days from its commencement on [startDate]. None of the [assigned] dispatched members returned by [returnDate]. Search parties discovered evidence confirming the loss of all personnel. The guild has documented available information and formally closed this contract as unfulfilled with complete casualties.`,
     }
 
-    #getSummaryFlavor({adventurerResults, startDate, returnDate, isSuccess}) {
+    /**
+     * 
+     * @param {import("./Resolver.mjs").AdventurerResults} adventurerResults 
+     * @param {TaliaDate} startDate 
+     * @param {TaliaDate} returnDate 
+     * @param {boolean} isSuccess 
+     */
+    #getSummaryFlavor(adventurerResults, startDate, returnDate, isSuccess) {
         const args = {
             duration: this.duration.total,
             startDate: startDate.displayString,
@@ -630,27 +610,19 @@ export default class Mission extends foundry.abstract.DataModel {
 
         await ChatMessage.implementation.create({
             content: template,
-            speaker: { alias: this.parent.name },
+            speaker: { alias: Guild.CONFIG.scribeTitle },
         });
     }
 
-    /**
-     * @returns {Promise<ChatMessage[]>}
-     */
     async displayRolls() {
         if(!this.hasResults) throw new Error(`Mission id "${this.id}" does not have results to display.`);
         
-        const sorted = Object.values(this.adventurerResults)
-            .sort((a, b) => a.name.localeCompare(b.name));
-
-        const allChatMessages = [];
-        for(const advRes of sorted) {
-            const promises = advRes.checkResults.map(checkRes => this._createSingleRollMessage(checkRes.id));
-            const ret = await Promise.all(promises);
-            allChatMessages.push(...ret);
-        }
-
-        return allChatMessages;
+        const promises = Object.values(this.adventurerResults)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .flatMap(advRes => this._createAdventurerRollMessages(advRes.id));
+        
+        const messageArrays = await Promise.all(promises);
+        return messageArrays.flat();
     }
 
     async displayResults() {    // called from 'Mission#finish' when a mission is first finished and via a button in the mission log ui 
@@ -663,48 +635,59 @@ export default class Mission extends foundry.abstract.DataModel {
         await Promise.all(promises);
 
         await this.displaySummaryMessage();
-        
+    }
+
+    /**
+     * Creates roll messages for all rolls of the given adventurer
+     * @param {string} adventurerId 
+     */
+    async _createAdventurerRollMessages(adventurerId) {
+        const advRes = this.adventurerResults[adventurerId];
+        if(!advRes) throw new Error(`No results for adventurer id "${adventurerId} in mission id "${this.id}"`);
+
+        return Promise.all(
+            Object.values(advRes.checkResults)
+                .filter(Boolean)
+                .map(checkRes => this._createSingleRollMessage(checkRes))
+        );
     }
 
     /**
      * Transform a checkResult into a ChatMessage, displaying the roll result.
-     * @param {string} resultId 
+     * @param {import("./Resolver.mjs").CheckResult} checkRes 
      * @returns {Promise<ChatMessage>}           A promise which resolves to the created ChatMessage document
      */
-    async _createSingleRollMessage(resultId) {
-        const /** @type {CheckResult} */ result = this.checkResults[resultId];
-        if(!result) throw new Error(`Result id "${resultId}" not found in mission id "${this.id}".`);
+    async _createSingleRollMessage(checkRes) {
+        const roll = dnd5e.dice.D20Roll.fromData(checkRes.rollObj);
+        const flavor = `DC ${checkRes.dc} ${checkRes.attributeKey.capitalize()} Check`;
 
-        const { rollObj, attributeKey, dc, adventurerName, adventurerId, adventurerImg } = result;
-
-        const roll = dnd5e.dice.D20Roll.fromData(rollObj);
-        const flavor = `DC ${dc} ${attributeKey.capitalize()} Check`;
-  
         const messageData = {
             flavor: flavor,
             speaker: {
-                alias: adventurerName,
+                alias: checkRes.adventurerName,
             },
-            flags: { "talia-custom": { checkResult: result } }
+            flags: { "talia-custom": { checkResult: checkRes } }
         };
 
-        return await roll.toMessage(messageData, { rollMode: CONST.DICE_ROLL_MODES.PUBLIC });
+        return roll.toMessage(messageData, { rollMode: CONST.DICE_ROLL_MODES.PUBLIC });
     }
 
     /**
      * Hook on dnd5e.renderChatMessage for chat messages with the "talia-custom.checkResult" flag
-     * to modify the avatar image to match the adventurer image
+     * to modify the avatar image to match the adventurer image or the guild's scribe's image.
      * @param {ChatMessage5e} chatMessage 
      * @param {HTMLElement} html 
      */
     static onDnd5eRenderChatMessageHook(chatMessage, html, messageData) {
         const result = chatMessage.flags?.["talia-custom"]?.checkResult;
-        if(!result) return;
+        const isScribe = chatMessage.speaker?.alias === Guild.CONFIG.scribeTitle;
+        if(!result && !isScribe ) return;
 
-        const { adventurerName, adventurerImg } = result;
+        const name = result?.adventurerName ?? Guild.CONFIG.scribeTitle;
+        const img = result?.adventurerImg ?? Guild.CONFIG.scribeImg;
 
-        const imgEle = html.querySelector(`img[alt="${adventurerName}"]`);
-        if(imgEle) imgEle.setAttribute("src", adventurerImg);
+        const imgEle = html.querySelector(`img[alt="${name}"]`);
+        if(imgEle) imgEle.setAttribute("src", img);
     }
 
 
@@ -722,57 +705,53 @@ export default class Mission extends foundry.abstract.DataModel {
             };
         }
 
+        const makeGroup = (keyArray) => {
+            return keyArray.reduce((acc, curr) => {
+                const field = makeField(curr);
+                const element = field.field.toFormGroup({}, { value: field.value });
+                acc += element.outerHTML;
+                return acc;
+            }, "");
+        }
+
         const { DialogV2 } = foundry.applications.api;
         const { DocumentUUIDField, NumberField } = foundry.data.fields;
         const source = this.toObject();
 
-        const itemFields = Object.entries(this.rewards.items)
-            .reduce((acc, [k, v]) => {
-                const uuidField = new DocumentUUIDField({
-                    type: "Item",
-                    embedded: false,
-                    label: `Reward Item ${k}`,
-                    initial: v.uuid ?? null,
-                }).toFormGroup({}, {name: `rewards.items.${k}.uuid`}).outerHTML;
-
-                const quantityField = new NumberField({
-                    min: 1,
-                    required: true,
-                    initial: v.quantity ?? null,
-                    nullable: true,
-                }).toFormGroup({stacked: false}, {name: `rewards.items.${k}.quantity`}).outerHTML;
-                acc += uuidField + quantityField;
-                return acc;
-            }, "");
-
-        // Fields that don't require special handling
-        const fieldPaths = [
-            "name", "_dc.brawn", "_dc.cunning", "_dc.spellcraft", "_dc.influence", "_dc.reliability",
-            "_risk", "rewards.gp", "rewards.other", "durationInDays", "description", "summaryFlavor",
-            "hidden"
-        ];
-
-        // Paths for item fields
-        for(const k of Object.keys(this.rewards.items)) {
-            fieldPaths.push(`rewards.items.${k}.uuid`);
-            fieldPaths.push(`rewards.items.${k}.quantity`);
+        const fieldPathGroups = {
+            flavor: ["name",  "description", "summaryFlavor"],
+            mechanics: [
+                "_dc.brawn", "_dc.cunning", "_dc.spellcraft", "_dc.influence", "_dc.reliability",
+                "_risk", "durationInDays"
+            ],
+            rewards: ["rewards.gp", "rewards.other", 
+                ...Object.keys(this.rewards.items).flatMap(k => [`rewards.items.${k}.uuid`, `rewards.items.${k}.quantity`])
+            ]
         }
 
-        const mainFields = fieldPaths.reduce((acc, curr) => {
-            const field = makeField(curr);
-            const element = field.field.toFormGroup({}, { value: field.value });
-            acc += element.outerHTML;
-            return acc;
-        }, "");
+        const fieldGroups = Object.values(fieldPathGroups)
+            .map(arr => arr.reduce((acc, curr) => {
+                const field = makeField(curr);
+                const element = field.field.toFormGroup({}, { value: field.value });
+                acc += element.outerHTML;
+                return acc;
+            }, ""))
+            .join(`<hr style="margin: 1px">`);
+
+        // open compendium pack for easier choice of rewards
+        const taliaItemsPack = game.packs.get("talia-custom.customItems");
+        const packApp = taliaItemsPack?.apps?.[0];
+        packApp?.render(true);
 
         const changes = await DialogV2.prompt({
             window: { title: "Mission Editor" },
-            position: { width: 500, height: "auto" },
-            content: mainFields, 
+            position: { width: 800 },
+            content: fieldGroups, 
             modal: false, 
             rejectClose: false, 
             ok: { callback: (event, button) => new FormDataExtended(button.form).object }
         });
+        packApp?.close();
 
         if(!changes) return;
         return this.update(changes);
@@ -784,5 +763,14 @@ export default class Mission extends foundry.abstract.DataModel {
 
     async toggleHidden() {
         return this.update({hidden: !this.hidden});
+    }
+
+    async returnNow() {
+        if(!this.hasStarted || this.hasReturned) throw new Error(`Mission id ${this.id} hasn't been started yet or has already returned.`);
+
+        const returnDate = TaliaDate.now();
+        const summary = this.#getSummaryFlavor( this.results.adventurerResults, this.startDate, returnDate, this.results.isSuccess );
+
+        return this.update({ "results.summary": summary, returnDate });
     }
 }

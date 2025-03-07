@@ -9,6 +9,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
     static ICONS = {
         edit: "fa-solid fa-pen-to-square",
         delete: "fa-solid fa-trash",
+        success: "fa-solid fa-check",
+        failure: "fa-solid fa-xmark",
         mission: {
             logged: "fa-solid fa-book",
             returned: "fa-solid fa-book-open",
@@ -35,6 +37,10 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         super({...options, document: guild.parent, guild: guild});
         this.guild = guild;
         this.#dragDrop = this.#createDragDropHandlers();
+    }
+
+    get allowInteraction() { 
+        return this.guild.parent.testUserPermission( game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER )
     }
 
     //#region Drag Drop
@@ -77,14 +83,14 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      * @param {string} selector       The candidate HTML selector for dragging
      * @returns {boolean}             Can the current user drag this selector?
      */
-    _canDragStart(selector) { return true }
+    _canDragStart(selector) { return this.allowInteraction }
 
     /**
      * Define whether a user is able to conclude a drag-and-drop workflow for a given drop selector
      * @param {string} selector       The candidate HTML selector for the drop target
      * @returns {boolean}             Can the current user drop on this selector?
      */
-    _canDragDrop(selector) { return true }
+    _canDragDrop(selector) { return this.allowInteraction }
 
     /**
      * Callback actions which occur at the beginning of a drag start workflow.
@@ -266,7 +272,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         // prepare tabs
         const tabs = {
             general: { label: "Guild Hall" },
-            log: { label: "Mission Log" },        
+            log: { label: "Archive" },        
             graveyard: { label: "Graveyard" },
         };
         if(game.user.isGM) tabs.gmtab = { label: "GM Tab" }
@@ -287,8 +293,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         const adventurers = this.guild.adventurers
             .map(adv => this.#prepareAdventurerContext(adv))
             .sort((a, b) => {   //Sort order: away last, others by name
-                const aPrio = a.adventurer.status === "away" ? -1 : 0;
-                const bPrio = b.adventurer.status === "away" ? -1 : 0;
+                const aPrio = a.adventurer.state === "away" ? -1 : 0;
+                const bPrio = b.adventurer.state === "away" ? -1 : 0;
                 return aPrio === bPrio
                     ? a.adventurer.name.localeCompare(b.adventurer.name)
                     :  bPrio - aPrio
@@ -300,7 +306,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             adventurers,
             isGM: game.user.isGM,
             source: this.guild.toObject(),
-            guild: this.guild
+            guild: this.guild,
+            allowInteraction: this.allowInteraction
         };
     }
 
@@ -312,7 +319,9 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
      * @param {Mission} mission 
      */
     #prepareMissionContext(mission) {
-        const context = {};
+        const context = {
+            allowInteraction: this.allowInteraction
+        };
 
         context.config = {
             mission: Mission.CONFIG,
@@ -334,8 +343,8 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
                 };
                 context.status = {
                     tooltip: `The report has been reviewed and archived.`,
-                    label: "Status: Archived",
-                    icon: GuildApp.ICONS.mission.logged,
+                    label: `Status: ${mission.isSuccess ? "Success" : "Failure"}`,
+                    icon: mission.isSuccess ? GuildApp.ICONS.success : GuildApp.ICONS.failure,
                 };
                 break;
 
@@ -409,7 +418,9 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
 
     /** @param {Adventurer} adv  */
     #prepareAdventurerContext(adv) {
-        const context = {};
+        const context = {
+            allowInteraction: this.allowInteraction
+        };
         
         switch (adv.state) {
             case "dead":
@@ -457,38 +468,46 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
 
     //#region Mission Context Menu
 
+    /** 
+     * @param {JQuery} jq  
+     * @returns {Mission}
+     */
+    misJQ(jq) {
+        const card = jq.closest(".mission-card")[0];
+        return this.guild.missions.get(card.dataset.missionId);
+    }
+
     _getMissionCardContextMenuItems() {
-        const ic = GuildApp.ICONS;
         return [
             {
                 name: "Unassign All Adventurers",
-                icon: `<i class="${ic.mission.unassignAll}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.mission.unassignAll}"></i>`,
                 condition: (jq) => {
                     const mission = this.misJQ(jq);
-                    return !!mission.assignedAdventurers.size && !mission.hasStarted;
+                    return this.allowInteraction && !!mission.assignedAdventurers.size && !mission.hasStarted;
                 },
                 callback: (jq) => this.misJQ(jq).unassignAll()
             },
             {
                 name: "(GM) Edit",
-                icon: `<i class="${ic.edit}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.edit}"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: (jq) => this.misJQ(jq).edit()
             },
             {
                 name: "(GM) Delete",
-                icon: `<i class="${ic.delete}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.delete}"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: (jq) => this.misJQ(jq).delete()
             },
             {
                 name: "(GM) Return Now",
-                icon: `<i class="${ic.mission.returnNow}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.mission.returnNow}"></i>`,
                 condition: (jq) => {
                     const mission = this.misJQ(jq);
                     return game.user.isGM && !!mission.hasStarted && !mission.hasReturned
                 },
-                callback: (jq) => this.misJQ(jq).update({returnDate: TaliaDate.now()})
+                callback: (jq) => this.misJQ(jq).returnNow()
             },
             {
                 name: "(GM) Display Report",
@@ -503,7 +522,15 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
                 condition: (jq) => game.user.isGM 
                     && this.misJQ(jq).hasStarted,
                 callback: (jq) => this.misJQ(jq).displayRolls()
-            }, {
+            }, 
+            {
+                name: "(GM) Display Full Results",
+                icon: `<i class="fa-solid fa-book-bookmark"></i>`,
+                condition: (jq) => game.user.isGM 
+                    && this.misJQ(jq).hasStarted,
+                callback: (jq) => this.misJQ(jq).displayResults()
+            }, 
+            {
                 name: "(GM) Toggle Hidden",
                 icon: `<i class="fa-regular fa-eye-slash"></i>`,
                 condition: (jq) => game.user.isGM && !this.misJQ(jq).assignedAdventurers.size,
@@ -512,50 +539,49 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         ];
     }
 
-    /** 
-     * @param {JQuery} jq  
-     * @returns {Mission}
-     */
-    misJQ(jq) {
-        const card = jq.closest(".mission-card")[0];
-        return this.guild.missions.get(card.dataset.missionId);
-    }
-
     //#endregion
 
     //#region Adventurer Context Menu
 
+    /** 
+     * @param {JQuery} jq  
+     * @returns {Adventurer}
+     */
+    advJQ(jq) {
+        const card = jq.closest(".adventurer-card")[0];
+        return this.guild.adventurers.get(card.dataset.adventurerId);
+    }
+
     _getAdventurerCardContextMenuItems() {
-        const ic = GuildApp.ICONS;
         return [
             {
                 name: "Unassign",
-                icon: `<i class="${ic.adventurer.unassign}"></i>`,
-                condition: (jq) => this.advJQ(jq).state === "assigned",
+                icon: `<i class="${GuildApp.ICONS.adventurer.unassign}"></i>`,
+                condition: (jq) => this.allowInteraction && this.advJQ(jq).state === "assigned",
                 callback: (jq) => this.advJQ(jq).unassign()
             },
             {
                 name: "(GM) Edit",
-                icon: `<i class="${ic.edit}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.edit}"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: (jq) => this.advJQ(jq).edit()
             },
             {
                 name: "(GM) Delete",
-                icon: `<i class="${ic.delete}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.delete}"></i>`,
                 condition: (jq) => game.user.isGM,
                 callback: (jq) => this.advJQ(jq).delete()
             },
             {
                 name: "(GM) Revive",
-                icon: `<i class="${ic.adventurer.revive}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.adventurer.revive}"></i>`,
                 condition: (jq) => game.user.isGM 
                     && this.advJQ(jq).isDead,
                 callback: (jq) => this.advJQ(jq).revive()
             },
             {
                 name: "(GM) Kill",
-                icon: `<i class="${ic.adventurer.dead}"></i>`,
+                icon: `<i class="${GuildApp.ICONS.adventurer.dead}"></i>`,
                 condition: (jq) => game.user.isGM 
                     && this.advJQ(jq).state === "waiting",
                 callback: (jq) => this.advJQ(jq).kill()
@@ -570,14 +596,6 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         ]
     }
 
-    /** 
-     * @param {JQuery} jq  
-     * @returns {Adventurer}
-     */
-    advJQ(jq) {
-        const card = jq.closest(".adventurer-card")[0];
-        return this.guild.adventurers.get(card.dataset.adventurerId);
-    }
-
     //#endregion
+
 }

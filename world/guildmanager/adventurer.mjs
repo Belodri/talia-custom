@@ -134,6 +134,8 @@ export default class Adventurer extends foundry.abstract.DataModel {
 
     get isDead() { return !!this._deathDate; }
 
+    get deathDate() { return this._deathDate; }
+
     //#endregion
 
     /**
@@ -425,7 +427,7 @@ export default class Adventurer extends foundry.abstract.DataModel {
         let assignedIds = new Set();
 
         for(const mis of this.guild.missions) {
-            if(mis.assignedAdventurerIds.has(this.id)) {
+            if(mis?.assignedAdventurerIds?.has?.(this.id)) {
                 if(force) await mis.unassignAdventurer(this.id);
                 else assignedIds.add(mis.id);
             }
