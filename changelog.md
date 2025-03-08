@@ -1,3 +1,55 @@
+# 1.23.0 - 2025/03/08
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Buildings
+        - Shrine
+        - Temple
+        - Monastery
+        - Cathedral
+        - Engineer's Workshop
+        - Airship Dockyard
+        - Gallows
+        - Market Square
+        - Training Grounds
+        - Homeless Shelter
+        - Courthouse
+        - City Walls
+        - Stocks
+
+    - Spells Plex learned from scrolls to Plex's character
+        - Comand
+        - Darkness
+        - Knock
+        - Major Image
+        - Longstrider
+        - Silence
+        - Globe of Invulnerability
+        - Death Ward
+
+    - Script that automatically updates Shalkoc's spice list journal whenever he opens it so the amount of spices listed matches their actual quantities in his inventory. 
+
+    - Toggleable display for equipped triggered spell gems with trigger condition. For Non-GM users, only spell gems equipped by their assigned character are displayed. 
+
+    - Full implementation of GuildManager
+
+    - Feature to allow GM clients to ignore tile occlusion. Toggleable in Tile config ui.
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Spell gems now track their spell slot level (and trigger condition if they are triggered) in a flag. This has no immediate impact on how spell gems work. (Note that spell gems created before this patch do not track their spell slot)
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Synchronisation issues between existing settlements and the database
+
+    - 3rd party module causing errors on player clients when an active effect is created or deleted on an actor they don't own through the use of a GM client proxy. [Link to commit in Belodri/fvtt-terrain-mapper_fork]( https://github.com/Belodri/fvtt-terrain-mapper_fork/commit/9429c65272906aa347bc0421709f693159e5b31f)
+    </details>
+
 # 1.22.0 - 2025/03/02
 
 - Added first functional implementation of GuildManager. A some features are missing and a few bugs are to be expected but the core is working.
