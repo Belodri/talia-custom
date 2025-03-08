@@ -496,5 +496,27 @@ export class Helpers {
     static replacePlaceholders(str, values) {
         return str.replace(/\[([a-zA-Z0-9_]+)\]/g, (match, key) => values[key] !== undefined ? values[key] : match);
     }
+
+    /**
+     * Checks if a module is active in the game.
+     *
+     * @param {string} moduleId                 The ID of the module to check.
+     * @param {object} [options={}]             Optional configuration.
+     * @param {boolean} [options.strict=false]  If true, throws errors instead of returning false. Defaults to `false`
+     * @returns {boolean}                       True if the module exists and is active, false otherwise (unless strict mode throws an error).
+     * @throws {Error}                          When strict mode is enabled and the module doesn't exist or isn't active.
+     */
+    static isModuleActive(moduleId, {strict=false}={}) {
+        const module = game.modules.get(moduleId);
+
+        if(!module) {
+            if(strict) throw new Error(`Required module id "${moduleId}" does not exist.`);
+            else return false;
+        } else if(!module.active) {
+            if(strict) throw new Error(`Activate required module id "${moduleId}".`);
+            else return false;
+        }
+        return true;
+    }
 }
 
