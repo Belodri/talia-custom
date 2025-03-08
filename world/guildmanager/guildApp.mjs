@@ -29,14 +29,21 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         }
     }
 
+    #guild = null;
+
     /**
      * @param {Guild} guild 
      * @param {object} [options] 
      */
     constructor(guild, options = {}) {
-        super({...options, document: guild.parent, guild: guild});
-        this.guild = guild;
+        super({...options, document: guild.parent});
+        this.#guild = guild;
         this.#dragDrop = this.#createDragDropHandlers();
+    }
+
+    /** @type {Guild} */
+    get guild() {
+        return this.#guild;
     }
 
     get allowInteraction() { 
@@ -136,6 +143,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
         classes: ["sheet", "talia-custom", "guild"],
         sheetConfig: false,
         window: {
+            minimizable: true,
             resizable: false,
             contentClasses: ["standard-form"],
             height: "1000px",
@@ -153,6 +161,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
             toggleCollapse: GuildApp.#toggleCollapse,
             createNewMission: GuildApp.#createNewMission,
             createRandomAdventurer: GuildApp.#createRandomAdventurer,
+            openVault: GuildApp.#openVault,
         },
         dragDrop: [{ dragSelector: '[data-drag]', dropSelector: '[data-drop]' }],
     }
@@ -254,6 +263,31 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
 
     static async #createRandomAdventurer(event, target) {
         return this.guild.createRandomAdventurer();
+    }
+
+    
+    #closeVaultAppHookId;
+
+    /**
+     * Opens the guild's vault and minimizes the GuildApp.
+     * When the vault is closed, the GuildApp is maximized again.
+     */
+    static async #openVault() {
+        let vaultPileAppId;
+
+        Hooks.once("renderItemPileInventoryApp", (app, html, data) => {
+            vaultPileAppId = app.appId;
+            this.minimize();
+        });
+
+        this.#closeVaultAppHookId = Hooks.on("closeApplication", (app, html) => {
+            if(vaultPileAppId === app.appId) {
+                if(this.minimized) this.maximize();
+                Hooks.off("closeApplication", this.#closeVaultAppHookId);
+            }
+        });
+
+        return this.guild.openVault();
     }
 
     /**
@@ -457,7 +491,7 @@ export default class GuildApp extends HandlebarsApplicationMixin(DocumentSheetV2
                     icon: GuildApp.ICONS.adventurer.waiting,
                     tooltip: `Waiting for assignment.`
                 }
-
+                context.defaultCollapse = true;
                 break;
         }
 

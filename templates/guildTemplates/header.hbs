@@ -5,9 +5,10 @@
     <div class="stats">
         <span class="current-date">{{guild.currentDate.displayString}}</span>
     </div>
-    <button 
-        class="document-notes-button"
-        type="button"
-        data-action="openNotes"
-    >Open Notes</button>
+    <div class="header-buttons">
+        {{#if allowInteraction}}
+            <button type="button" data-action="openVault">Guild Vault</button>
+        {{/if}}
+        <button type="button" data-action="openNotes">Guildmaster's Notes</button>
+    </div>
 </div>

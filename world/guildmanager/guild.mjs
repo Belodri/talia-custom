@@ -4,23 +4,10 @@ import Adventurer from "./adventurer.mjs";
 import Mission from "./mission.mjs";
 import GuildApp from "./guildApp.mjs";
 import TaliaDate from "../../utils/TaliaDate.mjs";
+import { Helpers } from "../../utils/helpers.mjs";
 
 /** @typedef {import("../../foundry/common/utils/collection.mjs").default} Collection */
 
-/**
- * @typedef {object} GuildConfig
- * @property {number} daysPerRound                  The number of ingame days in each round.
- * 
- * Mission Board
- * @property {number} boardSlotsMax                 The maximum number of missions available on the board at any given time 
- * @property {number} boardFillPerRound             The number of new missions to fill empty board slots each round.  
- * 
- * Mustering Hall                                       
- * @property {number} hallSlotsMax                  The maximum number of adventurers that can be at the guild at any given time.
- * @property {number} hallFillPerRound              The number of new adventurers to fill empty hall slots each round.
- * 
- * 
- */
 
 export default class Guild extends foundry.abstract.DataModel {
     constructor(...args) {
@@ -42,7 +29,6 @@ export default class Guild extends foundry.abstract.DataModel {
 
     static FLAG_KEY = "Guild";
 
-    /** @type {GuildConfig} */
     static CONFIG = {
         daysPerRound: 30,
 
@@ -54,6 +40,10 @@ export default class Guild extends foundry.abstract.DataModel {
 
         scribeTitle: "Guild Scribe",
         scribeImg: "TaliaCampaignCustomAssets/c_Icons/Linzi_token.png",
+
+        requiredModulesKeys: {
+            itemPiles: "item-piles"
+        }
     }
 
     /** @override */
@@ -246,11 +236,18 @@ export default class Guild extends foundry.abstract.DataModel {
         return this.update(changes);
     }
 
+    //#endregion
+
+    //#region Vault
+
     /**
      * Gets an existing item pile actor of this guild or creates one if none exists.
      * @returns {Promise<Actor>}
+     * @throws {Error}              If itempiles is not active or if no default actor could be found if a new vaultActor needs to be created.
      */
     async getVaultActor() {
+        Helpers.isModuleActive(Guild.CONFIG.requiredModulesKeys.itemPiles, {strict: true});    //throws if not active;
+
         const itemPileActor = game.actors.find(a => a.flags["talia-custom"]?.vaultOfGuildName === this.name);
         if(itemPileActor) return itemPileActor;
 
@@ -264,6 +261,37 @@ export default class Guild extends foundry.abstract.DataModel {
         }
         const obj = foundry.utils.mergeObject(packActorDoc.toObject(), changes);
         return await Actor.implementation.create(obj);
+    }
+
+    /**
+     * Opens the vault interface for the vault actor.
+     */
+    async openVault() {
+        const vaultActor = await this.getVaultActor();
+
+        /**
+         * Renders the appropriate interface for a given actor
+         *
+         * @param {Actor|TokenDocument} target                      The actor whose interface to render
+         * @param {object} [options]                                An object containing the options for this method
+         * @param {Array<string|User>} [options.userIds]            An array of users or user ids for each user to render the interface for (defaults to only self)
+         * @param {Actor|TokenDocument} [options.inspectingTarget]  Sets what actor should be viewing the interface
+         * @param {boolean} [options.useDefaultCharacter]           Whether other users should use their assigned character when rendering the interface
+         *
+         * @returns {Promise<void>}                                 A promise that resolves when the interface has been rendered.
+         */
+        const renderItemPileInterface = /** 
+        * @type {(
+        *   target: Actor | TokenDocument, 
+        *   options?: { 
+        *     userIds?: Array<string | User>;
+        *     inspectingTarget?: Actor | TokenDocument;
+        *     useDefaultCharacter?: boolean;
+        *   }
+        * ) => Promise<void>} 
+        */ game.itempiles.API.renderItemPileInterface;
+
+        return await renderItemPileInterface(vaultActor, {useDefaultCharacter: true});
     }
 
     //#endregion

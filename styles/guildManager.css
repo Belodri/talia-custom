@@ -8,9 +8,6 @@
     height: 1000px;
     width: 1500px;
 
-    min-width: 1500px;
-    min-height: 1000px;
-
     color: var(--color-text-main);
     background: rgba(11, 10, 19, 0.95);
 
@@ -37,6 +34,12 @@
             font-weight: bold;
             text-align: center;
         }
+
+        .header-buttons {
+            min-width: 33%;
+            display: flex;
+            gap: 5px;
+        }
     }
 
     .tab {
@@ -60,7 +63,6 @@
 
     .column-container {
         flex: 1;
-        
         display: flex;
         flex-direction: row;
         justify-content: space-between;
@@ -70,19 +72,16 @@
         }
     }
 
-
     .card-column {
         flex: 1;
         display: flex;
         flex-direction: column;
-
-        
+        gap: 1em;
     }
 
     .gm-info {
         display: flex;
         flex-direction: column;
-
         border: 1px solid var(--button-border-color);
         border-radius: 5px;
         margin-bottom: 1em;
@@ -94,14 +93,11 @@
         }
     }
 
- 
-
     .card {
         display: flex;
         flex-direction: column;
         border: 1px solid var(--button-border-color);
         border-radius: 5px;
-        margin-bottom: 1em;
         padding: 0.3em;
         background-color: var(--color-cool-5);
 
@@ -139,8 +135,6 @@
                     font-size: 1em;
                 }
             }
-
-
         }
     }
 
@@ -164,12 +158,9 @@
         }
 
         .lore-text {
-            /* font-family: Garamond, serif; */
             font-style: italic;
         }
     }
-
-    
 
     .card-header {
         display: flex;
@@ -244,8 +235,6 @@
             height: 30px;
             width: 30px;
         }
-
-
     }
 
     .adventurer-card {
