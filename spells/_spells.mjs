@@ -7,6 +7,7 @@ import bladeWard from "./bladeWard.mjs";
 import absorbElements from "./absorbElements.mjs";
 import witheringTouch from "./witheringTouch.mjs";
 import darkness from "./darkness.mjs";
+import polymorph from "./polymorph.mjs";
 
 
 export default {
@@ -20,5 +21,6 @@ export default {
         absorbElements.register();
         witheringTouch.register();
         darkness.register();
+        polymorph.register();
     }
 }

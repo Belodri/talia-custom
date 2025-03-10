@@ -6,3 +6,5 @@
 # Drafts
 - Refactored Extended Rest and RestManager
 - added 'extended rest' recovery period for items (consider adding mythic powers to this)
+- added cleanup logic for 'Polymorph' spell effect
+- added spell Polymorph
