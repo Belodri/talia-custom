@@ -293,7 +293,7 @@ class ExtendedRest {
             month: 60 * 24 * 7 * 4,
         };
         const unit = Object.keys(units)
-            .reduce((acc, unit) => ( minutes >= units[unit] ? k : acc ), "minute");
+            .reduce((acc, unit) => ( minutes >= units[unit] ? unit : acc ), "minute");
         const value = Math.floor( minutes / units[unit] );
         const unitStr = value === 1 ? unit : `${unit}s`;
         
