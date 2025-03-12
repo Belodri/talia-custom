@@ -22,20 +22,142 @@ class Manager {
             itemAttackCount: "repeatAttack.itemAttackCount",
         },
         validActionTypes: ["mwak", "msak", "rwak", "rsak"],
+        maxRepeatAttacks: 10,
     }
+
+    static attackUuidToCount = new Map();
+
+    static registeredDamageItems = new Set();
 
     /**
      * Registers necessary hooks for GMs only.
      */
     static init() {
-        Hooks.once("ready", () => {
-            if(!game.user.isGM) return;
+        Manager.registerRenderItemSheetHooks();
 
-            Manager.registerRenderItemSheetHooks();
-            Hooks.on("dnd5e.preRollAttack", Manager.onDnd5ePreRollAttack);
-            Hooks.on("dnd5e.preRollDamage", Manager.onDnd5ePreRollDamage);
+        Hooks.on("dnd5e.preDisplayCard", Manager.onDnd5ePreDisplayCard);
+        Hooks.on("renderChatMessage", Manager.onRenderChatMessage);
+        Hooks.on("dnd5e.preRollAttack", Manager.onDnd5ePreRollAttack);
+        Hooks.on("dnd5e.preRollDamage", Manager.onDnd5ePreRollDamage);
+    }
+
+    /*----------------------------------------------------------------------------
+                    Chat Card Buttons            
+    ----------------------------------------------------------------------------*/
+    //#region 
+
+    static onRenderChatMessage(message, [html]) {
+        const button = html.querySelector("[data-action^='talia-repeat-attack']");
+        if(!button) return;
+
+        button.dataset.messageId = message.id;
+        button.addEventListener("click", Manager.buttonEventListener);
+    }
+
+    static onDnd5ePreDisplayCard(item, chatData, options) {
+        const attackCount = Manager.getItemAttackCount(item);
+        if(!attackCount) return;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(chatData.content, "text/html");
+
+        let buttonSection = doc.querySelector(".card-buttons");
+        if(!buttonSection) {
+            buttonSection = doc.createElement("div");
+            buttonSection.className = "card-buttons";
+            doc.querySelector("div.chat-card").insertBefore(buttonSection, doc.querySelector("section.card-header").nextSibling);
+        }
+
+        const button = doc.createElement("button");
+        button.type = "button";
+        button.dataset.action = "talia-repeat-attack";
+        const icon = doc.createElement("i");
+        icon.className =`fas fa-solid fa-repeat`
+        button.appendChild(icon);
+        const span = doc.createElement("span");
+        span.innerText = "Multiattack";
+        button.appendChild(span);
+        buttonSection.appendChild(button);
+
+        chatData.content = doc.documentElement.innerHTML;
+    }
+
+
+    static async buttonEventListener(event) {
+        event.preventDefault();
+        const button = event.currentTarget;
+        button.disabled = true;
+        const card = button.closest(".chat-card");
+        const messageId = card.closest(".message").dataset.messageId;
+        const message = game.messages.get(messageId);
+
+        try {
+            const associatedItem = message.getAssociatedItem();
+            const attackCount = await Manager.selectAttackCount(associatedItem, event);
+            if(!attackCount) return;
+
+            Manager.attackUuidToCount.set(associatedItem.uuid, attackCount);
+
+            // Click the attack button to trigger the hook dnd5e.preRollAttack hook with the correct event.
+            const parentDiv = button.closest('div');
+            if(parentDiv) {
+                const attackButton = parentDiv.querySelector('button[data-action="attack"]');
+                if (attackButton) {
+                    const simulatedClick = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: event.clientX,
+                        clientY: event.clientY 
+                    });
+                    attackButton.dispatchEvent(simulatedClick);
+                }
+            }
+        } catch (err) {
+            // Handle and log any errors during execution
+            ui.notifications.error("Repeat attack error");
+            console.error(err);
+        } finally {
+            // Re-enable the button
+            button.disabled = false;
+        }
+    }
+
+    /**
+     * 
+     * @param {Item5e} item 
+     * @param {Event} event 
+     * @returns {Promise<number | null>}
+     */
+    static async selectAttackCount(item, event) {
+        let attackCount = Manager.getItemAttackCount(item);
+        if(!attackCount) return null;
+        if(!event.shiftKey) return attackCount;
+
+        const countFieldGroup = new foundry.data.fields.NumberField({
+            min: 1,
+            integer: true,
+            required: true,
+            max: Manager.CONFIG.maxRepeatAttacks,
+            label: "# of attacks"
+        }).toFormGroup({},{name: "count", value: attackCount}).outerHTML;
+
+        return foundry.applications.api.DialogV2.prompt({
+            window: { title: `${item.name} Multiattack` },
+            content: countFieldGroup,
+            rejectClose: false,
+            modal: true,
+            ok: {
+                callback: (event, button) => new FormDataExtended(button.form).object?.count ?? null
+            }
         });
     }
+
+    //#endregion
+
+    /*----------------------------------------------------------------------------
+                    Utils            
+    ----------------------------------------------------------------------------*/
+    //#region 
 
     /**
      * Checks if a given item has both an attack action type and an individual-type targetType
@@ -54,12 +176,14 @@ class Manager {
      * @param {Item5e} item 
      * @returns {number | null} The attack count of the item, minimum of 1.
      */
-    static getAttackCount(item) {
+    static getItemAttackCount(item) {
         if(!Manager.isValidAttackItem(item)) return null;
 
         const attackCount = item.getFlag(MODULE.ID, Manager.CONFIG.flagKeys.itemAttackCount) ?? 1;
         return Math.max(attackCount, 1);
     }
+    //#endregion
+
 
     /*----------------------------------------------------------------------------
                     Item Sheet           
@@ -69,7 +193,7 @@ class Manager {
         Hooks.on("renderItemSheet5e", (app, html, {item}={}) => {
             if (app.options.classes.includes("tidy5e-sheet")) return;
 
-            const attackCount = Manager.getAttackCount(item);
+            const attackCount = Manager.getItemAttackCount(item);
             if(!attackCount) return;
 
             const extraCritDmgElem = html.find('div[data-form-group-for="system.critical.damage"]');
@@ -82,7 +206,7 @@ class Manager {
             //change item sheet
             const html = $(element);
 
-            const attackCount = Manager.getAttackCount(item);
+            const attackCount = Manager.getItemAttackCount(item);
             if(!attackCount) return;
 
             const extraCritDmgElem = html.find('div[data-form-group-for="system.critical.damage"]');
@@ -119,19 +243,20 @@ class Manager {
                     Attack Rolls            
     ----------------------------------------------------------------------------*/
     //#region 
+
     /**
      * @param {Item5e} item 
      * @param {D20RollConfiguration} config
      */
     static onDnd5ePreRollAttack(item, config) {
-        const attackCount = Manager.getAttackCount(item);
+        const count = Manager.attackUuidToCount.get(item.uuid);
+        if(!count) return;
 
-        // If attack count > 1, call the attack handler and return false to stop the original attack
-        if(attackCount > 1) {
-            Manager.handleAttacks(item, config, attackCount);  //async
-            return false;
-        }
-    }
+        Manager.makeRepeatAttack(item, config, count)
+            .then(() => Manager.attackUuidToCount.delete(item.uuid));
+        
+        return false;   //return false to cancel the hook
+    }    
 
     /**
      * 
@@ -139,10 +264,13 @@ class Manager {
      * @param {D20RollConfiguration} rollConfig 
      * @param {number} attackCount 
      */
-    static async handleAttacks(item, rollConfig, attackCount) {
+    static async makeRepeatAttack(item, rollConfig, attackCount) {
         const attackRolls = await Manager.rollAttacks(rollConfig, attackCount);
         if(!attackRolls) return;
-        const message = await Manager.createAttackSummaryMessage(item, attackRolls, rollConfig);
+        const attackMsg = await Manager.createAttackSummaryMessage(item, attackRolls, rollConfig);
+
+        const attackEvent = rollConfig.event;
+        Manager.triggerDamageRolls(attackEvent, attackMsg, item);    //async
     }
 
     /**
@@ -178,7 +306,8 @@ class Manager {
 
         const promises = [];
         for(let i = 1; i < attackCount; i++) {  //start at 1 because we already made the first roll
-            const roll = new CONFIG.Dice.D20Roll(firstRoll.formula, firstRoll.data, otherRollConfig);
+
+            const roll = new CONFIG.Dice.D20Roll(firstRoll.formula, firstRoll.data, foundry.utils.deepClone(otherRollConfig));
             promises.push( roll.evaluate({ allowInteractive: (roll.options.rollMode ?? defaultRollMode) !== CONST.DICE_ROLL_MODES.BLIND }) );
         }
 
@@ -207,10 +336,7 @@ class Manager {
 
         // Add other rolls to the message
         msgDataObj.rolls = attackRolls.map(r => JSON.stringify( r.toJSON() ) );
-        const newMsg = await ChatMessage.implementation.create(msgDataObj);
-
-        // For the damage roll part, just look for the last chat message from the same originating message id 
-        // and work out the hits and crits from there.
+        return ChatMessage.implementation.create(msgDataObj);
     }
     //#endregion
 
@@ -218,17 +344,54 @@ class Manager {
                     Damage Rolls            
     ----------------------------------------------------------------------------*/
     //#region 
+
+    static async triggerDamageRolls(attackEvent, attackMsg, item) {
+        const button = attackEvent.currentTarget;
+        const card = button.closest(".chat-card");
+
+        //to account for rollgroups
+        const damageButtons = card.querySelectorAll('.card-buttons button[data-action*="damage"]');
+        if(!damageButtons) throw new Error("No damage buttons found.");
+
+        const chosenButton = damageButtons.length > 1  
+            ? await Manager.selectDamageButtonDialog(damageButtons)
+            : damageButtons[0];
+        if(!chosenButton) return;
+
+        // Add register item so the preRollDamage listener can use it.
+        Manager.registeredDamageItems.add(item.uuid);
+        
+        // Click the damage button to trigger the hook dnd5e.preRollDamage hook with the correct event.
+        const simulatedClick = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            clientX: event.clientX,
+            clientY: event.clientY 
+        });
+        chosenButton.dispatchEvent(simulatedClick);
+    }
+
+    /**
+     * 
+     * @param {HTMLButtonElement[]} damageButtons 
+     */
+    static async selectDamageButtonDialog(damageButtons) {
+        return damageButtons[0];    //TODO write an actual dialog instead of just returning the first button
+    }
+ 
     /**
      * @param {Item5e} item 
      * @param {DamageRollCon} rollConfig
      */
     static onDnd5ePreRollDamage(item, rollConfig) {
+        if(!Manager.registeredDamageItems.has(item.uuid)) return;
+
         const messageId = rollConfig.event?.currentTarget?.closest('[data-message-id]')?.dataset?.messageId;
         if(!messageId) return;
 
         const attackRollMessage = Manager.getAttackRollMessage(messageId);
         if(attackRollMessage) {
-            Manager.handleDamage(attackRollMessage, rollConfig);  //async
+            Manager.handleDamage(item.uuid, attackRollMessage, rollConfig);  //async
             return false;
         }
     }
@@ -249,12 +412,14 @@ class Manager {
     }
 
     /**
+     * @param {string} itemUuid 
      * @param {ChatMessage5e} attackRollMessage 
      * @param {DamageRollConfiguration} damageRollConfig 
      */
-    static async handleDamage(attackRollMessage, damageRollConfig) {
+    static async handleDamage(itemUuid, attackRollMessage, damageRollConfig) {
         const damageRolls = await Manager.rollDamageRolls(attackRollMessage, damageRollConfig);
-        const message = await Manager.createDamageSummaryMessage(damageRolls, attackRollMessage, damageRollConfig);        
+        Manager.createDamageSummaryMessage(damageRolls, attackRollMessage, damageRollConfig)
+            .then(() => Manager.registeredDamageItems.delete(itemUuid));
     }
 
     /**
@@ -303,3 +468,5 @@ class Manager {
     }
     //#endregion
 }
+
+//TODO wait for attack roll animation before playing damage roll animation
