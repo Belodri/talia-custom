@@ -518,5 +518,31 @@ export class Helpers {
         }
         return true;
     }
+
+    /**
+     * Creates a new object composed of the selected properties from the source object.
+     * 
+     * @param {object} obj      The source object from which to extract properties.
+     * @param {string[]} keys   An array of property names to select from the source object.
+     * @returns {object}        A new object containing only the specified properties from the source object.
+     * 
+     * @example
+     * // Returns { name: 'John', age: 30 }
+     * Helpers.extractProperties({ name: 'John', age: 30, email: 'john@example.com' }, ['name', 'age']);
+     * 
+     * @example
+     * // Returns { flavor: 'chocolate', size: 'large' }
+     * Helpers.extractProperties(iceCreamOptions, ['flavor', 'size']);
+     * 
+     * @example
+     * // Returns { name: 'John' } (non-existent keys are ignored)
+     * Helpers.extractProperties({ name: 'John' }, ['name', 'missing']);
+     */
+    static extractProperties(obj, keys) {
+        return keys.reduce((result, key) => {
+            if (key in obj) result[key] = obj[key];
+            return result;
+        }, {});
+    }
 }
 
