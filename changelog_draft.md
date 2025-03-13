@@ -8,3 +8,4 @@
 - added 'extended rest' recovery period for items (consider adding mythic powers to this)
 - added cleanup logic for 'Polymorph' spell effect
 - added spell Polymorph
+- added Multiattack button to item chat cards to speed up resolving multiple attack/damage rolls against a single target

@@ -1,4 +1,5 @@
 import { MODULE } from "../scripts/constants.mjs";
+import WildMagic from "../world/wildMagic/wildMagic.mjs";
 import { Helpers } from "./helpers.mjs";
 
 /** @typedef {import("../system/dnd5e/module/documents/item.mjs").default} Item5e */
@@ -33,8 +34,8 @@ class Manager {
      * Registers necessary hooks for GMs only.
      */
     static init() {
-        Manager.registerRenderItemSheetHooks();
-
+        Hooks.on("renderItemSheet5e", Manager.onRenderItemSheet5e);
+        Hooks.on("tidy5e-sheet.renderItemSheet", Manager.onRenderTidy5eItemSheet);
         Hooks.on("dnd5e.preDisplayCard", Manager.onDnd5ePreDisplayCard);
         Hooks.on("renderChatMessage", Manager.onRenderChatMessage);
         Hooks.on("dnd5e.preRollAttack", Manager.onDnd5ePreRollAttack);
@@ -82,7 +83,6 @@ class Manager {
         chatData.content = doc.documentElement.innerHTML;
     }
 
-
     static async buttonEventListener(event) {
         event.preventDefault();
         const button = event.currentTarget;
@@ -92,6 +92,11 @@ class Manager {
         const message = game.messages.get(messageId);
 
         try {
+            if(game.user.targets.size !== 1) {
+                ui.notifications.warn("Multiattack feature only supports attacks against a single target.");
+                return;
+            }
+
             const associatedItem = message.getAssociatedItem();
             const attackCount = await Manager.selectAttackCount(associatedItem, event);
             if(!attackCount) return;
@@ -189,36 +194,34 @@ class Manager {
                     Item Sheet           
     ----------------------------------------------------------------------------*/
     //#region 
-    static registerRenderItemSheetHooks() {
-        Hooks.on("renderItemSheet5e", (app, html, {item}={}) => {
-            if (app.options.classes.includes("tidy5e-sheet")) return;
+    static onRenderTidy5eItemSheet(app, element, {item}, forced) {
+        //change item sheet
+        const html = $(element);
 
-            const attackCount = Manager.getItemAttackCount(item);
-            if(!attackCount) return;
+        const attackCount = Manager.getItemAttackCount(item);
+        if(!attackCount) return;
 
-            const extraCritDmgElem = html.find('div[data-form-group-for="system.critical.damage"]');
-            if(!extraCritDmgElem) return;
+        const extraCritDmgElem = html.find('div[data-form-group-for="system.critical.damage"]');
+        if(!extraCritDmgElem) return;
 
-            $(Manager.getAttackCountFieldHTML(attackCount)).insertAfter(extraCritDmgElem);
-        });
+        const markupToInject = `
+                <div style="display: contents;" data-tidy-render-scheme="handlebars">
+                    ${Manager.getAttackCountFieldHTML(attackCount)}
+                </div>
+            `;
+        $(markupToInject).insertAfter(extraCritDmgElem);
+    }
 
-        Hooks.on("tidy5e-sheet.renderItemSheet", (app, element, {item}, forced) => {
-            //change item sheet
-            const html = $(element);
+    static onRenderItemSheet5e(app, html, {item}={}) {
+        if (app.options.classes.includes("tidy5e-sheet")) return;
 
-            const attackCount = Manager.getItemAttackCount(item);
-            if(!attackCount) return;
+        const attackCount = Manager.getItemAttackCount(item);
+        if(!attackCount) return;
 
-            const extraCritDmgElem = html.find('div[data-form-group-for="system.critical.damage"]');
-            if(!extraCritDmgElem) return;
+        const extraCritDmgElem = html.find('div[data-form-group-for="system.critical.damage"]');
+        if(!extraCritDmgElem) return;
 
-            const markupToInject = `
-                    <div style="display: contents;" data-tidy-render-scheme="handlebars">
-                        ${Manager.getAttackCountFieldHTML(attackCount)}
-                    </div>
-                `;
-            $(markupToInject).insertAfter(extraCritDmgElem);
-        });
+        $(Manager.getAttackCountFieldHTML(attackCount)).insertAfter(extraCritDmgElem);
     }
 
     /**
@@ -268,6 +271,13 @@ class Manager {
         const attackRolls = await Manager.rollAttacks(rollConfig, attackCount);
         if(!attackRolls) return;
         const attackMsg = await Manager.createAttackSummaryMessage(item, attackRolls, rollConfig);
+
+        // Check WMS triggers
+        if(WildMagic.canSurge(item)) {
+            for(let i = 1; i < attackCount; i++) {
+                if( WildMagic.checkIsSurge() ) await WildMagic.surge(item.actor);
+            }
+        }
 
         const attackEvent = rollConfig.event;
         Manager.triggerDamageRolls(attackEvent, attackMsg, item);    //async
@@ -336,7 +346,12 @@ class Manager {
 
         // Add other rolls to the message
         msgDataObj.rolls = attackRolls.map(r => JSON.stringify( r.toJSON() ) );
-        return ChatMessage.implementation.create(msgDataObj);
+
+        const msg = await   ChatMessage.implementation.create(msgDataObj);
+
+        //wait for dice roll animations
+        await game.dice3d.waitFor3DAnimationByMessageID(msg.id);
+        return msg;
     }
     //#endregion
 
@@ -346,6 +361,8 @@ class Manager {
     //#region 
 
     static async triggerDamageRolls(attackEvent, attackMsg, item) {
+        if( !attackMsg.rolls.some(r => Helpers.isRollSuccess(r)) ) return;
+
         const button = attackEvent.currentTarget;
         const card = button.closest(".chat-card");
 
@@ -365,8 +382,8 @@ class Manager {
         const simulatedClick = new MouseEvent('click', {
             bubbles: true,
             cancelable: true,
-            clientX: event.clientX,
-            clientY: event.clientY 
+            clientX: attackEvent.clientX,
+            clientY: attackEvent.clientY 
         });
         chosenButton.dispatchEvent(simulatedClick);
     }
@@ -376,7 +393,25 @@ class Manager {
      * @param {HTMLButtonElement[]} damageButtons 
      */
     static async selectDamageButtonDialog(damageButtons) {
-        return damageButtons[0];    //TODO write an actual dialog instead of just returning the first button
+        const choices = {};
+        damageButtons.forEach((btn, index) => choices[index] = btn.childNodes[1].textContent )  //get the text after the icon
+
+        const buttonIndexField = new foundry.data.fields.StringField({
+            choices,
+            label: "Choose damage group",
+        }).toFormGroup({}, {name: "buttonIndex"}).outerHTML;
+
+        const chosenIndex = await foundry.applications.api.DialogV2.prompt({
+            content: buttonIndexField,
+            rejectClose: false,
+            modal: true,
+            ok: {
+                callback: (event, button) => new FormDataExtended(button.form).object?.buttonIndex ?? null
+            }
+        });
+
+        if(chosenIndex === null) return null;
+        else return damageButtons[chosenIndex];
     }
  
     /**
@@ -468,5 +503,3 @@ class Manager {
     }
     //#endregion
 }
-
-//TODO wait for attack roll animation before playing damage roll animation
