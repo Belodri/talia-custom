@@ -2,9 +2,8 @@ import { surgesTable } from "./surgesTable.mjs";
 import { TaliaCustomAPI } from "../../scripts/api.mjs";
 import { TaliaUtils } from "../../utils/_utils.mjs";
 
-
-export default {
-    register() {
+export default class WildMagic {
+    static register() {
         WildMagic.addItemProperty();
         TaliaCustomAPI.add({
             wildMagicSurge: WildMagic.surge,
@@ -13,10 +12,7 @@ export default {
         Hooks.on("dnd5e.useItem", WildMagic.hook_useItem);
         Hooks.on("dnd5e.preDisplayCard", WildMagic.hook_preDisplayCard)
     }
-}
 
-
-class WildMagic {
     static async hook_useItem(item, config, options) {
         if(!WildMagic.canSurge(item) || !WildMagic.checkIsSurge() || options.canSurge === false) return;
         const actor = item.actor || canvas.tokens.controlled[0]?.actor;

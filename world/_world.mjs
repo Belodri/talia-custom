@@ -1,7 +1,7 @@
 import changesToConditions from "./changesToConditions.mjs";
 import itemProperties from "./itemProperties.mjs";
 import spellFailureChance from "./spellFailureChance.mjs";
-import wildMagic from "./wildMagic/wildMagic.mjs";
+import WildMagic from "./wildMagic/wildMagic.mjs";
 import customLimitedUsePeriods from "./customLimitedUsePeriods.mjs";
 import _settlement from "./settlement/_settlement.mjs";
 import damageAbsorption from "./damageAbsorption.mjs";
@@ -11,7 +11,7 @@ import addActiveEffectFields from "./addActiveEffectFields.mjs";
 
 export default {
     registerSection() {
-        wildMagic.register();
+        WildMagic.register();
         itemProperties.register();
         changesToConditions.register();
         spellFailureChance.register();
