@@ -1,3 +1,35 @@
+# 1.24.0 - 2025/03/16
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Spells
+        - Polymorph
+            Applying the transformation is handled manually; just tell me what you want to polymorph into.
+        - Find Traps (changed to ritual)
+
+    - Extended Rest recovery period for items (no mechanical changes, yet)
+
+    - Multiattack button to item chat cards to speed up resolving multiple identical attack/damage rolls against a single target
+        > Clicking the multiattack button while targeting a single token rolls the number of attacks the item was configured to roll (default 1). This number can be overridden by shift-clicking the button instead, allowing for up to 10 attacks to be rolled at once.
+        > 
+        > The attack configuration dialog is only shown for the first attack, all others will use the same configuration. That means if the first attack is rolled with advantage, so are all other attacks.
+        > 
+        > Once the attacks have been rolled, damage is rolled automatically without a damage configuration dialog, which will be added in the future. Until then, only flat, static modifiers to damage rolls work with this feature!
+        > The number of damage rolls depends on the number of attacks that hit the target and critical hits are accounted for.
+        > 
+        > Until these issues are fixed, consider this feature mainly to be used for NPCs as they rarely have dynamic modifiers to damage rolls.
+        > 
+        Known issues:
+        - No damage roll configuration dialog means bonuses from dynamic sources such as BaB are not applied.
+        - The Multiattack button appears on Vice Grip but doesn't work as the Vice Grip card cannot roll attacks.
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Refactored the code for RestManager and ExtendedRest (no mechanical changes)
+    </details>
+
 # 1.23.0 - 2025/03/08
 -   <details>
     <summary><h2>Added</h2></summary>
