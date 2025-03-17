@@ -31,6 +31,8 @@ class GemDisplay {
         GemDisplay.#active = value;
 
         if(GemDisplay.element) {
+            GemDisplay.refresh();
+
             GemDisplay.element.style.display = value 
                 ? "block"
                 : "none";
@@ -110,6 +112,14 @@ class GemDisplay {
         }
     }
 
+    static refresh() {
+        game.users.players
+            .map(u => u.character)
+            .filter(a => game.user.isGM || a.uuid === game.user.character?.uuid)
+            .forEach(a => GemDisplay.setActorText(a));
+        GemDisplay.updateDisplayText();
+    }
+
     static updateDisplayText() {
         if(!GemDisplay.element) {
             GemDisplay.initDisplayElement();
@@ -140,7 +150,7 @@ class GemDisplay {
     }
 
     /** @param {Item} item */
-    static #isItemOnPC(item) { return GemDisplay.pcUuids.has(item.actor.uuid); }
+    static #isItemOnPC(item) { return GemDisplay.pcUuids.has(item?.actor?.uuid); }
 
     /** @param {Item} item */
     static #isItemSpellGem(item) { return item?.system.type?.value === "spellGem"; }
