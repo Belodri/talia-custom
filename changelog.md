@@ -1,3 +1,58 @@
+# 1.25.0 - 2025/03/23
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Spells    
+        - Cloudkill
+        - Binding Shadows
+        - Summon Umbral Spirit
+            - Umbral Spirit actor
+        - Shadow Monsters
+        - Living Shadows
+        - Douse Light
+        - Candle's Insight
+        - Augury
+        - Sword Burst
+        - Spare the Dying
+        - Dancing Lights
+        - Mind Blank
+        - Deadly Sting
+
+    - Features
+        - Piercing the Veil
+        - Shadowslip
+        - Witchcraft
+        - Altered Spellcasting Ability
+        - Channeled Metamagic
+        - Selfless Healer
+        - Curing Hands
+
+    Items
+        - Ancient Adamantine Plate
+        - Abjurer's Bangle
+        - Broth of Needful Fortitude
+        - Cap of Water Breathing
+        - Oathgold Coin
+
+    Race
+        - Halfling (Witch of the Veil)
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Triggered spell gem overlay now refreshes display data when toggled on.
+    - Refactored `changesToConditions` (no mechanical changes)
+    - The 'dead' status effect should now be displayed as an overlay on tokens by default to make it easier to discern living from dead.
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Fixed an error with triggered spell gem overlay if the equipped or attuned status of an item was modified while the item wasn't embedded on actor.
+    - Ginseng Root Powder should now increase current hp by the same amount as max hp even when the actor wasn't at full health when consuming it.  
+    </details>
+
 # 1.24.0 - 2025/03/16
 -   <details>
     <summary><h2>Added</h2></summary>
