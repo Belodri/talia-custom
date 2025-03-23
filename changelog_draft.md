@@ -4,7 +4,3 @@
 - In case of merge conflicts, **retain all entries** to ensure no changes are lost.
 - During release preparation, entries from this file are reviewed, organized, and moved into the main `changelog.md`.
 # Drafts
-triggeredSpellGemDisplay
-- fixed potential error if item was not on actor;
-- added refresh of display data on display toggle on 
-refactored `changesToConditions` and added default overlay to 'dead' status
