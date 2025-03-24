@@ -103,6 +103,24 @@ class GemDisplay {
         this.isGM = game.user.isGM;
         /** @type {string | null} */
         this.userCharUuid = game.user.character?.uuid ?? null;
+
+        // Proxy to trigger a refresh whenever the map is modified.
+        this.#items = new Proxy(this.#items, {
+            get: (target, prop, receiver) => {
+                if (['set', 'delete', 'clear'].includes(prop)) {
+                    return function(...args) {
+                        const retVal = target[prop](...args);
+                        this.setElementContent();
+                        return retVal;
+                    }.bind(this);
+                }
+
+                const value = Reflect.get(target, prop, receiver);
+                return typeof value === 'function' 
+                    ? value.bind(target) 
+                    : value;
+            }
+        });
     }
 
     _onCreateInstance() {
@@ -133,20 +151,20 @@ class GemDisplay {
 
     _onCreateItem(item, options, userId) {
         if(!this.#validateItem(item, {checkUserChar: true, checkEmbedded: true, equippedEquals: true})) return;
-        this.#addItem(item);
+        this.#items.set(item.uuid, item);
     }
 
     _onUpdateItem(item, changed, options, userId) {
         if(!this.#validateItem(item, {checkUserChar: true, checkEmbedded: true})) return;
 
         const equipped = changed.system?.equipped;
-        if(equipped === true) this.#addItem(item);
-        else if(equipped === false) this.#removeItem(item);
+        if(equipped === true) this.#items.set(item.uuid, item);
+        else if(equipped === false) this.#items.delete(item.uuid);
     }
 
     _onDeleteItem(item, options, userId) {
         if(!this.#validateItem(item, {checkUserChar: true})) return;
-        this.#removeItem(item);
+        this.#items.delete(item.uuid);
     }
 
     _onCanvasReady(canvas) {
@@ -167,7 +185,7 @@ class GemDisplay {
 
             for(const i of t.actor.items) {
                 if( this.#validateItem(i, {equippedEquals: true}) ) {
-                    this.#addItem(i);
+                    this.#items.set(i.uuid, i);
                 }
             }
         }
@@ -189,17 +207,6 @@ class GemDisplay {
         if(checkUserChar && !this.isGM && item?.actor?.uuid !== this.userCharUuid) return false;
 
         return true;
-    }
-
-    #addItem(item) {
-        this.#items.set(item.uuid, item);
-        this.setElementContent();
-    }
-
-    #removeItem(item) {
-        if(this.#items.delete(item.uuid)) {
-            this.setElementContent();
-        }
     }
 
     /*----------------------------------------------------------------------------
