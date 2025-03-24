@@ -54,7 +54,7 @@ function getChanges(actor, chosenArgs) {
         "system.weight.value": chosenArgs.chosenGem.system.weight.value,
         "flags.talia-custom.spellGem.school": chosenArgs.chosenSpell.system.school,
         "flags.talia-custom.spellGem.spellLevel": chosenArgs.selectedSpellSlotLevel,
-        "flags.talia-custom.spellGem.triggerCondition": chosenArgs.triggerConditions ?? undefined,
+        "flags.talia-custom.spellGem.triggerCondition": chosenArgs.isTrigger ? chosenArgs.triggerConditions : undefined,
     };
 
     //attack changes
