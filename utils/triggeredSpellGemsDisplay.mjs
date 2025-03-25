@@ -1,4 +1,3 @@
-import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
 
 export default {
@@ -9,12 +8,7 @@ export default {
 
 class GemDisplay {
     static CONFIG = {
-        flagsKeys: {
-            world: "triggeredSpellGemTracker",
-            item: "spellGem",
-            itemTrigger: "spellGem.triggerCondition"
-
-        },
+        triggerConditionFlag: "spellGem.triggerCondition",
         itemTypeValue: "spellGem",
         debounceDelay: 50,
         anchorId: "hotbar-page-controls",
@@ -29,7 +23,7 @@ class GemDisplay {
             "display": "block",
             "text-wrap": "nowrap",
         },
-
+        maxLines: 6,
     }
 
     /** @type {GemDisplay} */
@@ -59,10 +53,9 @@ class GemDisplay {
         });
     }
 
+    /** @param {boolean} value */
     static toggle(value) {
-        if(value === true) GemDisplay.#create();
-        else if(value === false) GemDisplay.#destroy();
-        else throw new TypeError(`Argument 'value' must be boolean.`);
+        return value ? GemDisplay.#create() : GemDisplay.#destroy();
     }
 
     static #create() {
@@ -194,7 +187,7 @@ class GemDisplay {
     #validateItem(item, {checkUserChar=false, checkEmbedded=false, equippedEquals=null}={}) {
         // Is the item a valid triggered spell gem?
         const isSpellGem = item?.system?.type?.value === GemDisplay.CONFIG.itemTypeValue;
-        const hasTrigger = !!item?.getFlag(MODULE.ID, GemDisplay.CONFIG.flagsKeys.itemTrigger);
+        const hasTrigger = !!this.#getCondition(item);
         if(!isSpellGem || !hasTrigger) return false;
 
         // Is the item embedded on an actor?
@@ -207,6 +200,10 @@ class GemDisplay {
         if(checkUserChar && !this.isGM && item?.actor?.uuid !== this.userCharUuid) return false;
 
         return true;
+    }
+
+    #getCondition(item) {
+        return item?.getFlag(MODULE.ID, GemDisplay.CONFIG.triggerConditionFlag);
     }
 
     /*----------------------------------------------------------------------------
@@ -231,10 +228,11 @@ class GemDisplay {
     }
 
     #getParagraph(item) {
-        const match = item.name.match(/^Triggered: (.*?) - /);
-        const itemName = match ? match[1] : item.name;
+        const itemName =  item.name.startsWith("Triggered: ") && item.name.indexOf(" - ") > 0
+            ? item.name.split(" - ")[0].replace("Triggered: ", "")
+            : item.name;
 
-        const condition = item.getFlag(MODULE.ID, GemDisplay.CONFIG.flagsKeys.itemTrigger) ?? "NO TRIGGER CONDITION";
+        const condition = this.#getCondition(item) ?? "NO TRIGGER CONDITION"; // Should never happen but just in case
         const charName = item.actor.token?.name ?? item.actor.name.split(" ")[0];   // use token name for synthetic actors to keep them apart
 
         return `<p><b>${charName}:</b> ${itemName} - <i>"${condition}"</i></p>`;
@@ -244,6 +242,7 @@ class GemDisplay {
         const content = [...this.#items.values()]
             .map(i => this.#getParagraph(i))
             .sort((a, b) => a.localeCompare(b))
+            .slice(0, GemDisplay.CONFIG.maxLines)
             .join("");
 
         this.#element.innerHTML = content || GemDisplay.CONFIG.defaultContent;
