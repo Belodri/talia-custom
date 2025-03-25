@@ -14,6 +14,7 @@ import DetectionChecker from "./detectionChecker.mjs";
 import overrideTileOcclusion from "./overrideTileOcclusion.mjs";
 import ExtendedRest from "./ExtendedRest.mjs";
 import RepeatAttackManager from "./RepeatAttackManager.mjs";
+import damageOrHealSelfDialog from "./damageOrHealSelfDialog.mjs";
 
 export const TaliaUtils = {
     Helpers,
@@ -36,6 +37,7 @@ export default {
         overrideTileOcclusion.register();
         ExtendedRest.register();
         RepeatAttackManager.register();
+        damageOrHealSelfDialog.register();
 
         TaliaCustomAPI.add(TaliaUtils, "none");
     }
