@@ -1,8 +1,10 @@
+import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
 
 export default {
     register() {
         GemDisplay.init();
+        TaliaCustomAPI.add({GemDisplay}, "Other");
     }
 }
 
