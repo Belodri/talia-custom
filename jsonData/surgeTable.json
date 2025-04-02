@@ -1,0 +1,262 @@
+[
+    {
+        "text": "You are the center of a massive explosion. You and each creature within {distance.small} feet of you must make a Dexterity saving throw against your spell save DC, taking 2{dice.small} force damage for each level of your character on a failed save, or half as much damage on a successful one."
+    }, {
+        "text": "You recover all expended class resources."
+    }, {
+        "text": "You are restrained. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["restrained"]
+        }
+    }, {
+        "text": "You are blinded. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["blinded"]
+        }
+    }, {
+        "text": "You are deafened. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["deafened"]
+        }
+    }, {
+        "text": "You are silenced. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["silenced"]
+        }
+    }, {
+        "text": "You are poisoned. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["poisoned"]
+        }
+    }, {
+        "text": "You are invisible. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["invisible"]
+        }
+    }, {
+        "text": "You are frightened. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["frightened"]
+        }
+    }, {
+        "text": "You are resistant to all damage types. Duration: 1 {minute|hour|day}.",
+        "effect": {
+            "changes": [{"key": "system.traits.dr.all", "mode": 0, "value": 1}]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are restrained. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["restrained"]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are blinded. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["blinded"]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are deafened. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["deafened"]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are silenced. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["silenced"]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are poisoned. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["poisoned"]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are invisible. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["invisible"]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are frightened. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "statuses": ["frightened"]
+        }
+    }, {
+        "text": "All other creatures within {10|30|60} feet of you are resistant to all damage types. Duration: 1 {minute|hour|day}.",
+        "effect": {
+            "changes": [{"key": "system.traits.dr.all", "mode": 0, "value": 1}]
+        }
+    }, {
+        "text": "Each other creature within {30|60|90} feet of you takes 2{d8|d10|d12} necrotic damage. You regain hit points equal to the sum of damage dealt."
+    }, {
+        "text": "Each other creature within {10|30|60} feet of you takes 1{d8|d10|d12} necrotic damage. You take necrotic damage equal to the sum of damage dealt."
+    }, {
+        "text": "Each other creature within {30|60|90} feet of you regains 2{d4|d6|d8} hit points. You take necrotic damage equal to the sum of hit points restored this way."
+    }, {
+        "text": "Each other creature within {30|60|90} feet of you regains 2{d4|d6|d8} hit points. You regain hit points equal to the sum of hit points restored this way."
+    }, {
+        "text": "You are teleported to an empty demiplane before returning to the location you left. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "You are protected from creatures from the same plane as the one you're currently on. Such creatures cannot willingly attack or harm you unless they succeed on a Charisma saving throw against your spell save DC and will focus on other targets if they can. Duration: 1 {hour|day|week}."
+    }, {
+        "text": "You are at the center of a darkness spell. Duration: 1 {hour|day|week}."
+    }, {
+        "text": "You immediately gain {3d10|3d20|3d100} temporary hit points."
+    }, {
+        "text": "You immediately lose all temporary hit points and drop to {50%|20%|1} hp."
+    }, {
+        "text": "You are teleported to the furthest hostile creature within {60|120|480} feet, appearing next to it in the nearest unoccupied space."
+    }, {
+        "text": "You are teleported to the furthest friendly creature within {60|120|480} feet, appearing next to it in the nearest unoccupied space."
+    }, {
+        "text": "You are teleported {30|60|120} feet in a random direction, determined by a d6 (1=down, 2=up, 3=north, 4=east, 5=south, 6=west). If there isn't enough space for you to appear, you are shunted to the nearest unoccupied space, taking damage 1d10 force damage for every 5 feet moved."
+    }, {
+        "text": "All attack rolls against you are made with advantage. Duration: 1 {day|week|month}.",
+        "effect": {
+            "changes": [{"key": "flags.midi-qol.grants.advantage.attack.all", "mode": 0, "value": 1}]
+        }
+    }, {
+        "text": "All attack rolls against you are made with disadvantage. Duration: 1 {day|week|month}.",
+        "effect": {
+            "changes": [{"key": "flags.midi-qol.grants.disadvantage.attack.all", "mode": 0, "value": 1}]
+        }
+    }, {
+        "text": "You have advantage on all attack rolls. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "changes": [{"key": "flags.midi-qol.advantage.attack.all", "mode": 0, "value": 1}]
+        }
+    }, {
+        "text": "You have disadvantage on all attack rolls. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "changes": [{"key": "flags.midi-qol.disadvantage.attack.all", "mode": 0, "value": 1}]
+        }
+    }, {
+        "text": "A demon whose CR is equal to {one quarter|half|} your level appears near you. Roll a contested Persuasion check against the demon. If you tie or succeed, the demon is subservient, otherwise it is hostile. Duration: 1 {week|month|permanent}. The demon, if not banished or defeated, vanishes after the duration."
+    }, {
+        "text": "You can attune to one additional item. Duration: 1 {day|week|month}.",
+        "effect": {
+            "changes": [{"key": "system.attributes.attunement.max", "mode": 2, "value": 1}]
+        }
+    }, {
+        "text": "You can attune to one less item. Duration: 1 {day|week|month}.",
+        "effect": {
+            "changes": [{"key": "system.attributes.attunement.max", "mode": 2, "value": -1}]
+        }
+    }, {
+        "text": "You are immune to all damage. At the start of each new round of combat (or every 6 seconds outside of combat) you explode, dealing force damage equal to {|twice|three times} your level to all creatures within {10|30|60} feet. Duration: {1 round|3 rounds|1 minute}.",
+        "effect": {
+            "changes": [{"key": "system.traits.di.all", "mode": 0, "value": 1}]
+        }
+    }, {
+        "text": "Your size is reduced by 1 category. Duration: 1 {week|month|permanent}.",
+        "effect": {
+            "changes": [{"key": "macro.execute", "mode": 0, "value": "\"daeMacro_sizeChange\" -1"}]
+        }
+    }, {
+        "text": "Your size is increased by 1 category. Duration: 1 {week|month|permanent}.",
+        "effect": {
+            "changes": [{"key": "macro.execute", "mode": 0, "value": "\"daeMacro_sizeChange\" 1"}]
+        }
+    }, {
+        "text": "You transform into a medium-sized potted plant and are considered petrified. Duration: 1 {minute|hour|day}.",
+        "effect": {
+            "statuses": ["petrified"]
+        }
+    }, {
+        "text": "1d20 random gems appear near you, worth {50|500|5000}gp each."
+    }, {
+        "text": "All creatures {within 60ft|within 10 miles|on the plane} are knocked prone."
+    }, {
+        "text": "Whenever you make an ability check using Strength, subtract 1d{4|6|8} from the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.str.bonuses.check", "mode": 2, "value": "-1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Dexterity, subtract 1d{4|6|8} from the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.dex.bonuses.check", "mode": 2, "value": "-1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Constitution, subtract 1d{4|6|8} from the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.con.bonuses.check", "mode": 2, "value": "-1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Intelligence, subtract 1d{4|6|8} from the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.int.bonuses.check", "mode": 2, "value": "-1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Wisdom, subtract 1d{4|6|8} from the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.wis.bonuses.check", "mode": 2, "value": "-1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Charisma, subtract 1d{4|6|8} from the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.cha.bonuses.check", "mode": 2, "value": "-1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Strength, add 1d{4|6|8} to the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.str.bonuses.check", "mode": 2, "value": "1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Dexterity, add 1d{4|6|8} to the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.dex.bonuses.check", "mode": 2, "value": "1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Constitution, add 1d{4|6|8} to the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.con.bonuses.check", "mode": 2, "value": "1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Intelligence, add 1d{4|6|8} to the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.int.bonuses.check", "mode": 2, "value": "1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Wisdom, add 1d{4|6|8} to the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.str.bonuses.check", "mode": 2, "value": "1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Whenever you make an ability check using Charisma, add 1d{4|6|8} to the result. Duration: permanent.",
+        "effect": {
+            "changes": [{"key": "system.abilities.str.bonuses.check", "mode": 2, "value": "1d{4|6|8}"}]
+        }
+    }, {
+        "text": "Other creatures within {10|30|60} feet of you cannot cast spells of {1st|3rd|6th} level or lower. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "You lose the ability to speak {1|2|3} language{|s|s} of your choice you already know and gain the ability to speak {1|2|3} other, new language{|s|s} of your choice. This is permanent and cannot be undone."
+    }, {
+        "text": "You forget {1|2|3} cantrip{|s|s} of your choice. This is permanent and cannot be undone."
+    }, {
+        "text": "You learn {1|2|3} cantrip{|s|s} of your choice. This is permanent and cannot be undone."
+    }, {
+        "text": "You gain an additional {1st|3rd|6th} level spell slot. Duration: 1 {week|month|permanent}.",
+        "effect": {
+            "changes": [{"key": "system.spells.spell{1|3|6}.max", "mode": 2, "value": 1}]
+        }
+    }, {
+        "text": "You lose one {1st|3rd|6th} level spell slot. Duration: 1 {week|month|permanent}.",
+        "effect": {
+            "changes": [{"key": "system.spells.spell{1|3|6}.max", "mode": 2, "value": -1}]
+        }
+    }, {
+        "text": "You can take {1|2|3} additional action{|s|s} during this turn."
+    }, {
+        "text": "You can take {1|2|3} additional bonus action{|s|s} during this turn."
+    }, {
+        "text": "You gain proficiency with one weapon{|/armour|/armor/tool} of your choice. This is permanent and cannot be undone."
+    }, {
+        "text": "You can take the attack action and cast spells with a casting time of 1 action using a bonus action. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "You immediately cause {1|2|4}d4 additional wild magic surges."
+    }, {
+        "text": "You cannot target anything that's more than 5 feet away from you with ranged attacks and spells. Duration: {1 round|2 rounds|5 rounds}."
+    }, {
+        "text": "All creatures within {20|30|60} feet must make a Wisdom saving throw against your spell save DC. Any creature immune to magical sleep automatically succeeds on its saving throw. Those that fail fall asleep. Duration: 1 {minute|hour|day}.",
+        "effect": {
+            "statuses": ["sleeping"]
+        }
+    }
+]
