@@ -43,7 +43,10 @@ function registerHideChatMessageHook() {
  * Rule: "When cast a spell using a spell slot, the spell is treated as if it were cast using a spell slot of x levels higher/lower, up to a maximum of 9th level."
  * 
  * Checks if the actor casting the spell has one of the following flags (can be expanded later):
- * - talia-custom.modifySpellLevel.spellSchools[spellSchoolId] {number}
+ * - talia-custom.modifySpellLevel.spellSchools[spellSchoolId] {number}     // target spells of a given spell school
+ * - talia-custom.modifySpellLevel.all {number}                             // target all spells
+ * - talia-custom.modifySpellLevel.filter.underLevel {number}               // target only spells under a given spell level
+ * - talia-custom.modifySpellLevel.filter.overLevel {number}                // target only spells over a given spell level
  */
 function registerModifySpellLevelHook() {
     Hooks.on("dnd5e.preItemUsageConsumption", (item, config, options) => {
@@ -58,12 +61,16 @@ function registerModifySpellLevelHook() {
         const chosenSlotLevel = options.flags.dnd5e?.use?.spellLevel;
         if(!chosenSlotLevel) return;
 
+        if(modFlag.filter?.underLevel && chosenSlotLevel > modFlag.filter?.underLevel) return;
+        if(modFlag.filter?.overLevel && chosenSlotLevel < modFlag.filter?.overLevel) return;
+
         let slotLevelModifier = 0;
         //add all flag values together
         slotLevelModifier += modFlag.spellSchools?.[item.system.school] ?? 0;
-
+        slotLevelModifier += modFlag.all ?? 0;
+        
         //calculate changed slot level; min = 1, max = 9;
-        const newSlotLevel = Math.min(1, Math.max(chosenSlotLevel + slotLevelModifier, 9));
+        const newSlotLevel = Math.clamp(chosenSlotLevel + slotLevelModifier, 1, 9);
         if(newSlotLevel === chosenSlotLevel) return;
 
         //start async function, then return false to cancel the use

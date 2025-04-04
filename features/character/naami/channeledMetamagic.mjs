@@ -1,24 +1,18 @@
 import ChatCardButtons from "../../../utils/chatCardButtons.mjs"
 
-export default {
-    register() {
-        ChanneledMetamagic.init();
-    }
-}
-
-class ChanneledMetamagic {
+export default class ChanneledMetamagic {
     static METAMAGIC_OPTIONS = {
-        careful: { key: "careful", name: "Careful", scaling: false },
-        distant: { key: "distant", name: "Distant", scaling: false },
-        empowered: { key: "empowered", name: "Empowered", scaling: false },
-        extended: { key: "extended", name: "Extended", scaling: false },
-        piercing: { key: "piercing", name: "Piercing", scaling: false },
-        quickened: { key: "quickened", name: "Quickened", scaling: false },
-        subtle: { key: "subtle", name: "Subtle", scaling: false },
-        twinned: { key: "twinned", name: "Twinned", scaling: true },
-        seeking: { key: "seeking", name: "Seeking", scaling: false },
-        transmuted: { key: "transmuted", name: "Transmuted", scaling: false },
-        heightened: { key: "heightened", name: "Heightened", scaling: false },
+        careful: { key: "careful", name: "Careful" },
+        distant: { key: "distant", name: "Distant" },
+        empowered: { key: "empowered", name: "Empowered" },
+        extended: { key: "extended", name: "Extended" },
+        piercing: { key: "piercing", name: "Piercing" },
+        quickened: { key: "quickened", name: "Quickened" },
+        subtle: { key: "subtle", name: "Subtle" },
+        twinned: { key: "twinned", name: "Twinned" },
+        seeking: { key: "seeking", name: "Seeking" },
+        transmuted: { key: "transmuted", name: "Transmuted" },
+        heightened: { key: "heightened", name: "Heightened" },
     }
 
     static CONFIG = {
@@ -35,22 +29,8 @@ class ChanneledMetamagic {
         }
     }
 
-    static init() {
-        Hooks.once("setup", ChanneledMetamagic.registerButtons);
+    static register() {
         Hooks.on("dnd5e.restCompleted", ChanneledMetamagic.onRestCompleted);
-    }
-
-    static registerButtons() {
-        Object.values(ChanneledMetamagic.METAMAGIC_OPTIONS)
-            .forEach(obj => {
-                ChatCardButtons.register({
-                    itemName: `Metamagic: ${obj.name} Spell`,
-                    buttons: [{
-                        label: "Channel",
-                        callback: ChanneledMetamagic.channel
-                    }]
-                })
-            })
     }
 
     static async onRestCompleted(actor, result, config) {
@@ -88,9 +68,7 @@ class ChanneledMetamagic {
     async evaluate() {
         if(this.#evaluated) throw new Error("Alrady evaluated.");
 
-        const diceCount = this.option.scaling 
-            ? await this.#diceCountDialog()
-            : this.item.system.consume.amount;
+        const diceCount = this.item.system.consume.amount
         if(!diceCount) return;
 
         const diceSize = ChanneledMetamagic.CONFIG.diceSize[this.isFocused ? "focused" : "base"];
@@ -131,32 +109,6 @@ class ChanneledMetamagic {
             changes: newChanges,
             name: `${effectName} (${newValue})`,
         }
-    }
-
-    async #diceCountDialog() {
-        const {DialogV2} = foundry.applications.api;
-        const {NumberField} = foundry.data.fields;
-
-        const {minNum, maxNum,} = ChanneledMetamagic.CONFIG.dialogOptions;
-
-        const spentField = new NumberField({
-            min: minNum,
-            max: maxNum,
-            integer: true,
-            initial: 1,
-            required: true,
-            label: "Spent Sorcery Points",
-            hint: "Please enter the number of sorcery points you spent on this metamagic."
-        }).toFormGroup({}, {name: "spent"}).outerHTML;
-
-        return DialogV2.prompt({
-            content: spentField,
-            rejectClose: false,
-            modal: true,
-            ok: {
-                callback: (event, button) => new FormDataExtended(button.form).object.spent,
-            }
-        });
     }
 
     async #createMessage() {
