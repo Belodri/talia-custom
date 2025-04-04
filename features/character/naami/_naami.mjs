@@ -1,7 +1,7 @@
-import flexibleCasting from "./flexibleCasting.mjs";
+import channeledMetamagic from "./channeledMetamagic.mjs";
 
 export default {
     registerSubsection() {
-        flexibleCasting.register();
+        channeledMetamagic.register();
     }
 }
