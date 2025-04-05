@@ -122,7 +122,7 @@ class CombatTriggers {
         for (const e of actor.appliedEffects) {
             if( CombatTriggers._shouldExecute(e, hook) ) {
                 if(e.flags?.[MODULE.ID]?.repeatEffects?.enableItem) {
-                    await createItemMessage(actor, e, hook);
+                    await createMessage(actor, e, hook);
                 }
                 await rollDamage(actor, e, hook);
             }
@@ -273,49 +273,58 @@ async function rollDamage(actor, effect, hook) {
 //#region Repeating Item Use
 
 /**
- * Gets the source item of an effect. Logs errors and returns undefined if a source item cannot be found.
- * @param {ActiveEffect} effect 
- * @returns {Promise<Item | undefined>}
- */
-async function getSourceItem(effect) {
-    const errLog = (msg) => { console.error(`Cannot repeat effect | ${msg}`, {effect, actor, hook}) }
-
-    const source = await effect.getSource();
-
-    if(source instanceof Item) return source;
-
-    else if(source instanceof ActiveEffect && source.parent instanceof Item) return source.parent;
-
-    else if(source instanceof Actor) return errLog("Actors are not a valid effect source");
-
-    else if(source === null) {
-        //try to find chat message with item data if the item was consumed and destroyed in the process
-        const parsed = foundry.utils.parseUuid(effect.origin);
-        if(parsed.primaryType !== "Actor") return errLog("Source could not be resolved");
-
-        const itemUuid = parsed.embedded?.[0] === "Item"
-            ? [parsed.primaryType, parsed.primaryId, parsed.embedded[0], parsed.embedded[1]].join(".")
-            : null;
-
-        if(!itemUuid) return errLog("Source could not be resolved");
-
-        const useMsg = game.messages.find(m => m.flags?.dnd5e?.use?.itemUuid === itemUuid);
-        if(!useMsg) return errLog(`Source item uuid not be found in messages`);
-
-        //if found, create the item in memory and return it
-        return useMsg.getAssociatedItem();
-    }
-    else return undefined;
-}
-
-/**
  * @param {import ("../system/dnd5e/module/documents/actor/actor.mjs").default} actor 
  * @param {import ("../system/dnd5e/module/documents/active-effect.mjs").default} effect 
  * @param {string} hook 
  */
-async function createItemMessage(actor, effect, hook) {
-    let sourceItem = await getSourceItem(effect);
-    if(!sourceItem) return;
+async function createMessage(actor, effect, hook) {
+    const msgData = getMessageDataFromMessage(effect) 
+        ?? await getItemMessageDataFromItem(effect);
+    if(!msgData) return;
+
+    foundry.utils.setProperty(msgData, "talia-custom.isRepeatEffect", true);
+    msgData.flavor = getMsgFlavor(hook, effect, actor);
+
+    //create the chat message
+    await ChatMessage.create(msgData);
+}
+
+/**
+ * Tries to get the message data from an existing chat message.
+ * @param {ActiveEffect} effect 
+ * @returns {object} 
+ */
+function getMessageDataFromMessage(effect) {
+    const parsed = foundry.utils.parseUuid(effect.origin);
+    if(parsed.primaryType !== "Actor") return null;
+
+    const itemUuid = parsed.embedded?.[0] === "Item"
+        ? [parsed.primaryType, parsed.primaryId, parsed.embedded[0], parsed.embedded[1]].join(".")
+        : null;
+    if(!itemUuid) return null;
+
+    const useMsg = game.messages.filter(m => 
+        m.getFlag("dnd5e", "use.itemUuid") === itemUuid 
+        && !m.getFlag("talia-custom", "isRepeatEffect")
+    ).sort((a, b) => a._stats.createdTime - b._stats.createdTime)[0];
+
+    return useMsg?.toObject();
+}
+
+/**
+ * Tries to get the messsage data from the item itself. 
+ * @param {ActiveEffect} effect 
+ * @returns {object}
+ */
+async function getItemMessageDataFromItem(effect) {
+    const errLog = (msg) => { console.error(`Cannot repeat effect | ${msg}`, {effect, actor, hook}) }
+
+    let sourceItem = await effect.getSource();
+    if(source instanceof ActiveEffect) sourceItem = source.parent;
+    if( !(sourceItem instanceof Item) ) {
+        errLog("Source could not be resolved");
+        return null;
+    }
 
     //display options
     const options = {
@@ -334,11 +343,8 @@ async function createItemMessage(actor, effect, hook) {
     }
     if(sourceItem.type === "spell") foundry.utils.setProperty(options, "flags.dnd5e.use.spellLevel", sourceItem.system.level);
 
-    //get the chat data and modify it
-    const chatData = await sourceItem.displayCard(options);
-    chatData.flavor = getMsgFlavor(hook, effect, actor);
-
-    //create the chat message
-    await ChatMessage.create(chatData);
+    //get the chat data to modify
+    return sourceItem.displayCard(options);
 }
+
 //#endregion
