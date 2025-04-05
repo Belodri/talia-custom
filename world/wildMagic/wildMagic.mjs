@@ -272,7 +272,8 @@ export class Surge {
 
     async #getTableEntry() {
         const table = await Surge.fetchTable();
-        const index = Helpers.getRandomInt(0, table.length - 1);
+        const filtered = table.filter(e => !e.severity || e.severity?.includes?.(this.#derived.severity));
+        const index = Helpers.getRandomInt(0, filtered.length - 1);
         return table[index];
     }
 
