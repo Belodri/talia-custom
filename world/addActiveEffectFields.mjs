@@ -23,5 +23,7 @@ function addFields() {
         "flags.talia-custom.jumpDist.countDoubled",
         "flags.talia-custom.jumpDist.countHalved",
         "flags.talia-custom.jumpDist.distMult",
+
+        "flags.talia-custom.ray-of-enfeeblement",
     ]);
 }

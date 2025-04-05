@@ -8,6 +8,7 @@ import absorbElements from "./absorbElements.mjs";
 import witheringTouch from "./witheringTouch.mjs";
 import darkness from "./darkness.mjs";
 import polymorph from "./polymorph.mjs";
+import rayOfEnfeeblement from "./rayOfEnfeeblement.mjs";
 
 
 export default {
@@ -22,5 +23,6 @@ export default {
         witheringTouch.register();
         darkness.register();
         polymorph.register();
+        rayOfEnfeeblement.register();
     }
 }
