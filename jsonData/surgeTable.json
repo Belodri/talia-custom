@@ -1,8 +1,12 @@
 [
     {
-        "text": "You are the center of a massive explosion. You and each creature within {distance.small} feet of you must make a Dexterity saving throw against your spell save DC, taking 2{dice.small} force damage for each level of your character on a failed save, or half as much damage on a successful one."
+        "text": "You are the center of a massive explosion. You and each creature within {20|40|80} feet of you must make a Dexterity saving throw against your spell save DC, taking 2d{4|6|8} force damage for each level of your character on a failed save, or half as much damage on a successful one."
     }, {
-        "text": "You recover all expended class resources."
+        "text": "You immediately fall asleep. If you are still asleep at the end of your next turn, you receive the benefits of a {|short|long} rest.",
+        "effect": {
+            "statuses": ["sleeping"]
+        },
+        "severity": ["moderate", "major"]
     }, {
         "text": "You are restrained. Duration: 1 {hour|day|week}.",
         "effect": {
@@ -248,6 +252,10 @@
     }, {
         "text": "You gain proficiency with one weapon{|/armour|/armor/tool} of your choice. This is permanent and cannot be undone."
     }, {
+        "text": "The ability of {1 skill|2 skills|3 skills} of your choice that you're proficient with is replaced with it's counterpart (STR<>INT, DEX<>WIS, CON<>CHA). Duration: {1 week|1 month|permanent}."
+    }, {
+        "text": "You lose proficiency with {one skill|two skills|three skills} of your choice but gain proficiency with that many other skills of your choice. This is permanent and cannot be undone."
+    }, {
         "text": "You can take the attack action and cast spells with a casting time of 1 action using a bonus action. Duration: 1 {minute|hour|day}."
     }, {
         "text": "You immediately cause {1|2|4}d4 additional wild magic surges."
@@ -257,6 +265,125 @@
         "text": "All creatures within {20|30|60} feet must make a Wisdom saving throw against your spell save DC. Any creature immune to magical sleep automatically succeeds on its saving throw. Those that fail fall asleep. Duration: 1 {minute|hour|day}.",
         "effect": {
             "statuses": ["sleeping"]
+        }
+    }, {
+        "text": "Whenever you hit a creature with an attack roll, it is pulled up to {10|30|90} feet towards you in a straight line. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "Whenever a creature hits you with an attack roll, you are pulled up to {10|30|90} feet towards it in a straight line. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "Whenever you hit a creature with an attack roll, it is pushed up to {10|30|90} feet away from you in a straight line. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "Whenever a creature hits you with an attack roll, you are pushed up to {10|30|90} feet away from it in a straight line. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "You jump backwards in time, allowing others to anticipate your actions. You must decide your movement {|and actions|and actions (in order)} for your next turn and announce it to the table. On your next turn you cannot do anything but take the described actions to the best of your abilities."
+    }, {
+        "text": "Each player looses control over their character and instead gains control over the character who's session inspiration they can see. Duration: {2 rounds|1 minute|1 hour}. During this time, the characters are not aware of anything unusual though they might question their actions afterwards."
+    }, {
+        "text": "Your walking speed is increased by {10|20|30}ft. Duration: {1 week|1 month|permanent}.",
+        "effect": {
+            "changes": [{"key": "system.attributes.movement.walk", "mode": 2, "value": "{10|20|30}"}]
+        }
+    }, {
+        "text": "Your walking speed is reduced by {10|20|30}ft. Duration: {1 week|1 month|permanent}.",
+        "effect": {
+            "changes": [{"key": "system.attributes.movement.walk", "mode": 2, "value": "-{10|20|30}"}]
+        }
+    }, {
+        "text": "Whenever a creature talks to you for the first time during the effect's duration, you flip a coin. If it lands on heads, you punch them in the face, otherwise you hug them. You are not aware of this effect being anything other than you openly expressing your feelings and you take offense to any suggestion it could be something else. Duration: 1 {hour|day|week}."
+    }, {
+        "text": "The next time you spot a (1d6: 1=Cat, 2=Pig, 3=Frog, 4=Goat, 5=Chicken, 6=Dog) of CR 0, you firmly believe it to be a reincarnated deity, an embodiment of nature itself, or something similar according to your beliefs. You decide that you need to protect it at all costs and do everything in your power to make sure it is treated with the respect you think it deserves. Duration: {1 week|1 month|permanent}."
+    }, {
+        "text": "Your vocabulary is limited to the words \"Yes\" and \"No\", which you can only scream. During this time you cannot cast spells with verbal components. Duration: 1 {round|minute|day}."
+    }, {
+        "text": "While asleep, you snore so loudly that no other creature within {100ft|500ft|1 mile} can sleep unless they are deaf. Duration: {1 week|1 month|permanent}."
+    }, {
+        "text": "You and everything you're wearing and carrying are instantly, and without warning, transported to the elemental plane of (1d4: 1= fire, 2=water, 3=earth, 4=air). Your companions know exactly where you are. Duration: {1 day|1 week|1 month}. When the duration ends, you are teleported back. This effect cannot be ended early though any means short of a Wish spell."
+    }, {
+        "text": "You cannot willingly move further than {500|120|30}ft from your current location. If you are moved outside this range, you must take any and all actions you can to get back as quickly as possible. For the duration of the effect, your behaviour seems perfectly reasonable to you and you cannot be convinced otherwise. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "You can only move via jumping, and you cannot choose to jump less than the maximum distance you're able to jump. For the duration of the effect, your behaviour seems perfectly reasonable to you and you cannot be convinced otherwise. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "Yu can speak with animals but trying to speak any language will result in you making random animal noises. Duration: 1 {hour|day|week}."
+    }, {
+        "text": "You take 1 damage for every {1000|100|10}gp worth of currency you're carrying."
+    }, {
+        "text": "Everything you say will also be written in the sky as per the Skywrite spell. Duration: {1 week|1 month|permanent}."
+    }, {
+        "text": "You gain the ability to breathe water but loose the ability to breathe air. You are aware of this and trying to breathe air feels like drowning. Duration: 1 {minute|hour|day}."
+    }, {
+        "text": "You can pass through solid, non-magical walls as long as they are less than 5 feet thick. Duration: 1 {day|week|month}."
+    }, {
+        "text": "All {copper|silver|gold} pieces you carry turn into {silver|gold|platinum} pieces."
+    }, {
+        "text": "All {silver|gold|platinum} pieces you carry turn into {copper|silver|gold} pieces."
+    }, {
+        "text": "Whenever you take a long rest, a corpse of a humanoid creature that was recently murdered appears in or near your bed. Duration: {1 day|1 month|permanent}."
+    }, {
+        "text": "Every time you walk through a door or gate it will slam shut behind you and become locked. Duration: 1 {hour|day|week}."
+    }, {
+        "text": "Damage and healing you inflict are reversed. Duration: 1 {round|minute|day}." 
+    }, {
+        "text": "All your clothing and equipment teleports to an unoccupied space about {60|120|500} feet from you. You know where it landed."
+    }, {
+        "text": "Your skin changes color (1d8: 1=Red, 2=Green, 3=Blue, 4= Purple, 5= Yellow, 6=Grey, 7=White, 8=Black). Duration: {1 week|1month|permanent}."
+    }, {
+        "text": "Roll a d6 at the start of your turn do determine the order of your actions until the start of your next turn. (1=action->bonus->reaction; 2=action->reaction->bonus; 3=bonus->action->reaction; 4=bonus->reaction->action; 5=reaction->action->bonus; 6=reaction->bonus->action;)"
+    }, {
+        "text": "While speaking, your tongue is under the effect of the {Light|Light|Sunlight} spell. Duration: 1 {day|week|month}."
+    }, {
+        "text": "All liquids within {5|10|60}ft of you transform into lukewarm water when drunk. Duration: 1 {minute|hour|week}."
+    }, {
+        "text": "Some deity has taken issue with the last thing you said or did. You immediately take xd{8|10|12} radiant damage where x is your level."
+    }, {
+        "text": "Approximately 1m³ of {water|blood|lava} appears over each creature within 100 feet."
+    }, {
+        "text": "You are unable to read as the letters all appeared jumbled. Duration: {1 week|1 month|permanent}."
+    }, {
+        "text": "No matter how hard you try, you cannot bring yourself to say no if asked for help. Duration: 1 {day|week|month}."
+    }, {
+        "text": "Whenever you ask a question, you immediately interrupt the first person to answer with a brash 'Shut Up!' or something along those lines. You are not aware of this effect being anything other than you openly expressing your feelings and you take offense to any suggestion it could be something else. Duration: 1 {hour|day|week}."
+    }, {
+        "text": "You develop an uncontrollable urge to collect a certain objects (1d6: 1=keys, 2=feathers, 3=one shoe of a pair, 4=spoons, 5=splinters, 6=teeth). You must make a DC 15 Wisdom save to pass up an opportunity to add to your collection. Duration: {1 day|1 week|permanent}."
+    }, {
+        "text": "Your reflection in mirrors and other reflective surfaces acts independently of you. It might wave when you're still, frown when you smile, or silently scream in terror. Duration: 1 {week|month|permanent}."
+    }, {
+        "text": "You develop a magical 'allergy' to a common substance (1d6: 1=metal, 2=wood, 3=water, 4=cloth, 5=leather, 6=stone). Contact causes your eyes to tear up uncontrollably, rendering you distracted for 1 minute. Duration: 1 {day|week|month}."
+    }, {
+        "text": "You become magically bound to the next non-magical item you touch weighing around {5|20|100} pounds. The item cannot be more than 30 feet from you without causing you 1d6 psychic damage per minute of separation. Duration: 1 {day|week|month}."
+    }, {
+        "text": "Your dreams physically manifest as minor illusions while you sleep, visible to anyone within {10|30|60} feet. Duration: 1 {week|month|permanent}."
+    }, {
+        "text": "Your footsteps leave behind {flowers|dirt|manure} that last for {1 minute|1 hour|1 day} before disappearing. Duration: 1 {day|week|month}."
+    }, {
+        "text": "The weather within a {1 mile|500ft|100ft} radius of you always exists in an opposite state to the surrounding region (rain becomes sunshine, hot becomes cold, etc.). Duration: 1 {day|week|month}."
+    }, {
+        "text": "Small non-magical flames (candles, torches, campfires) within {30|60|120} feet of you change color to match your current emotional state. Duration: 1 {week|month|permanent}"
+    }, {
+        "text": "Empty containers within {10|30|100} feet of you have a 50% chance of filling with {clean water|colorful sand|harmless spider} when left unattended for more than a minute. Duration: 1 {day|week|month}."
+    }, {
+        "text": "Others can hear your whispers from {30|100|300} feet away, while, to them, your shouts are barely audible beyond {50|30|10} feet. You sound the same to yourself. Duration: 1 {hour|day|week}."
+    }, {
+        "text": "A randomly chosen magical weapon, armour, or other equipment of {uncommon|rare|very rare or legendary} rarity in your possession becomes sentient with its own personality and agenda. It communicates telepathically only with you and may refuse to function if its desires are ignored. Duration: 1 {week|month|permanent}."
+    }, {
+        "text": "You and a random allied creature within 60 feet develop a psychic link. You can communicate telepathically at will, but also experience each other's strong emotions and can't help occasionally blurting out each other's private thoughts. Duration: 1 {day|week|month}."
+    }, {
+        "text": "You gain {one level|two levels|three levels} of exhaustion for each day you go without receiving an honest and sincere compliment. Duration: {1 week|1 month|permanent}."
+    }, {
+        "text": "When you recount the party's adventures to NPCs, illusory images appear to illustrate your tale. However, the images always {slightly exaggerate|wildly exaggerate|completely fabricate} your personal contribution. Duration: 1 {week|month|permanent}."
+    }, {
+        "text": "You attract the attention of the most dangerous hostile creature within {10|50|250} miles, which becomes curious about you and knows your location for the duration. Duration: 1 {week|month|permanent}."
+    }, {
+        "text": "You gain proficiency in any saving throws you are not currently proficient in, and lose proficiency in any you are. Duration: 1 {hour|day|week}.",
+        "effect": {
+            "changes": [
+                { "key": "system.abilities.str.proficient", "mode": 5, "value": "0"},
+                { "key": "system.abilities.dex.proficient", "mode": 5, "value": "0"},
+                { "key": "system.abilities.con.proficient", "mode": 5, "value": "0"},
+                { "key": "system.abilities.int.proficient", "mode": 5, "value": "0"},
+                { "key": "system.abilities.wis.proficient", "mode": 5, "value": "0"},
+                { "key": "system.abilities.cha.proficient", "mode": 5, "value": "0"}
+            ],
+            "disabled": true
         }
     }
 ]
