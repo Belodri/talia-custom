@@ -1,5 +1,5 @@
 import { MODULE } from "../scripts/constants.mjs";
-import WildMagic from "../world/wildMagic/wildMagic.mjs";
+import { WildMagic } from "../world/wildMagic/wildMagic.mjs";
 import { Helpers } from "./helpers.mjs";
 
 /** @typedef {import("../system/dnd5e/module/documents/item.mjs").default} Item5e */
@@ -275,7 +275,7 @@ class Manager {
         // Check WMS triggers
         if(WildMagic.canSurge(item)) {
             for(let i = 1; i < attackCount; i++) {
-                if( WildMagic.checkIsSurge() ) await WildMagic.surge(item.actor);
+                if( WildMagic.surgeCheck() ) await WildMagic.surge(item.actor);
             }
         }
 
@@ -318,7 +318,7 @@ class Manager {
         for(let i = 1; i < attackCount; i++) {  //start at 1 because we already made the first roll
 
             const roll = new CONFIG.Dice.D20Roll(firstRoll.formula, firstRoll.data, foundry.utils.deepClone(otherRollConfig));
-            promises.push( roll.evaluate({ allowInteractive: (roll.options.rollMode ?? defaultRollMode) !== CONST.DICE_ROLL_MODES.BLIND }) );
+            promises.push( roll.evaluate({ allowInteractive: (roll.options.rollMode ?? roll.options.defaultRollMode) !== CONST.DICE_ROLL_MODES.BLIND }) );
         }
 
         return [
