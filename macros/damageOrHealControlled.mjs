@@ -2,11 +2,14 @@ import { TaliaCustomAPI } from "../scripts/api.mjs";
 
 export default {
     register() {
-        TaliaCustomAPI.add({damageOrHealSelf}, "Macros");
+        TaliaCustomAPI.add({
+            damageOrHealSelf: damageOrHealControlled, // Old function name, keep for compatability with older macros
+            damageOrHealControlled
+        }, "Macros"); 
     }
 }
 
-async function damageOrHealSelf() {
+async function damageOrHealControlled() {
     const types = {
         untyped: { label: "Untyped" },
         ...CONFIG.DND5E.damageTypes,
@@ -31,8 +34,8 @@ async function damageOrHealSelf() {
         speaker: { alias: game.user.name },
         flavor: `<b>Type:</b> ${types[chosen.type].label}`
     });
-    await game.dice3d.waitFor3DAnimationByMessageID(msg.id);
-
+    if(!roll.isDeterministic) await game.dice3d.waitFor3DAnimationByMessageID(msg.id);
+    
     const func = chosen.type === "temphp"
         ? { name: "applyTempHP", arg: roll.total }
         : { name: "applyDamage", arg: [{ value: roll.total, type: chosen.type === "untyped" ? undefined : chosen.type }] };
@@ -74,7 +77,7 @@ async function dialog(types, priorChosen = {}) {
         },
         content: span + typeField + formulaField,
         rejectClose: false,
-        modal: true,
+        modal: false,
         ok: {
             callback: (event, button) => new FormDataExtended(button.form).object
         }
