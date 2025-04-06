@@ -7,6 +7,7 @@ import _gmMacros from "../gmMacros/_gmMacros.mjs";
 import _items from "../items/_items.mjs";
 import _spells from "../spells/_spells.mjs";
 import _features from "../features/_features.mjs";
+import _macros from "../macros/_macros.mjs";
 
 /*
     API looks like this:
@@ -62,6 +63,7 @@ Hooks.once("init", () => {
     _items.registerSection();
     _spells.registerSection();
     _features.registerSection();
+    _macros.registerSection();
     registerRulePages();
 });
 
