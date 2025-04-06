@@ -1,3 +1,71 @@
+# 2.0.0 - 2025/04/06
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Character: Naami
+
+    - Features
+        - Hand of Healing (replaces Quickened Healing)
+        - Metamagic: Subtle Spell
+        - Metamagic: Twinned Spell
+        - Metamagic: Heightened Spell
+        - Healer
+        - Channeled Metamagic
+
+    - Spells
+        - Whirlwind
+        - Regenerate
+        - Life Transference
+        - Sleep
+        - Healing Word
+        - Blindness Deafness
+        - Prayer of Healing
+        - Mass Cure Wounds
+        - Raise Dead
+        - Heal
+        - Ray of Enfeeblement
+        - Wall of Force
+        - Doom of Stacked Stones
+        - False Life
+        - Harm
+        - Death God's Touch
+    
+    - Items
+        - Dagger of Warning
+        - Two-Bird Sling
+        - Belt of Dwarvenkind
+        - Figurine of Wondrous Power, Onyx Dog
+        - Wand of Magic Detection
+        - Keoghtom's Ointment
+        - Staff of Power
+        - Amulet of Fragile Tranquility
+        - Little Finger of Dam'ghur
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Size-altering Active Effects can now be applied by non-GM clients.
+    - Potion of Giant Size now correctly doubles both maximum and current hit points.
+    - Weapons affected by Oil of Sharpness are now correctly tagged as magical.
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Full rewrite of Spell Gem Trigger display
+        - Refreshes automatically on scene change and can be refreshed manually through UI toggle
+        - Allows non-GM users to display the triggers of all owned actors
+        - Supports NPC actors in addition to PC actors
+        - Supports runtime configuration via `TaliaCustom.Other.GemDisplay.configure()`
+
+    - Full rewrite of "Damage of Heal Self"
+        - Supports both numbers and roll formulas
+        - Applies to all controlled tokens instead of just one
+        - Renamed to "Damage or Heal Controlled" to reflect this change
+
+    </details>
+
 # 1.25.0 - 2025/03/23
 -   <details>
     <summary><h2>Added</h2></summary>
