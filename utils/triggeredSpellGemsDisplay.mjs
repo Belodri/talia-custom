@@ -26,6 +26,9 @@ class GemDisplay {
             "text-wrap": "nowrap",
         },
         maxLines: 6,
+        permissions: {
+            limitToUserChar: false,
+        }
     }
 
     /** @type {GemDisplay} */
@@ -38,7 +41,12 @@ class GemDisplay {
     }
 
     static configure(newConfig) {
-        this.CONFIG = foundry.utils.mergeObject(this.CONFIG, newConfig);
+        this.CONFIG = foundry.utils.mergeObject(this.CONFIG, newConfig, {
+            insertKeys: false,
+            insertValues: false,
+            enforceTypes: true,
+            performDeletions: false,
+        });
     }
 
     /** @param {SceneControl} controls*/
@@ -145,12 +153,12 @@ class GemDisplay {
     ----------------------------------------------------------------------------*/
 
     _onCreateItem(item, options, userId) {
-        if(!this.#validateItem(item, {checkUserChar: true, checkEmbedded: true, equippedEquals: true})) return;
+        if(!this.#validateItem(item, {checkEmbedded: true, equippedEquals: true})) return;
         this.#items.set(item.uuid, item);
     }
 
     _onUpdateItem(item, changed, options, userId) {
-        if(!this.#validateItem(item, {checkUserChar: true, checkEmbedded: true})) return;
+        if(!this.#validateItem(item, {checkEmbedded: true})) return;
 
         const equipped = changed.system?.equipped;
         if(equipped === true) this.#items.set(item.uuid, item);
@@ -158,7 +166,7 @@ class GemDisplay {
     }
 
     _onDeleteItem(item, options, userId) {
-        if(!this.#validateItem(item, {checkUserChar: true})) return;
+        if(!this.#validateItem(item)) return;
         this.#items.delete(item.uuid);
     }
 
@@ -175,8 +183,7 @@ class GemDisplay {
         this.#items.clear();
 
         for(const t of canvas?.scene?.tokens ?? []) {
-            const validToken = t?.actor && (this.isGM || t.actor?.uuid === this.userCharUuid);
-            if(!validToken) continue;
+            if(!t.actor?.isOwner) continue;
 
             for(const i of t.actor.items) {
                 if( this.#validateItem(i, {equippedEquals: true}) ) {
@@ -186,7 +193,7 @@ class GemDisplay {
         }
     }
 
-    #validateItem(item, {checkUserChar=false, checkEmbedded=false, equippedEquals=null}={}) {
+    #validateItem(item, {checkEmbedded=false, equippedEquals=null}={}) {
         // Is the item a valid triggered spell gem?
         const isSpellGem = item?.system?.type?.value === GemDisplay.CONFIG.itemTypeValue;
         const hasTrigger = !!this.#getCondition(item);
@@ -198,8 +205,14 @@ class GemDisplay {
         // What's the equipment status of the item?
         if(equippedEquals !== null && item.system.equipped !== equippedEquals) return false;
 
-        // If the user is not a GM, is the item on the user's assigned character?
-        if(checkUserChar && !this.isGM && item?.actor?.uuid !== this.userCharUuid) return false;
+        // For non-GMs, if the display is limited to user chars only, is the item on user's assigned character?
+        if(!this.isGM 
+            && GemDisplay.CONFIG.permissions.limitToUserChar 
+            && item.actor?.uuid !== this.userCharUuid
+        ) return false;
+
+        // If not, does the user own the actor?
+        if( !item.actor.isOwner ) return false;
 
         return true;
     }
