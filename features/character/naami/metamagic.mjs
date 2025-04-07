@@ -50,8 +50,12 @@ function twinned(itemName = "Metamagic: Twinned Spell") {
         if(item.name !== itemName || options.skipItemMacro ) return;
 
         (async() => {
-            const sorcPoints = await chooseSpellLevel(item) ?? 0;
-            await item.update({"system.consume.amount": sorcPoints});
+            const sorcPoints = await chooseSpellLevel(item);
+            if(sorcPoints === null) return;
+
+            // ensure that cantrips also consume 1 sorc point
+            const points = Math.max(1, sorcPoints);
+            await item.update({"system.consume.amount": points});
             item.use({}, {skipItemMacro: true});
         })();
         return false;
