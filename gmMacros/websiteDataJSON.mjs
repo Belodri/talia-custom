@@ -64,7 +64,7 @@ async function websiteDataJSON() {
 
     setTimeout(async() => {
         const exportData = {
-            playerData: getActorItemsData(),
+            playerData: await getActorItemsData(),
             settlementData: await getSettlementData("Promise"),
             ingameDate: TaliaDate.now().displayString,
         };
@@ -81,7 +81,7 @@ async function websiteDataJSON() {
             console.error("Failed to copy: ", err);
         }
 
-    }, 3000);
+    }, 200);
 }
 
 async function getSettlementData(settlementName) {
@@ -132,23 +132,62 @@ async function getSettlementData(settlementName) {
     return settlementData;
 }
 
-function getActorItemsData() {
+async function selectPlayerCharactersDialog() {
+    const {DialogV2} = foundry.applications.api;
+    const {createMultiSelectInput, createFormGroup} = foundry.applications.fields;
+
+    const multiSelect = createMultiSelectInput({
+        type: "checkboxes",
+        name: "uuids",
+        options:  game.users.players
+            .filter(u => u.character)
+            .map(u => {
+                const char = u.character;
+                return {
+                    label: char.name,
+                    value: char.uuid,
+                    selected: true
+                }
+            })
+    });
+
+    const pcChoicesGroup = createFormGroup({
+        input: multiSelect,
+        label: "Player Characters"
+    }).outerHTML;
+
+    const uuids = await DialogV2.prompt({
+        content: pcChoicesGroup,
+        ok: {
+            callback: (event, button) => new FormDataExtended(button.form).object.uuids
+        },
+        rejectClose: true,
+        modal: true,
+    });
+
+    return uuids 
+        ? uuids.map(uuid => fromUuidSync(uuid)) 
+        : [];
+}
+
+async function getActorItemsData() {
     const pcNames = ["Aviana Winterwing", "Fearghas MacAllistar", "Plex", "Shalkoc Zornax"];
     const actorItems = {};
 
-    for(const actorName of pcNames) {
-        const workingActor = game.actors.getName(actorName, {strict: true});
-        
+    const chosenActors = await selectPlayerCharactersDialog();
+
+    chosenActors.forEach(a => {
         const itemsArray = [];
-        workingActor.items.forEach(i => {
+
+        a.items.forEach(i => {
             const itemData = getItemData(i);
             if(itemData) {
                 itemsArray.push(itemData);
             }
         });
-        
-        actorItems[actorName] = itemsArray;
-    }
+
+        actorItems[a.name] = itemsArray;
+    });
 
     return actorItems;
 }
