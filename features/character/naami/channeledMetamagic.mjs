@@ -19,10 +19,11 @@ export default class ChanneledMetamagic {
         effectName: "Channeling Fatigue",
         changeKey: "system.attributes.hp.tempmax",
         chatMessageFlavor: "Maximum HP reduction",
-        diceSize: {
-            base: "d10",
-            focused: "d10"
+        diceCountMult: {
+            base: 2,
+            focused: 1,
         },
+        diceSize: "d10",
         dialogOptions: {
             minNum: 0,
             maxNum: 9,
@@ -68,10 +69,13 @@ export default class ChanneledMetamagic {
     async evaluate() {
         if(this.#evaluated) throw new Error("Alrady evaluated.");
 
-        const diceCount = this.item.system.consume.amount
-        if(!diceCount) return;
+        const amount = this.item.system.consume.amount
+        if(!amount) return;
 
-        const diceSize = ChanneledMetamagic.CONFIG.diceSize[this.isFocused ? "focused" : "base"];
+        const diceCountMult = ChanneledMetamagic.CONFIG.diceCountMult[this.isFocused ? "focused" : "base"];
+        const diceSize = ChanneledMetamagic.CONFIG.diceSize;
+
+        const diceCount = Math.floor(amount * diceCountMult);
 
         this.roll = await new Roll(`${diceCount}${diceSize}`).evaluate();
         await this.#createMessage();
