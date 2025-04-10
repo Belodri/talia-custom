@@ -79,6 +79,10 @@ export class WildMagic {
 
         return true;
     }
+
+    static get surge() {
+        return Surge.surge;
+    }
 }
 
 export class Surge {
@@ -220,7 +224,7 @@ export class Surge {
 
     #id;
 
-    #derived;
+    #derived = {};
 
     /**
      * @typedef {object} SurgeData
@@ -255,7 +259,12 @@ export class Surge {
         this.#evaluated = !!surgeData.evaluated;
         this.#id = surgeData.id || foundry.utils.randomID();
 
-        this.#setDerivedData();
+        this.#derived.severity = this.#getSeverity();
+        if(this.#evaluated) {
+            this.#derived.text = this.#getParsedText();
+            this.#derived.duration = this.#getDuration();
+            this.#derived.effectData = this.#getEffectData();
+        }
     }
 
     //#region Evaluation
@@ -266,7 +275,13 @@ export class Surge {
         this.#entry = await this.#getTableEntry();
 
         this.#evaluated = true;
-        this.#setDerivedData();
+
+        this.#derived = {};
+        this.#derived.severity = this.#getSeverity();
+        this.#derived.text = this.#getParsedText();
+        this.#derived.duration = this.#getDuration();
+        this.#derived.effectData = this.#getEffectData();
+
         return this;
     }
 
@@ -281,17 +296,9 @@ export class Surge {
 
     //#region Derived Data
 
-    #setDerivedData() {
-        if(!this.#evaluated) return;
-
-        this.#derived = {};
-        this.#derived.severity = this.#getSeverity();
-        this.#derived.text = this.#getParsedText();
-        this.#derived.duration = this.#getDuration();
-        this.#derived.effectData = this.#getEffectData();
-    }
-
     #getSeverity() {
+        if(!this.#roll) return undefined;
+
         for(const [sev, cutoff] of Object.entries(this.#allowedRangeCutoffs)) {
             if(this.#roll.total <= cutoff) {
                 return sev;
@@ -300,8 +307,8 @@ export class Surge {
     }
 
     #getParsedText() {
-        const {severity} = this.#derived;
         const regexPlaceholder = /\{(.*?)\}/g;
+        const {severity} = this.#derived;
     
         return this.#entry.text.replace(regexPlaceholder, (match, contents) => {
             if(contents.includes("|")) {
@@ -361,7 +368,7 @@ export class Surge {
     }
 
     #getEffectData() {
-        const {duration, severity, text} = this.#derived;
+        const {duration, text, severity} = this.#derived;
         const DFREDS = Surge.DFREDS;
 
         if(!duration || !DFREDS) return null;
