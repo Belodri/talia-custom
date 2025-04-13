@@ -1,3 +1,51 @@
+# 2.1.0 - 2025/04/13
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Currency Chat Logger
+        - Tracks changes to actor currency and automatically sends a summary message to chat after a short delay
+        - Chat message includes a breakdown of each currency type and the total value gained/spent in gp
+        - Only triggers if currency logging is enabled for the actor (via toggle button on the actor sheet, if setting is enabled)
+        - Debounce delay is configurable via GM setting (default 10 seconds)
+        - Supports tracking across multiple currency updates within the debounce window, merging them into one summary message
+
+    - Spells
+        - Guiding Bolt
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Raise Dead: Material cost changed from 500gp diamond to 5000gp diamond.
+    - Cure Wounds: Reverted the previous buff (2d8 healing / spell level) back to raw (1d8 healing / spell level).
+    - Gift of the Metallic Dragon: The Cure Wounds spell from this feat is now cast at 2nd level to compensate for the change to the spell itself.
+    
+    - Naami Spells
+        - Replaced Inflict Wounds with Guiding Bolt
+        - Replaced Prayer of Healing with Cure Wounds
+
+    - Multiattack Button
+        - Now fully supports both attack and damage rolls.
+        - Non-optional bonuses are fully taken into account, while non-optional bonuses can only be applied to attack rolls.
+
+        - Left-Click opens dialog to choose the number of attacks to be made.
+        - Shift-Click skips the dialog and uses the item's base attack count (if set).
+        - Ctrl-Click only rolls the damage of the last multiattack from the same message.
+
+    - WebsiteData: Added dialog to select the player characters whose data should be exported to `websiteDataJSON` macro.
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Wild Magic: Surges are now correctly filtered by severity.
+    - Selfless Healer: Added missing x2 multiplier.
+    - Twinned Metamagic
+        - Now avoids updates and further dialogs if the dialog to choose the spell level is cancelled.
+        - Added missing minimum sorcery point cost for cantrips (1 SP).
+    - Channeled Metamagic: Added the missing 1d10 to the number of dice rolled to determine the temporary reduction in maximum hit points (for a total default of 2d10 per sorcery point).
+    </details>
+
 # 2.0.0 - 2025/04/06
 -   <details>
     <summary><h2>Added</h2></summary>
