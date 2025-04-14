@@ -1,3 +1,4 @@
+import { _initSocket } from "./socket.mjs";
 import { TaliaCustomAPI } from "./api.mjs";
 import _utils from "../utils/_utils.mjs";
 import { registerWrappers } from "../wrappers/_wrappers.mjs";
@@ -53,6 +54,7 @@ import _macros from "../macros/_macros.mjs";
 
 
 Hooks.once("init", () => {
+    _initSocket();
     TaliaCustomAPI._setup();
     _utils.registerSection();
     registerWrappers();
