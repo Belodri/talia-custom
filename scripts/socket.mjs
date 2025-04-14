@@ -1,7 +1,7 @@
 import { TaliaCustomAPI } from "./api.mjs";
 import MODULE from "./module.mjs";
 
-/** @typedef {import("./../types/Socketlib.d.ts").SocketlibSocket} SocketlibSocket */
+/** @typedef {import("../types/Socketlib.d.ts").SocketlibSocket} SocketlibSocket */
 
 
 /**
