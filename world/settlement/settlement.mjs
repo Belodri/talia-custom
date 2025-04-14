@@ -84,14 +84,16 @@ export default class Settlement extends foundry.abstract.DataModel {
     }
 
     /**
-     * Gets an existing Settlement instance by name.
+     * Gets an existing Settlement instance by name, returning the Settlement
+     * of the first journal entry of that name that has settlement flag data. 
      * @param {string} name 
      * @returns {Settlement}
      */
     static getName(name) {
-        const journalEntry = game.journal.getName(name);
-        const flagData = journalEntry?.getFlag(MODULE.ID, Settlement.FLAG_KEY);
-        if(flagData) return new Settlement(flagData, {parent: journalEntry});
+        const journalEntry = game.journal.find(j => 
+            j.name === name && j.flags[MODULE.ID]?.[Settlement.FLAG_KEY]
+        );
+        return Settlement.getFromDoc(journalEntry);
     }
 
     /**
