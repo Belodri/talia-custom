@@ -1,5 +1,5 @@
 import { TaliaCustomAPI } from "./api.mjs";
-import MODULE from "./module.mjs";
+import { MODULE } from "./constants.mjs";
 
 /** @typedef {import("../types/Socketlib.d.ts").SocketlibSocket} SocketlibSocket */
 
@@ -17,12 +17,13 @@ export default class Socket {
     /**
      * Toggles the debug logging for this class.
      * @param {boolean} [force=undefined]   If provided, forces the debug to the given state.
-     * @returns {void}
+     * @returns {boolean} Is debugging turned on?
      */
     static toggleDebug(force=undefined) {
         Socket.#DEBUG = typeof force === "boolean"
             ? force
             : !Socket.#DEBUG;
+        return Socket.#DEBUG;
     }
 
     /** 
@@ -31,7 +32,7 @@ export default class Socket {
      */
     static init() {
         if(Socket.#initialized) throw new Error("Class has already been initialized.");
-        Hooks.once("socketlib.ready", Socket._onLibReady);
+        //Hooks.once("socketlib.ready", Socket._onLibReady);
 
         Hooks.once("ready", () => {
             TaliaCustomAPI.add({toggleSocketDebug: Socket.toggleDebug}, "Other");
@@ -54,22 +55,22 @@ export default class Socket {
     //#region Socketlib interfaces
 
     /** @type {SocketlibSocket['executeAsGM']} */
-    static get executeAsGM() { return Socket.#socket.executeAsGM }
+    static get executeAsGM() { return Socket.#socket.executeAsGM.bind(Socket.#socket); }
 
     /** @type {SocketlibSocket['executeAsUser']} */
-    static get executeAsUser() { return Socket.#socket.executeAsUser }
+    static get executeAsUser() { return Socket.#socket.executeAsUser.bind(Socket.#socket); }
 
     /** @type {SocketlibSocket['executeForAllGMs']} */
-    static get executeForAllGMs() { return Socket.#socket.executeForAllGMs }
+    static get executeForAllGMs() { return Socket.#socket.executeForAllGMs.bind(Socket.#socket); }
 
     /** @type {SocketlibSocket['executeForOtherGMs']} */
-    static get executeForOtherGMs() { return Socket.#socket.executeForOtherGMs }
+    static get executeForOtherGMs() { return Socket.#socket.executeForOtherGMs.bind(Socket.#socket); }
 
     /** @type {SocketlibSocket['executeForEveryone']} */
-    static get executeForEveryone() { return Socket.#socket.executeForEveryone }
+    static get executeForEveryone() { return Socket.#socket.executeForEveryone.bind(Socket.#socket); }
 
     /** @type {SocketlibSocket['executeForUsers']} */
-    static get executeForUsers() { return Socket.#socket.executeForUsers }
+    static get executeForUsers() { return Socket.#socket.executeForUsers.bind(Socket.#socket); }
 
     //#endregion
 

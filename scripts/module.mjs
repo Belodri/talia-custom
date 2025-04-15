@@ -52,7 +52,7 @@ import _macros from "../macros/_macros.mjs";
     4) Wrappers
     5) SECTIONS (each section should manage it's own order)
 */
-
+Hooks.once("socketlib.ready", () => Socket._onLibReady());
 
 Hooks.once("init", () => {
     Socket.init();
