@@ -5,7 +5,6 @@ import getRollDataWrapper from "./getRollDataWrapper.mjs";
 
 /** registers all wrappers */
 export function registerWrappers() {
-    //libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.getRollData", wrap_Actor_getRollData , "WRAPPER");
     libWrapper.register(MODULE.ID, 'dnd5e.applications.actor.ActorSheet5e.prototype.maximize', wrap_ActorSheet_maximize, "MIXED");
     libWrapper.register(MODULE.ID, 'dnd5e.canvas.AbilityTemplate.prototype._finishPlacement', wrap_AbilityTemplate_finishPlacement, "WRAPPER");
     libWrapper.register(MODULE.ID, "dnd5e.applications.components.DamageApplicationElement.prototype.getTargetOptions", wrap_DamageApplicationElement_getTargetOptions, "WRAPPER");
@@ -15,26 +14,7 @@ export function registerWrappers() {
     getRollDataWrapper.registerWrapper();
     libWrapper.register(MODULE.ID, "Actor.prototype.toggleStatusEffect", wrap_Actor_prototype_toggleStatusEffect, "OVERRIDE");
     libWrapper.register(MODULE.ID, "Tile.prototype._refreshMesh", wrap_Tile_prototype__refreshMesh, "WRAPPER");
-}
-
-/** Lets other parts of the module hook into talia_addToRollData and mutate the taliaObj which is then appended to rollData */
-function wrap_Actor_getRollData(wrapped, ...args) {
-    const rollData = wrapped(...args);
-    // add an object to the rolldata
-    const taliaObj = {};
-
-    // add jump distance to rollData
-    taliaObj.jumpDistance = 
-
-    // add magical bonuses from armor and shield to rollData
-    taliaObj.magicalArmorBonus = ( rollData?.attributes?.ac?.equippedArmor && Helpers.checkAttunement(rollData.attributes.ac.equippedArmor) ) 
-        ? rollData.attributes.ac.equippedArmor.system.armor.magicalBonus : 0;
-    taliaObj.magicalShieldBonus = ( rollData?.attributes?.ac?.equippedShield && Helpers.checkAttunement(rollData.attributes.ac.equippedShield) )
-        ? rollData.attributes.ac.equippedShield.system.armor.magicalBonus : 0;
-
-    Hooks.callAll("talia_addToRollData", this, rollData, taliaObj);
-    rollData.talia = taliaObj;
-    return rollData;
+    libWrapper.register(MODULE.ID, "dnd5e.documents.Actor5e.prototype.applyDamage", listen_Actor5e_prototype_applyDamage, "LISTENER");
 }
 
 /** Prevents the character sheet from being maximised again after a template has been placed. */
@@ -243,4 +223,22 @@ function wrap_Tile_prototype__refreshMesh(wrapped, ...args) {
         this.mesh.unoccludedAlpha = 0;
     }
     return ret;
+}
+
+/**
+ * Listener wrapper for Actor5e.prototype.applyDamage
+ * @this {Actor5e}
+ * @param {DamageDescription[]|number} damages 
+ * @param {DamageApplicationOptions} options 
+ */
+function listen_Actor5e_prototype_applyDamage(damages, options) {
+    /**
+     * A hook event that fires immediately when Actor#applyDamage is called.
+     * @param {Actor5e} actor                       Actor the damage will be applied to.
+     * @param {DamageDescription[]|number} damages  Damages to apply.
+     * @param {DamageApplicationOptions} options    Damage application options.
+     * @function _dnd5e.onCallApplyDamage
+     * @memberof hookEvents
+     */
+    Hooks.callAll("_dnd5e.onCallApplyDamage", this, damages, options);
 }

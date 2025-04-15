@@ -9,6 +9,7 @@ import witheringTouch from "./witheringTouch.mjs";
 import darkness from "./darkness.mjs";
 import polymorph from "./polymorph.mjs";
 import rayOfEnfeeblement from "./rayOfEnfeeblement.mjs";
+import tetherEssence from "./tetherEssence.mjs";
 
 
 export default {
@@ -24,5 +25,6 @@ export default {
         darkness.register();
         polymorph.register();
         rayOfEnfeeblement.register();
+        tetherEssence.register();
     }
 }
