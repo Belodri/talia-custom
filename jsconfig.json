@@ -10,7 +10,12 @@
         "moduleResolution": "Node"
     },
     "exclude": ["node_modules", "**/node_modules/*"],
-    "include": ["scripts/module.mjs", "system/dnd5e/**/*.mjs", "foundry"],
+    "include": [
+        "scripts/module.mjs", 
+        "system/dnd5e/**/*.mjs", 
+        "foundry/**/*",
+        "types/**/*.d.ts"
+    ],
     "typeAcquisition": {
         "include": ["jquery"]
     }

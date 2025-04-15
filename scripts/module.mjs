@@ -1,3 +1,4 @@
+import Socket from "./Socket.mjs";
 import { TaliaCustomAPI } from "./api.mjs";
 import _utils from "../utils/_utils.mjs";
 import { registerWrappers } from "../wrappers/_wrappers.mjs";
@@ -45,14 +46,16 @@ import _macros from "../macros/_macros.mjs";
 /*
     LOAD ORDER
 
-    1) API
-    2) Utils
-    3) Wrappers
-    4) SECTIONS (each section should manage it's own order)
+    1) Socket
+    2) API
+    3) Utils
+    4) Wrappers
+    5) SECTIONS (each section should manage it's own order)
 */
-
+Hooks.once("socketlib.ready", () => Socket._onLibReady());
 
 Hooks.once("init", () => {
+    Socket.init();
     TaliaCustomAPI._setup();
     _utils.registerSection();
     registerWrappers();
