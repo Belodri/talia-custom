@@ -1,0 +1,34 @@
+<div class="tab" id="repeatingEffectsContent" data-tab="RepeatingEffects">
+    <div class="form-group">
+        <label>Trigger</label>
+        <select name="{{basePath}}.trigger">
+            {{selectOptions triggerOptions selected=trigger nameAttr="key" labelAttr="label"}}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Roll Mode</label>
+        <select name="{{basePath}}.rollMode">
+            {{selectOptions rollModes selected=rollMode nameAttr="value" labelAttr="label" localize=true}}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Use source item?</label>
+        <input name="{{basePath}}.useItem" type="checkbox" {{checked useItem}}>
+    </div>
+
+    <h3>Damages</h3>
+
+    <div class="form-group" data-tooltip="Use the rolldata of the target actor instead of the origin actor?">
+        <label>Use target's rollData?</label>
+        <input name="{{basePath}}.useTargetRolldata" type="checkbox" {{checked useTargetRolldata}}>
+    </div>
+
+    {{#each rollConfigs}}
+    <div class="form-group">
+        <label>{{label}}</label>
+        <input id="type" name="{{../basePath}}.rollConfigs.{{@key}}.formula" type="text" value="{{formula}}" placeholder="">
+    </div>
+    {{/each}}
+</div>

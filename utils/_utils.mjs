@@ -34,7 +34,7 @@ export default {
         ChatCardButtons.registerHooks();
         _methodAdditions.registerSection();
         sceneEffects.register();
-        RepeatingEffects.register();
+        RepeatingEffects.init();
         triggeredSpellGemsDisplay.register();
         overrideTileOcclusion.register();
         ExtendedRest.register();
