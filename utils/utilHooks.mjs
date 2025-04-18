@@ -54,7 +54,7 @@ function registerModifySpellLevelHook() {
         //prevent recursion
         if(options.talia?.modifiedSpellLevel) return;
         //prevent invalid items
-        if(!item.type === "spell" || !config.slotLevel || config.slotLevel === 0) return;
+        if(item.type !== "spell" || !config.slotLevel || config.slotLevel === 0) return;
 
         const modFlag = item.actor?.flags?.["talia-custom"]?.modifySpellLevel;
         if(!modFlag) return;
