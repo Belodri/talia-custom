@@ -15,6 +15,7 @@ import overrideTileOcclusion from "./overrideTileOcclusion.mjs";
 import ExtendedRest from "./ExtendedRest.mjs";
 import MultiattackManager from "./MultiattackManager.mjs";
 import currencyChatLogger from "./currencyChatLogger.mjs";
+import CombatTriggers from "./CombatTriggers.mjs";
 
 export const TaliaUtils = {
     Helpers,
@@ -25,6 +26,7 @@ export const TaliaUtils = {
 export default {
     registerSection() {
         utilHooks.register();
+        CombatTriggers.init();
         spellbookManager.register();
         ItemHookManager.registerManager();
         sizeChange.regsiter();
