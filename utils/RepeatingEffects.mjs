@@ -1,350 +1,370 @@
 import { MODULE } from "../scripts/constants.mjs";
+import CombatTriggers from "./CombatTriggers.mjs";
 
-export default {
-    register() {
-        Hooks.on("renderActiveEffectConfig", renderActiveEffectConfigHook);
-        //Hooks.on("preCreateActiveEffect", preCreateActiveEffectHook);
-        CombatTriggers.registerHooks();
+export default class RepeatingEffect {
+    static CONFIG = {
+        effectFlagKey: "repeatEffects",
+        messageFlagKey: "isRepeatEffect",
+        templatePath: `modules/${MODULE.ID}/templates/repeatingEffectsConfig.hbs`,
     }
-}
 
-const hooksToNames = {
-    none: "",
-    onTurnStart: "On Turn Start",
-    onTurnEnd: "On Turn End",
-    onEachTurn: "On Each Turn",
-    onRoundStart: "On Round Start",
-    onRoundEnd: "On Round End"
-};
-
-
-class CombatTriggers {
-
-    static registerHooks() {
+    static init() {
         Hooks.once("ready", () => {
-            if(!game.user.isGM) return;
-            Hooks.on("preUpdateCombat", CombatTriggers.preUpdateCombat);
-            Hooks.on("updateCombat", CombatTriggers.updateCombat);
+            if(game.users.activeGM !== game.user ) return;
+
+            Hooks.on("renderActiveEffectConfig", RepeatingEffect.onRenderActiveEffectConfig);
+            for(const event of Object.values(CombatTriggers.EVENTS)) {
+                CombatTriggers.on(event.key, RepeatingEffect.onCombatTrigger);
+            }
         });
     }
 
-    /**
-     * Save data on updated combats.
-     * @param {Combat} combat     The combat updated.
-     * @param {object} update     The update performed.
-     * @param {object} options    The update options.
-     */
-    static preUpdateCombat(combat, update, options) {
-        const previousId = combat.combatant?.id;
-        const path = `${MODULE.ID}.previousCombatant`;
-        foundry.utils.setProperty(options, path, previousId);
-    
-        const prevPath = `${MODULE.ID}.previousTR`;
-        const prevTR = {T: combat.turn, R: combat.round};
-        foundry.utils.setProperty(options, prevPath, prevTR);
-    
-        const startedPath = `${MODULE.ID}.started`;
-        const prevStarted = combat.started;
-        foundry.utils.setProperty(options, startedPath, prevStarted);
-    }
+    //#region Combat Triggers
 
     /**
-     * Determine whether a combat was started and whether it moved forward in turns or rounds.
-     * @param {Combat} combat     The combat updated.
-     * @param {object} update     The update performed.
-     * @param {object} options    The update options.
-     * @returns {{
-     *  turnForward: boolean, 
-     *  roundForward: boolean, 
-     *  combatStarted: boolean
-     * }}
+     * Callback for CombatTriggers.
+     * 
+     * Executes repeating effects with matching event triggers on the actor.
+     * @param {import("./CombatTriggers.mjs").TriggerFunctionArgs} arg
+     * @param {string} arg.event 
+     * @param {Actor | null} arg.actor 
+     * @returns {Promise<void>}
      */
-    static _determineCombatState(combat, update, options) {
-        let turnForward = true;
-        let roundForward = true;
-        let combatStarted = true;
-
-        const cTurn = combat.current.turn;
-        const pTurn = foundry.utils.getProperty(options, `${MODULE}.previousTR.T`);
-        const cRound = combat.current.round;
-        const pRound = foundry.utils.getProperty(options, `${MODULE}.previousTR.R`);
-
-        // No change in turns or rounds, not started combat, or went backwards.
-        if ((update.turn === undefined) && (update.round === undefined)) turnForward = false;
-        if (!combat.started || !combat.isActive) turnForward = false;
-        if ((cRound < pRound) || ((cTurn < pTurn) && (cRound === pRound))) turnForward = false;
-
-        roundForward = turnForward && (cRound > pRound);
-        combatStarted = combat.started && !foundry.utils.getProperty(options, `${MODULE}.started`);
-
-        return {turnForward, roundForward, combatStarted};
-    }
-
-    /**
-     * On turn start, turn end, each turn.
-     * @param {Combat} combat     The combat updated.
-     * @param {object} update     The update performed.
-     * @param {object} options    The update options.
-     */
-    static async updateCombat(combat, update, options) {
-
-        const {turnForward, roundForward, combatStarted} = CombatTriggers._determineCombatState(combat, update, options);
-        const undefeated = combat.combatants.filter(c => !c.isDefeated);
-
-        if (turnForward) {
-            // Retrieve combatants.
-            const previousId = foundry.utils.getProperty(options, `${MODULE.ID}.previousCombatant`);
-            const previousCombatant = combatStarted ? combat.combatants.get(previousId) : null;
-
-            // Execute turn start and turn end triggers.
-            CombatTriggers._executeAppliedEffects(combat.combatant?.actor, "onTurnStart");
-            CombatTriggers._executeAppliedEffects(previousCombatant?.actor, "onTurnEnd");
-
-            // Execute all 'each turn' triggers.
-            for (const c of undefeated) CombatTriggers._executeAppliedEffects(c.actor, "onEachTurn");
-        }
-
-        if (roundForward) {
-            for (const c of undefeated) {
-                if (!combatStarted) CombatTriggers._executeAppliedEffects(c.actor, "onRoundEnd");
-                CombatTriggers._executeAppliedEffects(c.actor, "onRoundStart");
-            }
-        }
-    }
-
-    /**
-     * Execute all repeating effects that affect an actor and contain this trigger.
-     * @param {Actor} actor     The actor with the effects.
-     * @param {string} hook     The trigger name.
-     */
-    static async _executeAppliedEffects(actor, hook) {
+    static async onCombatTrigger({event, actor=null}) {
         if(!actor) return;
-        for (const e of actor.appliedEffects) {
-            if( CombatTriggers._shouldExecute(e, hook) ) {
-                if(e.flags?.[MODULE.ID]?.repeatEffects?.enableItem) {
-                    await createMessage(actor, e, hook);
-                }
-                await rollDamage(actor, e, hook);
+        for (const effect of actor.appliedEffects) {
+            if(RepeatingEffect.#shouldExecute(effect, event)) {
+                await RepeatingEffect.#execute(actor, effect, event)
             }
         }
     }
 
     /**
-     * Decides if a given effect should be executed.
-     * @param {ActiveEffect} effect     
-     * @param {string} hook             The trigger name.
+     * Executes a given effect and handles potential errors.
+     * @param {Actor} actor 
+     * @param {ActiveEffect} effect 
+     * @param {string} event 
+     * @returns {Promise<void>}
      */
-    static _shouldExecute(effect, hook) {
-        if(effect.flags?.[MODULE.ID]?.repeatEffects?.trigger !== hook) return false;
+    static async #execute(actor, effect, event) {
+        try {
+            const rep = RepeatingEffect.create(effect);
+            if(rep.useItem) await rep.triggerItemUse(event, actor);
+            if(rep.hasDamages) await rep.triggerDamageRolls(event, actor);
+        } catch(err) {
+            console.error(`Repeating Effects | Execution error for effect uuid "${effect.uuid}" for event "${event}".`, err);
+        }
+    }
+
+    /**
+     * Determines if a given effect should be executed.
+     * @param {ActiveEffect} effect     
+     * @param {string} event            The trigger name.
+     * @returns {boolean}
+     */
+    static #shouldExecute(effect, event) {
+        if(!RepeatingEffect.isValid(effect)) return false;
+
+        const isTrigger = event === effect.getFlag(MODULE.ID, `${RepeatingEffect.CONFIG.effectFlagKey}.trigger`);
+        if(!isTrigger) return false;
 
         // Active Auras integration
-        const aa = effect.flags.ActiveAuras;
-        if(aa?.isAura 
-            && aa.ignoreSelf 
-            && !aa.applied
+        if(effect.getFlag("ActiveAuras", "isAura")
+            &&  effect.getFlag("ActiveAuras", "ignoreSelf")
+            && !effect.getFlag("ActiveAuras", "applied")
         ) return false;
 
         //return true if all checks are passed
         return true;
     }
-}
 
-//#region Shared
+    //#endregion
 
-/** */
-function getDefaultFlagData() {
-    const combinedTypes = {
-        ...CONFIG.DND5E.damageTypes,
-        ...CONFIG.DND5E.healingTypes
-    };
-    const damageRollConfigs = Object.keys(combinedTypes)
-        .reduce((acc, k) => {
-            acc[k] = "";
-            return acc;
-        }, { untyped: "" });
-    
-    return {
-        trigger: "none",
-        damageRollConfigs,
-        enableItem: false,
+
+    //#region Config Template
+
+    /**
+     * Hook `renderActiveEffectConfig`
+     * 
+     * Injects the configuration template for a repeating effect into the active effect config.
+     * @param {Application} app             The Application instance being rendered
+     * @param {jQuery} html                 The inner HTML of the document that will be displayed and may be modified
+     * @param {object} data                 The object of data used when rendering the application
+     * @returns {Promise<void>}
+     */
+    static async onRenderActiveEffectConfig(app, html, data) {
+        const rep = RepeatingEffect.create(app.object);
+        if(!rep) return;
+
+        const template = await renderTemplate(RepeatingEffect.CONFIG.templatePath, rep.getTemplateData());
+        const tabStr = `<a class="item" data-tab="RepeatingEffects"><i class="fa-solid fa-repeat"></i> Repeating</a>`;
+
+        html.find(".tabs .item").last().after(tabStr);
+        html.find(".tab").last().after(template);
+        html.css({height: "auto"});
     }
-}
 
-/**
- * Creates the string for the chat message flavor text
- * @param {string} hook 
- * @param {ActiveEffect} effect 
- * @param {Actor} actor 
- */
-function getMsgFlavor(hook, effect, actor) {
-    const [tokenDoc] = actor.getActiveTokens(false, true);
-    return `<strong>${hooksToNames[hook]}</strong>: ${effect.name} on <strong>${tokenDoc?.name ?? actor.name}</strong>`;
-}
+    /** 
+     * @typedef {object} TemplateData
+     * @property {string} basePath
+     * @property {{[key: string]: { key: string, label: string }}} triggerOptions
+     * @property {{[type: string]: RollConfig}} labeledConfigs
+     * @property {string} trigger
+     * @property {boolean} useItem
+     * @property {boolean} useTargetRolldata
+     */
 
-/**
- * Hook renderActiveEffectConfig;
- * @param {Application} app             The Application instance being rendered
- * @param {jQuery} html                 The inner HTML of the document that will be displayed and may be modified
- * @param {object} data                 The object of data used when rendering the application
- */
-async function renderActiveEffectConfigHook(app, html, data) {
-    const flags = app.object.flags ?? {};
-    if(flags.dnd5e?.type === "enchantment") return;
-
-    if(!flags[MODULE.ID]?.repeatEffects) {
-        const defaultFlagData = getDefaultFlagData();
-        await app.object.setFlag(MODULE.ID, "repeatEffects", defaultFlagData);
-        app.render();
-    }
-    const mFlag = flags[MODULE.ID]?.repeatEffects;
-    if(!mFlag) return;
-
-    const rollFormulaConfigs = Object.entries(mFlag.damageRollConfigs)
-        .reduce((acc, [k, v]) => {
-            return acc += `
-                <div class="form-group input-select">
-                    <label>${k}: </label>
-                    <input id="type" name="flags.talia-custom.repeatEffects.damageRollConfigs.${k}" type="text" value="${mFlag.damageRollConfigs[k]}" placeholder=""></input>
-                </div>
-            `;
-        }, "");
-
-    const triggerSelectOptions = Object.entries(hooksToNames)
-        .reduce((acc, [k, v]) => acc += `<option value="${k}" ${mFlag.trigger === k ? "selected" : ""}>${v}</option>`, "");
-
-    const tab = `<a class="item" data-tab="RepeatingEffects"><i class="fa-solid fa-repeat"></i> Repeating</a>`;
-    const contents = `
-        <div class="tab" id="repeatingEffectsContent" data-tab="RepeatingEffects">
-            <div class="form-group">
-                <label>Trigger</label>
-                <select name="flags.talia-custom.repeatEffects.trigger" data-dtype="String" value=${mFlag.trigger}>
-                ${triggerSelectOptions}
-                </select>
-            </div>
-            <h3>Damages</h3>
-            ${rollFormulaConfigs}
-            <h3>Item Use</h3>
-            <div class="form-group">
-                <label>Use source item?</label>
-                <input id="enableItem" name="flags.talia-custom.repeatEffects.enableItem" type="checkbox" ${mFlag.enableItem ? "checked" : ""}>
-            </div>
-        </div>
-    `;
-
-    html.find(".tabs .item").last().after(tab);
-    html.find(".tab").last().after(contents);
-    html.css({ height: "auto" });
-}
-//#endregion
-
-//#region Damage Roll
-
-/**
- * Rolls all damages of a given effect (if any) and creates the chat message.
- * @param {Actor} actor 
- * @param {ActiveEffect} effect 
- * @param {string} hook 
- */
-async function rollDamage(actor, effect, hook) {
-    const typeConfigs = effect.flags[MODULE.ID].repeatEffects?.damageRollConfigs;
-    if(!typeConfigs) return;
-
-    const rollConfigs = Object.entries(typeConfigs)
-        .filter(([_, v]) => v)
-        .map(([k, v]) => ({ parts: [v], type: k === "untyped" ? "" : k }));
-    const targetActorRollData = actor.getRollData();
-    
-    const rolls = await dnd5e.dice.damageRoll({
-        rollConfigs, 
-        data: targetActorRollData,
-        fastForward: true,
-        rollMode: CONST.DICE_ROLL_MODES.PUBLIC,
-        chatMessage: true,
-        returnMultiple: true,
-        messageData: {
-            flavor: getMsgFlavor(hook, effect, actor),
-            speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    /** 
+     * Gets the data for the configuration template.
+     * @returns {TemplateData}
+     */
+    getTemplateData() {
+        return {
+            basePath: `flags.${MODULE.ID}.${RepeatingEffect.CONFIG.effectFlagKey}`,
+            triggerOptions: CombatTriggers.EVENTS,
+            rollConfigs: this.rollConfigs,
+            trigger: this.trigger,
+            useItem: this.useItem,
+            useTargetRolldata: this.useTargetRolldata,
+            rollModes: [
+                {value: "default", label: "Default"}, 
+                ...Object.entries(CONFIG.Dice.rollModes)
+                    .map(([k, v]) => ({ value: k, label: v }))
+            ],
+            rollMode: this.rollMode
         }
-    });
-} 
+    }
+    
+    //#endregion
 
-//#endregion
 
-//#region Repeating Item Use
+    //#region Instance
 
-/**
- * @param {import ("../system/dnd5e/module/documents/actor/actor.mjs").default} actor 
- * @param {import ("../system/dnd5e/module/documents/active-effect.mjs").default} effect 
- * @param {string} hook 
- */
-async function createMessage(actor, effect, hook) {
-    const msgData = getMessageDataFromMessage(effect) 
-        ?? await getItemMessageDataFromItem(effect);
-    if(!msgData) return;
-
-    foundry.utils.setProperty(msgData, "talia-custom.isRepeatEffect", true);
-    msgData.flavor = getMsgFlavor(hook, effect, actor);
-
-    //create the chat message
-    await ChatMessage.create(msgData);
-}
-
-/**
- * Tries to get the message data from an existing chat message.
- * @param {ActiveEffect} effect 
- * @returns {object} 
- */
-function getMessageDataFromMessage(effect) {
-    const parsed = foundry.utils.parseUuid(effect.origin);
-    if(parsed.primaryType !== "Actor") return null;
-
-    const itemUuid = parsed.embedded?.[0] === "Item"
-        ? [parsed.primaryType, parsed.primaryId, parsed.embedded[0], parsed.embedded[1]].join(".")
-        : null;
-    if(!itemUuid) return null;
-
-    const useMsg = game.messages.filter(m => 
-        m.getFlag("dnd5e", "use.itemUuid") === itemUuid 
-        && !m.getFlag("talia-custom", "isRepeatEffect")
-    ).sort((a, b) => a._stats.createdTime - b._stats.createdTime)[0];
-
-    return useMsg?.toObject();
-}
-
-/**
- * Tries to get the messsage data from the item itself. 
- * @param {ActiveEffect} effect 
- * @returns {object}
- */
-async function getItemMessageDataFromItem(effect) {
-    const errLog = (msg) => { console.error(`Cannot repeat effect | ${msg}`, {effect, actor, hook}) }
-
-    let sourceItem = await effect.getSource();
-    if(source instanceof ActiveEffect) sourceItem = source.parent;
-    if( !(sourceItem instanceof Item) ) {
-        errLog("Source could not be resolved");
-        return null;
+    /**
+     * Creates a new instance of RepeatingEffect from a valid ActiveEffect.
+     * @param {ActiveEffect} effect 
+     * @returns {RepeatingEffect | null}
+     */
+    static create(effect) {
+        return RepeatingEffect.isValid(effect)
+            ? new RepeatingEffect(effect)
+            : null;
     }
 
-    //display options
-    const options = {
-        createMessage: false,
-        rollMode: CONST.DICE_ROLL_MODES.PUBLIC
-    };
-    if(sourceItem.hasLimitedUses) foundry.utils.setProperty(options, "flags.dnd5e.use.consumedUsage", true);
-    if(sourceItem.hasResource) foundry.utils.setProperty(options, "flags.dnd5e.use.consumedResource", true);
-
-    // handle upcasting
-    const spellLevel = effect.flags?.dnd5e?.spellLevel;
-    if( sourceItem.type === "spell" && spellLevel !== sourceItem.system.level ) {
-        sourceItem = sourceItem.clone({"system.level": spellLevel}, {keepId: true});
-        sourceItem.prepareData();
-        sourceItem.prepareFinalAttributes();
+    /**
+     * Checks if a given active effect is valid to be a repeating effect.
+     * @param {ActiveEffect} effect 
+     * @returns {boolean}
+     */
+    static isValid(effect) {
+        return effect instanceof ActiveEffect
+            && effect.getFlag("dnd5e", "type") !== "enchantment"
     }
-    if(sourceItem.type === "spell") foundry.utils.setProperty(options, "flags.dnd5e.use.spellLevel", sourceItem.system.level);
 
-    //get the chat data to modify
-    return sourceItem.displayCard(options);
+    /**
+     * @typedef {object} RollConfig
+     * @property {string} formula       The dice roll formula.
+     * @property {string} [type]        A damage or healing type. True damage if undefined.
+     * @property {string} label         The label for the type. "Untyped" if type is undefined.
+     */
+
+    /** @param {ActiveEffect} effect */
+    constructor(effect) {
+        const flagData = effect.getFlag(MODULE.ID, RepeatingEffect.CONFIG.effectFlagKey) ?? {};
+
+        this.effect = effect;
+
+        /** @type {string} */
+        this.trigger = flagData.trigger ?? CombatTriggers.EVENTS.none.key;
+
+        /** @type {boolean} */
+        this.useItem = flagData.useItem ?? false;
+
+        /** @type {boolean} */
+        this.useTargetRolldata = flagData.useTargetRolldata ?? false;
+
+        /** @type {"publicroll"|"gmroll"|"blindroll"|"selfroll"|"default"}  */
+        this.rollMode = flagData.rollMode ?? "default";
+
+        const allTypes = {
+            untyped: { label: "Untyped" },
+            ...CONFIG.DND5E.damageTypes,
+            ...CONFIG.DND5E.healingTypes
+        }
+
+        /** @type {{[type: string]: RollConfig}} */
+        this.rollConfigs = {};
+
+        this.hasDamages = false;
+
+        for(const [k, v] of Object.entries(allTypes)) {
+            const formula = flagData.rollConfigs?.[k]?.formula ?? "";
+            if(formula) this.hasDamages = true;
+
+            const cfg = { formula, label: v.label };
+            if(k !== "untyped") cfg.type = k;
+
+            this.rollConfigs[k] = cfg;
+        }
+    }
+
+    /**
+     * Returns `this.rollMode` unless it's blank, 
+     * in which case the user's current roll mode is returned. 
+     * @returns {"publicroll"|"gmroll"|"blindroll"|"selfroll"}
+     */
+    determineRollMode() {
+        return this.rollMode === "default"
+            ? game.settings.get("core", "rollMode") 
+            : this.rollMode
+    }
+
+    //#endregion
+
+
+    //#region Trigger Calls
+
+    /**
+     * Rolls all damages of this effect (if any) and creates the chat message.
+     * @param {string} event 
+     * @param {Actor} affectedActor   The actor directly affected by this effect.
+     * @returns {Promise<DamageRoll | null>}
+     */
+    async triggerDamageRolls(event, affectedActor) {
+        const rollConfigs = Object.values(this.rollConfigs)
+            .filter(cfg => cfg.formula)
+            .map(cfg => ({
+                parts: [cfg.formula],
+                type: cfg.type,
+                properties: cfg.properties ?? []
+            }));
+        if(!rollConfigs.length) return null;
+
+        const rollingActor = this.effect.transfer || this.useTargetRolldata
+            ? affectedActor
+            : this.getOriginActor();
+
+        if(!rollingActor) {
+            const msg = `RepeatingEffect | Unable to find rollingActor. See console for details.`;
+            ui.notifications.error(msg);
+            console.error(msg, {instance: this, effect: this.effect, event, affectedActor});
+            return null;
+        }
+
+        return dnd5e.dice.damageRoll({
+            rollConfigs,
+            data: rollingActor?.getRollData() ?? {},
+            rollMode: this.determineRollMode(),
+            fastForward: true,
+            chatMessage: true,
+            messageData: {
+                flavor: this.getMsgFlavor(event, affectedActor),
+                speaker: ChatMessage.implementation.getSpeaker({ rollingActor }),
+            }
+        });
+    }
+
+    /**
+     * Gets the origin actor synchronously or returns null if unable to.
+     * @returns {Actor | null}
+     */
+    getOriginActor() {
+        if(!this.effect.origin) return null;
+
+        const parts = this.effect.origin.split(".");
+        const actorIndex = parts.findIndex(s => s === "Actor");
+        const actorUuid = parts.slice(actorIndex, actorIndex + 2).join(".");
+        const actor = fromUuidSync(actorUuid);
+        return actor instanceof Actor ? actor : null;
+    }
+
+    /**
+     * Recreates the chat card that was used to apply this effect.
+     * If the original card can't be found, recreate it if possible.
+     * @param {string} event 
+     * @param {Actor} affectedActor 
+     * @returns {Promise<ChatMessage>}
+     */
+    async triggerItemUse(event, affectedActor) {
+        const baseMsg = this.getApplicationMessage();
+        const msgData = baseMsg 
+            ? baseMsg.toObject() 
+            : await this.recreateItemUseMsgData();
+        if(!msgData) return;
+
+        // Note that this message is triggered.
+        foundry.utils.setProperty(msgData, `flags.${MODULE.ID}.${RepeatingEffect.CONFIG.messageFlagKey}`, true);
+        msgData.flavor = this.getMsgFlavor(event, affectedActor);
+
+        const cls = getDocumentClass("ChatMessage");
+        const msg = new cls(msgData);
+        msg.applyRollMode(this.determineRollMode());
+        return cls.create(msg.toObject());
+    }
+
+    //#endregion
+
+
+    //#region Chat Message
+
+    /** 
+     * Get the chat message that likely applied this effect. 
+     * @returns {ChatMessage | null}
+     */
+    getApplicationMessage() {
+        //if the effect wasn't created by an item, it cannot have been applied by a chat message
+        if(!this.effect.origin?.split?.(".")?.includes?.("Item")) return null;
+
+        const msg = game.messages.filter(m => 
+            m._stats.createdTime < this.effect._stats.createdTime
+            && this.effect.origin.includes(m.getFlag("dnd5e", "use.itemUuid"))
+            && !m.getFlag(MODULE.ID, RepeatingEffect.CONFIG.messageFlagKey)
+        ).sort((a, b) => a._stats.createdTime - b._stats.createdTime )[0];
+
+        return msg ?? null;
+    }
+
+    /**
+     * Get the flavor text for messages created by this effect.
+     * @param {string} event 
+     * @param {Actor} affectedActor 
+     */
+    getMsgFlavor(event, affectedActor) {
+        const [tokenDoc] = affectedActor.getActiveTokens(false, true);
+        return `<strong>${CombatTriggers.EVENTS[event].label}</strong>: ${this.effect.name} on <strong>${tokenDoc?.name ?? affectedActor.name}</strong>`;
+    }
+
+    /**
+     * Recreates the chat message data for a use of the source item.
+     * @returns {object | null} Chat message data for the recrated item use.
+     */
+    async recreateItemUseMsgData() {
+        let sourceItem = await this.effect.getSource();
+        if(sourceItem instanceof ActiveEffect) sourceItem = sourceItem.parent;
+
+        if( !(sourceItem instanceof Item) ) {
+            const msg = `RepeatingEffect | Unable to find source item. See console for details.`;
+            ui.notifications.error(msg);
+            console.error(msg, {instance: this, effect: this.effect, });
+            return null;
+        }
+
+        const options = { createMessage: false };
+        if(sourceItem.hasLimitedUses) foundry.utils.setProperty(options, "flags.dnd5e.use.consumedUsage", true);
+        if(sourceItem.hasResource) foundry.utils.setProperty(options, "flags.dnd5e.use.consumedResource", true);
+
+        // handle upcasting
+        const spellLevel = this.effect.getFlag("dnd5e", "spellLevel");
+        if( sourceItem.type === "spell" && spellLevel !== sourceItem.system.level ) {
+            sourceItem = sourceItem.clone({"system.level": spellLevel}, {keepId: true});
+            sourceItem.prepareData();
+            sourceItem.prepareFinalAttributes();
+        }
+        if(sourceItem.type === "spell") foundry.utils.setProperty(options, "flags.dnd5e.use.spellLevel", sourceItem.system.level);
+
+        //get the chat data to modify
+        return sourceItem.displayCard(options);
+    }
+
+    //#endregion
 }
-
-//#endregion
