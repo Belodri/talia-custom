@@ -6,6 +6,7 @@ export default {
         registerHideChatMessageHook();
         registerModifySpellLevelHook(); 
         registerHideConsumeButtonsHook();
+        registerStatusToggleEnricherDialog();
     }
 }
 
@@ -53,7 +54,7 @@ function registerModifySpellLevelHook() {
         //prevent recursion
         if(options.talia?.modifiedSpellLevel) return;
         //prevent invalid items
-        if(!item.type === "spell" || !config.slotLevel || config.slotLevel === 0) return;
+        if(item.type !== "spell" || !config.slotLevel || config.slotLevel === 0) return;
 
         const modFlag = item.actor?.flags?.["talia-custom"]?.modifySpellLevel;
         if(!modFlag) return;
@@ -197,4 +198,85 @@ function registerHideConsumeButtonsHook() {
             consumeResourceButton.style.display = 'none';
         }
     });
+}
+
+
+/**
+ * Hook on `dnd5e.enricherToggleStatus` (custom)
+ * 
+ * If the toggleStatus enricher is shift-clicked, opens a dialog to configure the duration.
+ */
+function registerStatusToggleEnricherDialog() {
+    Hooks.on("dnd5e.enricherToggleStatus", (statusId, event) => {
+        if(!event.shiftKey) return;
+
+        (async () => {
+            const {DialogV2} = foundry.applications.api;
+            const {NumberField, StringField} = foundry.data.fields;
+            const {createMultiSelectInput, createFormGroup} = foundry.applications.fields;
+
+            let content = "";
+
+            content += new NumberField({
+                label: "Duration (seconds)",
+                positive: true,
+                integer: true,
+                hint: "If a duration in seconds is given, round or turn durations are ignored."
+            }).toFormGroup({}, {name: "duration.seconds"}).outerHTML;
+
+            content += new NumberField({
+                label: "Duration (rounds)",
+                integer: true,
+                positive: true
+            }).toFormGroup({}, {name: "duration.rounds"}).outerHTML;
+
+            content += new NumberField({
+                label: "Duration (turns)",
+                integer: true,
+                positive: true
+            }).toFormGroup({}, {name: "duration.turns"}).outerHTML;
+
+            if(game.modules.get("dae").active) {
+
+                content += `<hr>`;
+
+                const daeSpecials = game.modules.get("dae").api.daeSpecialDurations();
+                /*
+                    turnStart: "Turn Start: Expires at the start of the target's next turn (in combat).",
+                    turnEnd: "Turn End: Expires at the end of the target's next turn (in combat).",
+                    turnStartSource: "Turn Start: Expires at the start of the source actor's next turn (in combat).",
+                    turnEndSource: "Turn End: Expires at the end of the source actor's next turn (in combat).",
+                    combatEnd: "End Combat",
+                    joinCombat: "Create Combatant"
+                */
+
+                content += createFormGroup({
+                    input: createMultiSelectInput({
+                        type: "multi-select",
+                        name: "flags.dae.specialDuration",
+                        options:  Object.entries(daeSpecials)
+                            .filter(([k,v]) => v !== "")
+                            .map(([k, v]) => ({ label: v, value: k }))
+                    }),
+                    label: "DAE Special Durations"
+                }).outerHTML;
+            }
+
+            const eff = CONFIG.statusEffects.find(e => e.id === statusId);
+
+            const effectDataOverride = await DialogV2.prompt({
+                content,
+                window: { title: `Configure Status Effect: ${eff.name}` },
+                ok: { callback: (_, button) => new FormDataExtended(button.form).object },
+                rejectClose: false,
+                modal: true,
+            });
+            if(!effectDataOverride) return;
+
+            for ( const token of canvas.tokens.controlled ) {
+                await token.actor.toggleStatusEffect(statusId, {effectDataOverride});
+            }
+        })();
+        return false;
+    })
 }

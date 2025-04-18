@@ -128,55 +128,11 @@ function wrap_dnd5e_documents_ChatMessage5e_prototype__highlightCriticalSuccessF
 }
 
 /** 
- * Replaces original function, keeping the functionality the same apart from incorporating a chosenDuration (if given).  
- * Lets the user set the duration of the status effect (in seconds) when the 'Apply Status to Selected Tokens' button of an enricher is shift-clicked.
- * 
- * Had to modify the `applyAction` function in dnd5e source code (in `dnd5e/enrichers`) to get this to work!  
- * Modified function:
- * ```js
- *  async function applyAction(event) {
- *      const target = event.target.closest('[data-action="apply"][data-status]');
- *      const status = target?.dataset.status;
- *      const effect = CONFIG.statusEffects.find(e => e.id === status);
- *      if ( !effect ) return;
- *      event.stopPropagation();
- *
- *      let duration;
- *      if (event.shiftKey) {
- *          const {DialogV2} = foundry.applications.api;
- *
- *          const selectDurationGroup = new foundry.data.fields.NumberField({
- *              label: "Duration in s",
- *              required: true,
- *              min: 1,
- *              integer: true,
- *              nullable: true,
- *              initial: null
- *          }).toFormGroup({}, {name: "duration"}).outerHTML;
- *
- *          const result = await DialogV2.prompt({
- *              window: {
- *                  title: `${effect.name} Duration`
- *              },
- *              content: selectDurationGroup,
- *              modal: true,
- *              rejectClose: false,
- *              ok: {
- *                  label: "Ok",
- *                  callback: (event, button) => new FormDataExtended(button.form).object
- *              }
- *          });
- * 
- *          if (result?.duration > 0) duration = result.duration;
- *      }
- *
- *      for ( const token of canvas.tokens.controlled ) {
- *          await token.actor.toggleStatusEffect(effect.id, {chosenDuration: duration});
- *      }
- *  }
- * ```
+ * Replaces original function, keeping the functionality the same apart from incorporating 
+ * an optional `effectDataOverride` parameter to the `options` argument.  
+ * If `effectDataOverride` is not empty, it is used to update the source of the ActiveEffect before its creation.
  */
-async function wrap_Actor_prototype_toggleStatusEffect(statusId, {active, overlay=false, chosenDuration=undefined}={}) {
+async function wrap_Actor_prototype_toggleStatusEffect(statusId, {active, overlay=false, effectDataOverride={}}={}) {
     const status = CONFIG.statusEffects.find(e => e.id === statusId);
     if ( !status ) throw new Error(`Invalid status ID "${statusId}" provided to Actor#toggleStatusEffect`);
     const existing = [];
@@ -206,7 +162,7 @@ async function wrap_Actor_prototype_toggleStatusEffect(statusId, {active, overla
     if ( !active && (active !== undefined) ) return;
     const effect = await ActiveEffect.implementation.fromStatusEffect(statusId);
     if ( overlay ) effect.updateSource({"flags.core.overlay": true});
-    if ( chosenDuration ) effect.updateSource({"duration.seconds": chosenDuration});    //added line
+    if ( !foundry.utils.isEmpty(effectDataOverride) ) effect.updateSource(effectDataOverride);    // Added line
     return ActiveEffect.implementation.create(effect, {parent: this, keepId: true});
 }
 
