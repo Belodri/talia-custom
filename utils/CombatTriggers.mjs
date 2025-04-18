@@ -8,8 +8,6 @@ import { MODULE } from "../scripts/constants.mjs";
  * @property {Actor} actor      The actor for which the event is trigged or null if actor couldn't be determined.
  */
 
-
-
 export default class CombatTriggers {
     constructor() {
         throw new Error("CombatTriggers is not intended to be instantiated. Use the exposed static methods instead.");
