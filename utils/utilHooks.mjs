@@ -209,74 +209,121 @@ function registerHideConsumeButtonsHook() {
 function registerStatusToggleEnricherDialog() {
     Hooks.on("dnd5e.enricherToggleStatus", (statusId, event) => {
         if(!event.shiftKey) return;
+        if(!canvas.tokens.controlled?.length) return;
 
-        (async () => {
-            const {DialogV2} = foundry.applications.api;
-            const {NumberField, StringField} = foundry.data.fields;
-            const {createMultiSelectInput, createFormGroup} = foundry.applications.fields;
+        configDialogAndApply(statusId, event); //async
+        return false;   //explicit false to cancel the hook
+    });
 
-            let content = "";
+    /**
+     * Returns the uuid of the origin item (or actor if no item found) 
+     * if the enricher is on a chat card, or undefined if it isn't.
+     * @param {PointerEvent} event 
+     * @returns {string | undefined}
+     */
+    function getOriginUuid(event) {
+        const target = event.target.closest('.chat-message.message[data-message-id]');
+        const msg = game.messages.get(target?.dataset?.messageId);
+        if(!msg) return;
 
-            content += new NumberField({
-                label: "Duration (seconds)",
-                positive: true,
-                integer: true,
-                hint: "If a duration in seconds is given, round or turn durations are ignored."
-            }).toFormGroup({}, {name: "duration.seconds"}).outerHTML;
+        const doc = msg.getAssociatedItem()
+            ?? msg.getAssociatedActor();
+        return doc?.uuid;
+    }
 
-            content += new NumberField({
-                label: "Duration (rounds)",
-                integer: true,
-                positive: true
-            }).toFormGroup({}, {name: "duration.rounds"}).outerHTML;
 
-            content += new NumberField({
-                label: "Duration (turns)",
-                integer: true,
-                positive: true
-            }).toFormGroup({}, {name: "duration.turns"}).outerHTML;
+    /**
+     * Gets the html string of the duration fields.
+     * @returns {string}
+     */
+    function getBaseDialogContent() {
+        const {NumberField, StringField} = foundry.data.fields;
+        
+        const secField = new NumberField({
+            label: "Duration (seconds)",
+            positive: true,
+            integer: true,
+            hint: "If a duration in seconds is given, round or turn durations are ignored."
+        }).toFormGroup({}, {name: "duration.seconds"}).outerHTML;
 
-            if(game.modules.get("dae").active) {
+        const roundField = new NumberField({
+            label: "Duration (rounds)",
+            integer: true,
+            positive: true
+        }).toFormGroup({}, {name: "duration.rounds"}).outerHTML;
 
-                content += `<hr>`;
+        const turnField = new NumberField({
+            label: "Duration (turns)",
+            integer: true,
+            positive: true
+        }).toFormGroup({}, {name: "duration.turns"}).outerHTML;
 
-                const daeSpecials = game.modules.get("dae").api.daeSpecialDurations();
-                /*
-                    turnStart: "Turn Start: Expires at the start of the target's next turn (in combat).",
-                    turnEnd: "Turn End: Expires at the end of the target's next turn (in combat).",
-                    turnStartSource: "Turn Start: Expires at the start of the source actor's next turn (in combat).",
-                    turnEndSource: "Turn End: Expires at the end of the source actor's next turn (in combat).",
-                    combatEnd: "End Combat",
-                    joinCombat: "Create Combatant"
-                */
+        return secField + roundField + turnField;
+    }
 
-                content += createFormGroup({
-                    input: createMultiSelectInput({
-                        type: "multi-select",
-                        name: "flags.dae.specialDuration",
-                        options:  Object.entries(daeSpecials)
-                            .filter(([k,v]) => v !== "")
-                            .map(([k, v]) => ({ label: v, value: k }))
-                    }),
-                    label: "DAE Special Durations"
-                }).outerHTML;
-            }
+    /**
+     * Gets the specialDuration fields for dae, if that module is active. Otherwise returns an empty string.
+     * @param {boolean} hasOrigin 
+     * @returns {string}
+     */
+    function getDaeContent(hasOrigin) {
+        const daeApi = game.modules.get("dae").active
+            ? game.modules.get("dae").api
+            : null;
+        if(!daeApi) return "";
+        
+        /*
+            turnStart: "Turn Start: Expires at the start of the target's next turn (in combat).",
+            turnEnd: "Turn End: Expires at the end of the target's next turn (in combat).",
+            turnStartSource: "Turn Start: Expires at the start of the source actor's next turn (in combat).",
+            turnEndSource: "Turn End: Expires at the end of the source actor's next turn (in combat).",
+            combatEnd: "End Combat",
+            joinCombat: "Create Combatant"
+        */
+        const daeSpecials = daeApi.daeSpecialDurations();
 
-            const eff = CONFIG.statusEffects.find(e => e.id === statusId);
+        const options = Object.entries(daeSpecials)
+            .filter(([k,v]) => v !== "" && (hasOrigin ? true : !k.includes("Source")) )
+            .map(([k, v]) => ({ label: v, value: k }));
 
-            const effectDataOverride = await DialogV2.prompt({
-                content,
-                window: { title: `Configure Status Effect: ${eff.name}` },
-                ok: { callback: (_, button) => new FormDataExtended(button.form).object },
-                rejectClose: false,
-                modal: true,
-            });
-            if(!effectDataOverride) return;
+        const {createMultiSelectInput, createFormGroup} = foundry.applications.fields;
+        const input = createMultiSelectInput({
+            type: "multi-select",
+            name: "flags.dae.specialDuration",
+            options,
+        });
 
-            for ( const token of canvas.tokens.controlled ) {
-                await token.actor.toggleStatusEffect(statusId, {effectDataOverride});
-            }
-        })();
-        return false;
-    })
+        const formGroupStr = createFormGroup({
+            label: "DAE Special Durations",
+            input,
+        }).outerHTML;
+
+        return `<hr>${formGroupStr}`;
+    }
+
+    /**
+     * Lets the user configure the status effect via dialog before applying it.
+     * @param {string} statusId 
+     * @param {PointerEvent} event 
+     * @returns {Promise<void>}
+     */
+    async function configDialogAndApply(statusId, event) {
+        const origin = getOriginItemUuid(event);
+        const content = getBaseDialogContent() + getDaeContent(!!origin);
+        const statusName = CONFIG.statusEffects.find(e => e.id === statusId)?.name;
+
+        const effectDataOverride = await foundry.applications.api.DialogV2.prompt({
+            content,
+            window: { title: `Configure Status Effect: ${statusName}` },
+            ok: { callback: (_, button) => new FormDataExtended(button.form).object },
+            rejectClose: false,
+            modal: true,
+        });
+        if(!effectDataOverride) return;
+        if(origin) effectDataOverride.origin = origin;
+
+        for ( const token of canvas.tokens.controlled ) {
+            await token.actor.toggleStatusEffect(statusId, {effectDataOverride});
+        }
+    }
 }
