@@ -1,3 +1,39 @@
+# 2.2.0 - 2025/04/20
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Spells
+        - Tether Essence
+        - Reverse Gravity
+    - Additional inspirations for Naami
+    - Monster Features
+        - Pack Tactics
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    -   Toggle Status Effect Enricher Button
+
+        ![toggleStatusEffect enricher button](imgs/toggleStatusEffectEnricherButton.png)
+
+        Shift-clicking this button now opens a dialog to configure the status effect's duration.
+        This includes options for special durations, for example making the effect expire at the end of the target's next turn in combat.
+
+    - Refactored the code for ActiveEffects with repeating effects.
+    - Monster Features
+        - Minion
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - A bug where settlement data would not load correctly if multiple journal entries shared the same name as the settlement.
+    - Monster Features
+        - Fear Aura
+        - Frightful Presence
+    </details>
+
 # 2.1.0 - 2025/04/13
 -   <details>
     <summary><h2>Added</h2></summary>
