@@ -308,7 +308,7 @@ function registerStatusToggleEnricherDialog() {
      * @returns {Promise<void>}
      */
     async function configDialogAndApply(statusId, event) {
-        const origin = getOriginItemUuid(event);
+        const origin = getOriginUuid(event);
         const content = getBaseDialogContent() + getDaeContent(!!origin);
         const statusName = CONFIG.statusEffects.find(e => e.id === statusId)?.name;
 
