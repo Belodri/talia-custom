@@ -4,6 +4,7 @@ import _plex from "./plex/_plex.mjs";
 import _shalkoc from "./shalkoc/_shalkoc.mjs";
 import _wizardShared from "./wizardShared/_wizardShared.mjs";
 import _naami from "./naami/_naami.mjs";
+import _emilio from "./emilio/_emilio.mjs";
 
 export default {
     registerSubsection() {
@@ -13,5 +14,6 @@ export default {
         _shalkoc.registerSubsection();
         _wizardShared.registerSubsection();
         _naami.registerSubsection();
+        _emilio.registerSubsection();
     }
 }
