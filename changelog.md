@@ -1,3 +1,87 @@
+# 2.3.0 - 2025/04/27
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Backgrounds
+        - Voidwalker
+
+    - Subclasses
+        - Void-Tainted
+
+    - Features
+        - Moderately Armored
+        - Tough
+
+        - Accrued Vitality
+        - Bloodrazor
+        - Eldritch Energies
+        - Eviscerate
+        - Grasping Talons
+        - Mindrazor
+        - Nether Surge
+        - Netherwalk
+        - Phase Shift
+        - Rend
+        - Schism
+        - Twist of Fate
+
+        - Agonizing Blast
+        - Book of Ancient Secrets
+        - Devil's Sight
+        - Grasp of Hadar
+        - Hidden Heart
+        - Trickster's Escape
+
+        - Boons of Eldritch Hunger
+        - Essence Shards
+        - Feeding Frenzy
+        - Ravenous Feast
+        - Reaping Claws
+        - Starbonded
+        - Thirsting Claws
+        - Void Form
+        
+
+    - Spells
+        - Dissonant Whispers
+        - Gift of Alacrity
+        - Tasha's Mind Whip
+        - Blink
+        - Abhorrent Apparition
+        - Void Torrent
+        - Howling Horrors
+        - Dying of the Light
+        - Freedom of Movement
+        - Eldritch Blast
+        - Hellfire
+        - Frostbite
+        - Arms of Hadar
+        - Alarm
+        - Fear
+
+    - Items
+        - Adamantine Breastplate
+        - Crown of the Wrath Bringer
+        - Eldritch Claw Tattoo
+        - Robe of Stars
+        - Hooded Lantern
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Players can no longer see the vision fields of other player characters when deselecting their own token.
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - StatusEnricherDialog origin UUID retrieval
+    - Token Action Hud missing categories
+    - Token Action Hud settings dialog error
+    - ItemsWithSpells settings dialog error 
+    </details>
+
 # 2.2.0 - 2025/04/20
 -   <details>
     <summary><h2>Added</h2></summary>
