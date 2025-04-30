@@ -67,11 +67,11 @@ class Logger {
      * @param {object} data 
      */
     static onRenderTidy5eActorSheet(app, element, data) {
-        if(!app.options.classes.includes("tidy5e-sheet") 
+        if(!app?.options?.classes?.includes?.("tidy5e-sheet") 
             || !game.settings.get(MODULE.ID, Logger.CONFIG.settings.displayActorSheetToggle)
         ) return;
 
-        const currencyEle = element.querySelector(".currency");
+        const currencyEle = element?.querySelector?.(".currency");
         if(!currencyEle) return;
 
         const actor = data.actor;
