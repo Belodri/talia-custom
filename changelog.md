@@ -1,3 +1,17 @@
+# 2.4.0 - 2025/05/04
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Inspirations for Emilio
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Various connectivity issues
+    - A console error that occured when importing an actor under certain circumstances.  
+    </details>
+
 # 2.3.0 - 2025/04/27
 -   <details>
     <summary><h2>Added</h2></summary>
