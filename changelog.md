@@ -1,3 +1,38 @@
+# 2.5.0 - 2025/05/11
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - Spells
+        - Synaptic Static
+        - Wellspring of Life
+    - Items
+        - Springseed
+        - Black Dragonhide Cloak
+        - Manual of Fiendish Flesh Golems
+        - Headband of Intellect
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Fishy Magic Mythic Power
+        from
+        > When you cast a spell that targets only one creature and doesn't have a range of self, you can spend 1 Mythic Power to target a second creature in range with the same spell.
+        > 
+        > If the spell fires a projectile, the projectile looks like a fish. If the spell doesn't, all targeted creatures smell like fish.
+
+        to
+        > When you cast a spell you can expend 1 Mythic Power to make a copy immediately after you cast it. The copy does not require any components and does not consume spell slots. The copy is considered to be a part of the original spell and should you fail to cast the original spell, the casting of the copy also fails. You can choose new targets for the copy.
+    </details>
+
+-   <details>
+    <summary><h2>Fixed</h2></summary>
+
+    - Added missing money to Emilio
+    - Various typos in wild magic surge descriptions.
+    </details>
+
 # 2.4.0 - 2025/05/04
 -   <details>
     <summary><h2>Added</h2></summary>
