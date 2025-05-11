@@ -325,7 +325,7 @@
     }, {
         "text": "All your clothing and equipment teleports to an unoccupied space about {60|120|500} feet from you. You know where it landed."
     }, {
-        "text": "Your skin changes color (1d8: 1=Red, 2=Green, 3=Blue, 4= Purple, 5= Yellow, 6=Grey, 7=White, 8=Black). Duration: {1 week|1month|permanent}."
+        "text": "Your skin changes color (1d8: 1=Red, 2=Green, 3=Blue, 4= Purple, 5= Yellow, 6=Grey, 7=White, 8=Black). Duration: {1 week|1 month|permanent}."
     }, {
         "text": "Roll a d6 at the start of your turn do determine the order of your actions until the start of your next turn. (1=action->bonus->reaction; 2=action->reaction->bonus; 3=bonus->action->reaction; 4=bonus->reaction->action; 5=reaction->action->bonus; 6=reaction->bonus->action;)"
     }, {
@@ -351,7 +351,7 @@
     }, {
         "text": "You become magically bound to the next non-magical item you touch weighing around {5|20|100} pounds. The item cannot be more than 30 feet from you without causing you 1d6 psychic damage per minute of separation. Duration: 1 {day|week|month}."
     }, {
-        "text": "Your dreams physically manifest as minor illusions while you sleep, visible to anyone within {10|30|60} feet. Duration: 1 {week|month|permanent}."
+        "text": "Your dreams physically manifest as minor illusions while you sleep, visible to anyone within {10|30|60} feet. Duration: {1 week|1 month|permanent}."
     }, {
         "text": "Your footsteps leave behind {flowers|dirt|manure} that last for {1 minute|1 hour|1 day} before disappearing. Duration: 1 {day|week|month}."
     }, {
@@ -359,11 +359,11 @@
     }, {
         "text": "Small non-magical flames (candles, torches, campfires) within {30|60|120} feet of you change color to match your current emotional state. Duration: 1 {week|month|permanent}"
     }, {
-        "text": "Empty containers within {10|30|100} feet of you have a 50% chance of filling with {clean water|colorful sand|harmless spider} when left unattended for more than a minute. Duration: 1 {day|week|month}."
+        "text": "Empty containers within {10|30|100} feet of you have a 50% chance of filling with {clean water|colorful sand|harmless spiders} when left unattended for more than a minute. Duration: 1 {day|week|month}."
     }, {
         "text": "Others can hear your whispers from {30|100|300} feet away, while, to them, your shouts are barely audible beyond {50|30|10} feet. You sound the same to yourself. Duration: 1 {hour|day|week}."
     }, {
-        "text": "A randomly chosen magical weapon, armour, or other equipment of {uncommon|rare|very rare or legendary} rarity in your possession becomes sentient with its own personality and agenda. It communicates telepathically only with you and may refuse to function if its desires are ignored. Duration: 1 {week|month|permanent}."
+        "text": "A randomly chosen magical weapon, armour, or other equipment of {uncommon|rare|very rare or legendary} rarity in your possession becomes sentient with its own personality and agenda. It communicates telepathically only with you and may refuse to function if its desires are ignored. Duration: {1 week|1 month|permanent}."
     }, {
         "text": "You and a random allied creature within 60 feet develop a psychic link. You can communicate telepathically at will, but also experience each other's strong emotions and can't help occasionally blurting out each other's private thoughts. Duration: 1 {day|week|month}."
     }, {
