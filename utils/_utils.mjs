@@ -16,6 +16,7 @@ import ExtendedRest from "./ExtendedRest.mjs";
 import MultiattackManager from "./MultiattackManager.mjs";
 import currencyChatLogger from "./currencyChatLogger.mjs";
 import CombatTriggers from "./CombatTriggers.mjs";
+import multiroll from "./multiroll.mjs";
 
 export const TaliaUtils = {
     Helpers,
@@ -40,6 +41,7 @@ export default {
         ExtendedRest.register();
         MultiattackManager.register();
         currencyChatLogger.register();
+        multiroll.register();
 
         TaliaCustomAPI.add(TaliaUtils, "none");
     }
