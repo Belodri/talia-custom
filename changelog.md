@@ -1,3 +1,35 @@
+# 2.6.0 - 2025/05/18
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+
+    - **Multiroll System**
+
+        To make rolling multiple identical dice rolls more convenient, a new field `Roll Count` has been added to the roll configuration dialog for attack rolls, saving throws, skill checks, ability checks, and damage rolls. It determines how many times that roll configuration should be rolled (default 1).
+
+        **Optional Modifiers**
+
+        Any modifiers applied to the initial roll will also apply to all subsequent rolls without further checks. So please 
+        be careful when adding optional modifiers (for example Guidance, Fury of the Small, or Inspiring Flex) and make sure they should apply to all rolls you make.
+        
+        **Skip Additional Surge Checks**
+
+        When you use this feature to make multiple attack rolls, you can check the "Skip Additional Surge Checks" checkbox. This is for abilities that involve multiple attack rolls which do not cause surges individually (Eldritch Blast or Scorching Ray for example). For multiattacks, leave it unchecked (as each individual attack could cause a surge).
+
+        **Damage Rolls & Crits**
+
+        Because damage rolls for regular hits and for crits can have different configurations and modifiers, they must be rolled separately. For example: You cast Scorching Ray and land 3 hits and 2 crits. When multirolling the damage, you should first roll the 2 crits and then the 3 hits (or the other way around, order doesn't matter).
+
+        **Chat Cards**
+
+        To avoid spamming the chat, the results of multirolls are summarized with details such as individual rolls hidden behind a collapsible 'Details' dropdown.
+
+        **Known Issues**
+        - **Missing auto-collapse:** The 'Details' dropdown should expand and collapse automatically the same way as other, similar dropdowns.
+        - **Incorrect flat damage modifications:** Flat damage modifications (from effects like "Any acid damage you take is reduced by 5.") are applied only once when applying multirolled damage, even if the source of the damage was technically multiple individual hits. Until this is fixed, we'll just handle it manually in the rare cases it does come up. Percentile damage modifications (resistance, vulnerability, etc.) are working correctly.
+        - **Skip Surges Checkbox** The 'Skip Additional Surge Checks' checkbox shows even for attacks with items that cannot cause wild magic surges. This is simply a display issue as the code makes sure to not roll surges for items that shouldn't be able to. So it's fine to leave it unchecked when you make a multiroll attack with, for example, a mundane dagger, as that item can never cause a surge. 
+    </details>
+
 # 2.5.0 - 2025/05/11
 
 -   <details>
