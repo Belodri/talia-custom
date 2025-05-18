@@ -8,11 +8,45 @@ import { WildMagic } from "../world/wildMagic/wildMagic.mjs";
 
 export default {
     register() {
+        registerSettings();
         libWrapper.register(MODULE.ID, "CONFIG.Dice.D20Roll.prototype._onDialogSubmit", wrapped_CONFIG_Dice_D20Roll_prototype__onDialogSubmit, "WRAPPER");
         libWrapper.register(MODULE.ID, "CONFIG.Dice.DamageRoll.prototype._onDialogSubmit", wrapped_CONFIG_Dice_DamageRoll__onSubmitDialog, "WRAPPER");
         Hooks.on("dnd5e.renderChatMessage", multiRollCollapsible);
         Hooks.on("renderDialog", injectDialog);
         Hooks.on("preCreateChatMessage", onPreCreateChatMessage);
+    }
+}
+
+/** Register related settings */
+function registerSettings() {
+    const SETTINGS = {
+        "multiroll_requireSingleAttackTarget": {
+            name: "Multiroll: Require single target for attacks",
+            hint: "If enabled attack rolls only allow multirolls if a single token is targeted.",
+            scope: "world",
+            config: true,
+            requiresReload: false,
+            type: Boolean,
+            default: true
+        },
+        "multiroll_maxMultirolls": {
+            name: "Multiroll: Max rolls",
+            hint: "Sets the maximum number of rolls that can be made with a single multiroll.",
+            scope: "world",
+            config: true,
+            requiresReload: false,
+            type: foundry.data.fields.NumberField({
+                nullable: false,
+                min: 2,
+                max: 100,
+                integer: true,
+            }),
+            default: 30
+        }
+    };
+
+    for(const [k, v] of Object.entries(SETTINGS)) {
+        game.settings.register(MODULE.ID, k, v);
     }
 }
 
@@ -135,15 +169,12 @@ function _getFlavorDetailsLine(msg, rollType) {
     for(const roll of msg.rolls) {
         if(roll.options.bypassSurges) bypassSurges = true;
 
-        const tv = typeof roll.options.targetValue === "number"
-            ? roll.options.targetValue
-            : typeof roll.options.targetValue === "string"
-                ? Number.parseInt(roll.options.targetValue)
-                : null;
+        // Enrichers set targetValue as a string for some reason.
+        const tv = Number(roll.options?.targetValue);   
 
         if(roll.isCritical) crit++;
         else if(roll.isFumble) fumble++;
-        else if(!Number.isInteger(tv)) unknown++;
+        else if(!Number.isSafeInteger(tv)) unknown++;
         else if(roll.total >= tv) success++;
         else fail++;        
     }
@@ -196,8 +227,12 @@ function injectDialog(dialog, html, data) {
     for(const [type, match] of Object.entries(validTypes)) {
         // No other way of differentiating roll dialogs from other generic dialogs.
         if(dialog.data?.title?.includes(match)) {
-            _injectRoll(html, type);
-            if(type === "attack") _injectSurgeBypass(html);
+            const isInvalidAttack = type === "attack" 
+                && game.settings.get(MODULE.ID, "multiroll_requireSingleAttackTarget")
+                && game.user.targets.size !== 1;
+            
+            _injectRoll(form, type, isInvalidAttack);
+            _injectSurgeBypass(form, type, isInvalidAttack);
 
             const pos = dialog.position;
             pos.height = "auto";
@@ -209,10 +244,44 @@ function injectDialog(dialog, html, data) {
 }
 
 /**
- * Adds a "Skip Additional Surge Checks" checkbox to attack roll dialogs for multi-attacks.
- * @param {JQuery} html 
+ * Adds a "Roll Count" input field to specified roll dialogs.
+ * @param {HTMLFormElement} form 
+ * @param {string} type 
+ * @param {boolean} isInvalidAttack 
  */
-function _injectSurgeBypass(html) {
+function _injectRoll(form, type, isInvalidAttack) {
+    const isDamage = type === "damage";
+
+    const div = document.createElement("div");
+    div.classList.add("form-group", "talia-dialog-form-group");
+    div.dataset.rollType = type;
+
+    const label = document.createElement("label");
+    label.textContent = "Roll Count";
+    div.appendChild(label);
+
+    const numInput = document.createElement("input")
+    numInput.type = 'number';
+    numInput.min = 1;
+    numInput.max = game.settings.get(MODULE.ID, "multiroll_maxMultirolls") ?? 30;
+    numInput.name = "rollCount";
+    numInput.placeholder = isInvalidAttack ? "Single Target Only" : '1';
+    numInput.disabled = isInvalidAttack;
+    div.appendChild(numInput);
+
+    form.appendChild(div);
+}
+
+/**
+ * Adds a "Skip Additional Surge Checks" checkbox to attack roll dialogs for multi-attacks.
+ * @param {HTMLFormElement} form 
+ * @param {string} type 
+ * @param {boolean} isInvalidAttack 
+ */
+function _injectSurgeBypass(form, type, isInvalidAttack) {
+    if(type !== "attack") return;
+    if(isInvalidAttack) return;
+
     const div = document.createElement("div");
     div.classList.add("form-group");
     div.dataset.tooltip = "Allows single events with multiple attack to skip additional wild magic surge checks (e.g. Eldritch Blast or Scorching Ray).";
@@ -228,36 +297,7 @@ function _injectSurgeBypass(html) {
     cb.checked = false;
     div.appendChild(cb);
 
-    html[0].querySelector("form").appendChild(div);
-}
-
-/**
- * Adds a "Roll Count" input field to specified roll dialogs.
- * @param {JQuery} html 
- * @param {string} type 
- */
-function _injectRoll(html, type) {
-    const isDamage = type === "damage";
-    const isInvalidAttack = type === "attack" && game.user.targets.size !== 1;
-
-    const div = document.createElement("div");
-    div.classList.add("form-group", "talia-dialog-form-group");
-    div.dataset.rollType = type;
-
-    const label = document.createElement("label");
-    label.textContent = "Roll Count";
-    div.appendChild(label);
-
-    const numInput = document.createElement("input")
-    numInput.type = 'number';
-    numInput.min = 1;
-    numInput.max = 30;
-    numInput.name = "rollCount";
-    numInput.placeholder = isInvalidAttack ? "Single Target Only" : '1';
-    numInput.disabled = isInvalidAttack;
-    div.appendChild(numInput);
-
-    html[0].querySelector("form").appendChild(div);
+    form.appendChild(div);
 }
 
 /**
@@ -270,9 +310,10 @@ function _injectRoll(html, type) {
 function wrapped_CONFIG_Dice_DamageRoll__onSubmitDialog(wrapped, html, isCritical, isFirst) {
     const form = html[0].querySelector("form");
     const rollType = form.querySelector(".form-group.talia-dialog-form-group")?.dataset?.rollType;
-    if(rollType) this.options.taliaRollCount = form.rollCount?.value ?? 1;
+    if(rollType) this.options.taliaRollCount = _validateRollCount(form.rollCount?.value);
     return wrapped(html, isCritical, isFirst);
 }
+
 
 /**
  * Wrapper that retrieves "Roll Count" and "Bypass Surges" from D20 roll dialogs and stores them in roll options.
@@ -284,10 +325,22 @@ function wrapped_CONFIG_Dice_D20Roll_prototype__onDialogSubmit(wrapped, html, ad
     const form = html[0].querySelector("form");
     const rollType = form.querySelector(".form-group.talia-dialog-form-group")?.dataset?.rollType;
     if(rollType) {
-        this.options.taliaRollCount = form.rollCount?.value ?? 1;
+        this.options.taliaRollCount = _validateRollCount(form.rollCount?.value);
         this.options.bypassSurges = form.bypassSurges?.checked ?? false;
     }
     return wrapped(html, advantageMode);
+}
+
+/**
+ * Validates the rollCount input. Returns 1 if invalid.
+ * @param {number} rollCount 
+ * @returns {number} Always a positive, non-zero integer equal to or smaller than allowed by `multiroll_maxMultirolls` setting.
+ */
+function _validateRollCount(rollCount) {
+    const num = Number(rollCount);
+    if(Number.isNaN(num)) return 1;
+    const max = game.settings.get(MODULE.ID, "multiroll_maxMultirolls") ?? 30;
+    return Math.clamp( Math.round(num), 1, max);
 }
 
 /**
@@ -299,17 +352,23 @@ function wrapped_CONFIG_Dice_D20Roll_prototype__onDialogSubmit(wrapped, html, ad
  */
 function onPreCreateChatMessage(msg, data, options) {
     const isMultiroll = msg.getFlag("talia-custom", "isMultiroll");
-    if(isMultiroll) return;
+    if(isMultiroll) return; // Prevents recursion
 
-    const rc = msg.rolls?.[0]?.options?.taliaRollCount;
-    if(rc <= 1) return;
+    const rollCount = msg.rolls?.[0]?.options?.taliaRollCount;
+    if(rollCount <= 1) return;
 
     const rollType = msg.getFlag("dnd5e", "roll.type");
-    if(rollType === "damage") _multiDamageMsg(msg, options, rc); //async
-    else if(["save", "attack", "ability", "skill"].includes(rollType)) _multiD20Msg(msg, options, rc);  //async
-    else return;
-
-    return false;
+    switch(rollType) {
+        case "damage": 
+            _multiDamageMsg(msg, options, rollCount); //async
+            return false;
+        case "save":
+        case "attack":
+        case "ability":
+        case "skill":
+            _multiD20Msg(msg, options, rollCount);  //async
+            return false;
+    }
 }
 
 /**
