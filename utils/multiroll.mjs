@@ -35,7 +35,7 @@ function registerSettings() {
             scope: "world",
             config: true,
             requiresReload: false,
-            type: foundry.data.fields.NumberField({
+            type: new foundry.data.fields.NumberField({
                 nullable: false,
                 min: 2,
                 max: 100,
