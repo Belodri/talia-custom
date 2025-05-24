@@ -1,4 +1,4 @@
-export class Mover {
+export default class Mover {
     static MODES = {
         TELEPORT: {
             callback: "_teleport",   
