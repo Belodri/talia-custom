@@ -126,16 +126,21 @@ export default class Mover {
      * Executes a given mode sequence function.
      * @param {string} mode     The chosen mode.
      * @param {...any} modeArgs  Any arguments to be passed to the mode sequence function.
-     * @returns {Promise<any>}  A promise that resolves to the mode sequence. 
+     * @returns {Promise<boolean>}  A promise that resolves to false if there was an error with the sequence, or true if the sequence was successful.
      */
     async executeMode(mode, ...modeArgs) {
         this.validateReady(mode, true);
         const {callback, fixElevation} = this.constructor.MODES[mode];
-
         const fn = this[callback];
-        const prom = await fn.call(this, ...modeArgs);
+
+        try {
+            await fn.call(this, ...modeArgs);
+        } catch(err) {
+            console.error(err);
+            return false;
+        }
         if(fixElevation) await this.fixElevation(this.targetElevation);
-        return prom;
+        return true;
     }
 
     /**
@@ -195,7 +200,7 @@ export default class Mover {
             .play();    //async
     }
 
-    async _teleport({tokenAnimation = "jb2a.misty_step.01.blue", targetAnimation = "jb2a.misty_step.02.blue", tint = ""}={}) {    
+    async _teleport({tokenAnimation = "jb2a.misty_step.01.blue", targetAnimation = "jb2a.misty_step.02.blue", tint = ""}={}) {
         return new Sequence()
             .animation()
             .delay(800)
