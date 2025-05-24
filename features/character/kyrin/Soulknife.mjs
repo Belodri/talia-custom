@@ -1,15 +1,18 @@
 import ChatCardButtons from "../../../utils/chatCardButtons.mjs"
 import { Helpers } from "../../../utils/helpers.mjs";
 import { ItemHookManager } from "../../../utils/ItemHookManager.mjs";
+import Mover from "../../../utils/Mover.mjs";
 
 export default {
     register() {
         psyBolsteredKnack();
         psychicWhisper();
+        psychicTeleportation();
     }
 }
 
 const PSI_SCALE_DIE = "psionic-energy-dice";
+
 
 function psyBolsteredKnack() {
     ChatCardButtons.register({
@@ -31,7 +34,8 @@ function psyBolsteredKnack() {
                 await targetItem.update({"system.uses.value": newUses});
                 ui.notifications.info(`Psy-Bolstered Knack | Regained expended die.`);
             }
-        }]
+        }],
+        displayFilter: (item) => item.actor?.itemTypes?.subclass?.find(s => s.name === "Soulknife")
     });
 }
 
@@ -65,6 +69,50 @@ function psychicWhisper() {
                 });
                 ui.notifications.info(`Psychic Whispers | Set duration to ${roll.total} hours.`);
             }
-        }]
+        }],
+        displayFilter: (item) => item.actor?.itemTypes?.subclass?.find(s => s.name === "Soulknife")
+    })
+}
+
+function psychicTeleportation() {
+    ChatCardButtons.register({
+        itemName: "Psychic Teleportation",
+        buttons: [{
+            label: "Teleport",
+            callback: async({item, message, token}) => {
+                const rd = item.actor.getRollData();
+                const scaleDie = rd.scale.soulknife[PSI_SCALE_DIE];
+                const maxDistance = scaleDie.faces * 10;
+
+                const mover = await new Mover(token).selectTarget(maxDistance);
+                if(!mover) return;
+
+                const res = await mover.executeMode("TELEPORT", {tint: "#00030d"});
+                if(!res) return;
+
+                const roll = await new Roll(`@scale.soulknife.${PSI_SCALE_DIE}`, item.actor.getRollData()).evaluate();
+                await roll.toMessage({
+                    speaker: message.speaker,
+                    flavor: `Psychic Teleportation`,
+                });
+
+                if(roll?.total >= 6) {
+                    const targetId = item.system.consume.target;
+                    const targetItem = item.actor.items.get(targetId);
+                    if(!targetItem) return ui.notifications.error("Psychic Teleportation | Missing consume target.");
+
+                    const currentUses = foundry.utils.getProperty(targetItem, "system.uses.value");
+                    const maxUses = foundry.utils.getProperty(targetItem, "system.uses.max");
+                    if(!maxUses) return ui.notifications.error("Psionic Energy | No uses configured.");
+
+                    const newUses = Math.clamp(currentUses + 1, 0, maxUses);
+                    if(newUses !== currentUses) {
+                        await targetItem.update({"system.uses.value": newUses});
+                        ui.notifications.info(`Psychic Teleportation | Regained expended die.`);
+                    }
+                }
+            }
+        }],
+        displayFilter: (item) => item.actor?.itemTypes?.subclass?.find(s => s.name === "Soulknife")
     })
 }
