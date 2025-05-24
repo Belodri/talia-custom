@@ -41,7 +41,7 @@ export default class Mover {
      * @param {number} [elevation] 
      */
     setTarget(x, y, elevation = null) {
-        const rect = this.scene.dimensions.rectangle;
+        const rect = this.scene.dimensions.sceneRect;
         this.#target.x = Math.clamp(x, rect.x, rect.x + rect.width);
         this.#target.y = Math.clamp(y, rect.y, rect.y + rect.height);
         if(Number.isSafeInteger(elevation)) this.#target.elevation = Math.max(elevation, -1);
@@ -59,6 +59,8 @@ export default class Mover {
         if(this.scene.grid.type !== CONST.GRID_TYPES.SQUARE) throw new Error("Select target only possible with square grids.");
         maxDist = Math.round(maxDist / this.scene.grid.distance) * this.scene.grid.distance;
 
+        const snapMode = Math.max(1, this.token.document.width) % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER;
+
         const options = foundry.utils.mergeObject({
             location: {
                 obj: this.token,
@@ -71,7 +73,9 @@ export default class Mover {
             },
             gridHighlight: true,
             snap: {
-                position: Math.max(1, this.token.document.width) % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER
+                position: snapMode,
+                resolution: 1,
+                size: snapMode,
             }
         }, crosshairOptions);
 
@@ -121,15 +125,15 @@ export default class Mover {
     /**
      * Executes a given mode sequence function.
      * @param {string} mode     The chosen mode.
-     * @param {any[]} modeArgs  Any arguments to be passed to the mode sequence function.
+     * @param {...any} modeArgs  Any arguments to be passed to the mode sequence function.
      * @returns {Promise<any>}  A promise that resolves to the mode sequence. 
      */
-    async executeMode(mode, modeArgs = []) {
+    async executeMode(mode, ...modeArgs) {
         this.validateReady(mode, true);
         const {callback, fixElevation} = this.constructor.MODES[mode];
 
         const fn = this[callback];
-        const prom = await fn(...modeArgs);
+        const prom = await fn.call(this, ...modeArgs);
         if(fixElevation) await this.fixElevation(this.targetElevation);
         return prom;
     }
@@ -191,7 +195,7 @@ export default class Mover {
             .play();    //async
     }
 
-    async _teleport({tokenAnimation = "jb2a.misty_step.01.blue", targetAnimation = "jb2a.misty_step.02.blue"}={}) {    
+    async _teleport({tokenAnimation = "jb2a.misty_step.01.blue", targetAnimation = "jb2a.misty_step.02.blue", tint = ""}={}) {    
         return new Sequence()
             .animation()
             .delay(800)
@@ -202,16 +206,19 @@ export default class Mover {
             .file(tokenAnimation)
             .atLocation(this.token)
             .scaleToObject(2)
+            .tint(tint)
             .waitUntilFinished(-2000)
 
             .animation()
             .on(this.token)
             .teleportTo(this.targetPos)
+            .snapToGrid()
             .waitUntilFinished()
 
             .effect()
             .file(targetAnimation)
             .atLocation(this.token)
+            .tint(tint)
             .scaleToObject(2)
 
             .animation()
