@@ -5,6 +5,7 @@ import _shalkoc from "./shalkoc/_shalkoc.mjs";
 import _wizardShared from "./wizardShared/_wizardShared.mjs";
 import _naami from "./naami/_naami.mjs";
 import _emilio from "./emilio/_emilio.mjs";
+import _kyrin from "./kyrin/_kyrin.mjs";
 
 export default {
     registerSubsection() {
@@ -15,5 +16,6 @@ export default {
         _wizardShared.registerSubsection();
         _naami.registerSubsection();
         _emilio.registerSubsection();
+        _kyrin.registerSubsection();
     }
 }
