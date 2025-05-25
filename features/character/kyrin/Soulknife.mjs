@@ -1,6 +1,4 @@
 import ChatCardButtons from "../../../utils/chatCardButtons.mjs"
-import { Helpers } from "../../../utils/helpers.mjs";
-import { ItemHookManager } from "../../../utils/ItemHookManager.mjs";
 import Mover from "../../../utils/Mover.mjs";
 
 export default {
@@ -14,6 +12,11 @@ export default {
 const PSI_SCALE_DIE = "psionic-energy-dice";
 
 
+/**
+ * Registers a chat card button for the "Psy-Bolstered Knack" feature for Soulknife subclass actors.
+ * When the button is clicked, it checks the consumption target item's uses,
+ * restores one use if possible, and notifies the user of the result.
+ */
 function psyBolsteredKnack() {
     ChatCardButtons.register({
         itemName: "Psy-Bolstered Knack",
@@ -39,6 +42,12 @@ function psyBolsteredKnack() {
     });
 }
 
+/**
+ * Registers the hook and chat card button for the "Psychic Whispers" feature for Soulknife subclass actors.
+ * Sets consumption to prefer uses over resources and adjusts chat card button display accordingly.
+ * When the "Roll Duration" button is clicked, a Psionic Energy die is rolled to determine the duration of
+ * the effect in hours.
+ */
 function psychicWhisper() {
     Hooks.on("dnd5e.preUseItem", (item, config, options) => {
         if(item.name !== "Psychic Whispers" || !item.actor?.itemTypes?.subclass?.find(s => s.name === "Soulknife")) return;
@@ -74,6 +83,13 @@ function psychicWhisper() {
     })
 }
 
+/**
+ * Registers a chat card button for the Psychic Teleportation" feature for Soulknife subclass actors.
+ * When clicked, allows the user to teleport to a location within range.  
+ *
+ * Upon successful teleportation, a Psionic Energy die is rolled. If this roll is 6 or higher, 
+ * restores an expended Psionic Energy die.
+ */
 function psychicTeleportation() {
     ChatCardButtons.register({
         itemName: "Psychic Teleportation",
