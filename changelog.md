@@ -1,3 +1,60 @@
+# 2.7.0 - 2025/05/25
+
+-   <details>
+    <summary><h2>Added</h2></summary>
+    - Races
+        - Changeling
+    - Backgrounds
+        - Urchin
+    - Subclasses
+        - Soulknife
+    - Spells
+        - Anatagonize
+    - Items
+        - Dispelling Stone
+        - Psychic Blade
+        - Psychic Blade (thrown)
+        - Shortbow +2
+        - Sun Blade
+        - Glamoured Studded Leather
+        - Gloves of Thievery
+        - Boots of Elvenkind
+        - Cloak of Elvenkind
+        - Rogue's Mantle
+        - Echo Stone
+        - Portable Hole
+        - Bag of Holding
+        - Lamp
+        - Ball Bearings (bag of 1000)
+    - Features
+        - Shapechanger
+        - City Secrets
+        - Psionic Energy
+        - Psi-Powered Knack
+        - Psychic Whispers
+        - Mark Soul
+        - Phantom Pain
+        - Psychic Teleportation
+        - Psychic Veil
+        - Soul Form
+        - Sneak Attack
+        - Cunning Action
+        - Actor
+        - Mobile
+        - Skill Expert
+        - Grasping Shadow
+        - Shadow Strike
+        - Ominous Will
+        - Living Shadow
+    </details>
+
+-   <details>
+    <summary><h2>Changed</h2></summary>
+
+    - Refactored data exporter for character website
+    </details>
+
+
 # 2.6.0 - 2025/05/18
 
 -   <details>
