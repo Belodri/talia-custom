@@ -2,6 +2,7 @@
 
 -   <details>
     <summary><h2>Added</h2></summary>
+    
     - Races
         - Changeling
     - Backgrounds
