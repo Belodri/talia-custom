@@ -7,6 +7,7 @@ import _settlement from "./settlement/_settlement.mjs";
 import damageAbsorption from "./damageAbsorption.mjs";
 import _guildmanager from "./guildmanager/_guildmanager.mjs";
 import addActiveEffectFields from "./addActiveEffectFields.mjs";
+import configChanges from "./configChanges.mjs";
 
 
 export default {
@@ -20,5 +21,6 @@ export default {
         damageAbsorption.register();
         addActiveEffectFields.register();
         _guildmanager.registerSubsection();
+        configChanges.register();
     }
 }
