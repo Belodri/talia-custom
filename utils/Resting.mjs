@@ -1,8 +1,24 @@
 export default {
     register() {
         ExtendedRest.init();
+        grittyLiteTestOverride();
     }
 }
+
+/** 
+ * Overrides the rest types defined in the config while we're testing this variation of the gritty rest rules. 
+ * Does not impact normal rest rules so switching back and forth is easy via the settings.
+ */
+function grittyLiteTestOverride() {
+    // Durations are in minutes!!
+    const overrides = {
+        "long.duration.gritty": 60 * 24,
+        "extended.duration.gritty": 60 * 24 * 30
+    };
+
+    foundry.utils.mergeObject(CONFIG.DND5E.restTypes, foundry.utils.expandObject(overrides));
+}
+
 
 /**
  * Results from a rest operation.
