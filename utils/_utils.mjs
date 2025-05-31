@@ -12,7 +12,7 @@ import RepeatingEffects from "./RepeatingEffects.mjs";
 import triggeredSpellGemsDisplay from "./triggeredSpellGemsDisplay.mjs";
 import DetectionChecker from "./detectionChecker.mjs";
 import overrideTileOcclusion from "./overrideTileOcclusion.mjs";
-import ExtendedRest from "./ExtendedRest.mjs";
+import Resting from "./Resting.mjs";
 import MultiattackManager from "./MultiattackManager.mjs";
 import currencyChatLogger from "./currencyChatLogger.mjs";
 import CombatTriggers from "./CombatTriggers.mjs";
@@ -38,7 +38,7 @@ export default {
         RepeatingEffects.init();
         triggeredSpellGemsDisplay.register();
         overrideTileOcclusion.register();
-        ExtendedRest.register();
+        Resting.register();
         MultiattackManager.register();
         currencyChatLogger.register();
         multiroll.register();
