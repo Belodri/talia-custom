@@ -210,10 +210,6 @@ const RECIPES = {
         {name: "Snow Moss", quantity: 2}, 
         {name: "Essence of Legend", quantity: 1}
     ]},
-    potionOfImmediateRest: {name: "Potion of Immediate Rest", rarity: "legendary", ingredients: [
-        {name: "Dragon Scale", quantity: 2}, 
-        {name: "Volcano Poppy", quantity: 1}
-    ]},
     potionOfLegendaryResistance: {name: "Potion of Legendary Resistance", rarity: "legendary", ingredients: [
         {name: "Essence of Legend", quantity: 3}
     ]},
