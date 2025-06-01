@@ -529,17 +529,17 @@ class Harvest extends Alchemy {
                 },
                 label: `${ingr.itemYield}x ${ingr.name}`,
                 command: async function() {
+                    const hasAlchFeat = actor.itemTypes?.feat?.some(i => i.name === "Alchemical Extraction");
+                    if(!hasAlchFeat) {
+                        ui.notifications.warn("You do not have the 'Alchemical Extraction' required harvest this.");
+                        return;
+                    }
+
                     await new TaliaCustom.AlchemyAPI.Harvest(actor, ingr).harvestIngredient();
                 },
             };
             buttonData.push(buttonObj);
         }
-
-        let whisper = new Set();
-        game.users.forEach(user => {
-            if (actor.testUserPermission(user, "OWNER")) whisper.add(user.id);
-        });
-        whisper = Array.from(whisper);
 
         await Requestor.request({
             title: "Alchemy - Harvesting",
@@ -549,7 +549,6 @@ class Harvest extends Alchemy {
             buttonData,
             limit: Requestor.LIMIT.ONCE,
             speaker: ChatMessage.getSpeaker({actor: actor}),
-            whisper: whisper,
         });
     }
 
