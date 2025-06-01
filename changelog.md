@@ -1,3 +1,229 @@
+# 2.8.0 - 2025/06/01
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Items
+        - Astral Hoardling
+        - Vandree Assassin Garb
+    
+    - Rules
+        - Rest variation: Gritty-Lite
+            - Short Rest: Duration: 8 hours, during which a character sleeps for at least 6 hours and performs no more than 2 hours of light activity.
+            - Long Rest: Duration: 24 hours. A character can't benefit from more than one long rest in a 5-day period.
+            - Extended Rest: Duration: 1 month, spent mostly in Promise. Is not interrupted by strenuous activity or rolling initiative. Only interrupted by leaving the island of Promise for more than 1 day at a time or for more than 4 days in total.
+
+    - Animations
+        - Psychic Blade
+        - Psychic Blade (thrown)
+
+    </details>
+
+-   <details><summary><h2>Changed</h2></summary>
+
+    -   <details><summary><strong>Void-Tainted Warlock Rebalance</strong></summary>
+
+        - Void Form (1st level)
+            - Added Reaping Claws scaling from the removed Ravenous Feast
+            - Minor wording changes for clarity
+
+            -   <details><summary>Details</summary>
+
+                from
+                > You can use your bonus action to awaken the ferocity and hunger of your patron, morphing its form with yours. This transformation lasts for 10 minutes or until you choose to end it as an action. During this time you gain the following abilities:
+                > - Heightened Senses.  Your senses become supernaturally keen. You have darkvision out to a range of 60 feet and advantage on Dexterity (Stealth), Wisdom (Perception), and Wisdom (Survival) checks.
+                > - Voracious Mind. You cannot concentrate on spells. If you’re concentrating on a spell when you enter this form, it ends immediately.
+                > - Psychic Link. Your body counts as a spellcasting focus for your warlock spells.
+                > - Reaping Claws. You sprout razor-sharp claws, which are natural weapons with a reach of 5 feet. You have proficiency with these weapons and can use your Charisma modifier for the attack and damage rolls made using these natural weapons. On a hit, your claws deal 1d6 slashing damage.
+                > 
+                > Starting at 10th level, you can choose to use a Boon of Eldritch Hunger immediately after using this feature as part of the same bonus action.
+                > 
+                > You can use this feature twice and you regain all expended uses when you finish a short or long rest.
+
+                to
+                > You can use your bonus action to awaken the ferocity and hunger of your patron, morphing its form with yours. This transformation lasts for 10 minutes or until you choose to end it as an action. During this time you gain the following abilities:
+                > - Heightened Senses.  Your senses become supernaturally keen. You have darkvision out to a range of 60 feet and advantage on Dexterity (Stealth), Wisdom (Perception), and Wisdom (Survival) checks.
+                > - Voracious Mind. You cannot concentrate on spells. If you are concentrating on a spell when you activate this form, your concentration on it ends.
+                > - Psychic Link. Your body counts as a spellcasting focus for your warlock spells.
+                > - Reaping Claws. You sprout razor-sharp claws, which are natural melee weapons with a reach of 5 feet. You have proficiency with these weapons and can use your Charisma modifier for the attack and damage rolls made using these natural weapons. On a hit, your claws deal 1d6 slashing damage, or 1d10 slashing damage once you reach 10th level in this class.
+                >
+                > Starting at 10th level, when you activate this feature, you can also choose to use one of your Boons of Eldritch Hunger as part of the same bonus action.
+                > 
+                > You can use this feature twice and you regain all expended uses of it when you finish a short or long rest.
+                </details>
+
+        - Essence Shards (1st level)
+            - Shard Acquisition: Now 1 per Reaping Claw hit, plus 1 additional if crit or kill (max one additional).
+            - Minor wording changes for clarity
+
+             -  <details><summary>Details</summary>
+
+                from
+                > If you hit a creature with the claws granted by your Void Form, you tear out a shard of its essence to feed your patron. You can never have more shards than you have Warlock levels and you lose all remaining shards when your Void Form ends.
+                > 
+                > Starting at 6th level, you immediately gain 2 shards upon entering your Void Form. This number increases to 4 at level 10, and to 6 at level 14.
+
+                to
+                > Your strikes tear your targets' essence. When you hit a creature with an attack using your Reaping Claws, you gain one Essence Shard. If the attack is a critical hit or reduces the target to 0 hit points, you gain one additional Essence Shard.
+                >
+                > The maximum number of Essence Shards you can hold at one time is equal to your warlock level. You lose any unspent Essence Shards when your Void Form ends.
+                > 
+                > Starting at 6th level, you immediately gain 2 Essence Shards when you activate your Void Form. When you reach 10th and 14th level in this class, this number increases to 4 and 6 respectively.
+                </details>
+
+        - Boons of Eldritch Hunger (1st level)
+            - Removed the general 14th-level rule granting an additional bonus action.
+            -   <details><summary>Details</summary>
+
+                from
+                > You can use your bonus action to expend Essence Shards for your patron to devour in exchange for various boons. You unlock these boons as you gain Warlock levels, as seen below. Additional boons can be unlocked through killing powerful aberrations and feeding them to your patron (at your GM's discretion).
+                > 
+                > Additionally, starting at 14th level, when you activate a boon that cost 2 shards or less for the first time during your turn, you can immediately take one additional bonus action.
+
+                to
+                > You can use your bonus action to expend Essence Shards for your patron to devour in exchange for various boons. You unlock these boons as you gain Warlock levels, as seen below. Additional boons can be unlocked through killing powerful aberrations and feeding them to your patron (at your GM's discretion).
+                </details>
+
+        - Accrued Vitality (1st level Boon of Eldritch Hunger)
+            - Temporary HP for initial shard increased to 1d8 + Charisma modifier (was 1d8).
+            - Added: Can grant an additional bonus action if it's the first bonus action taken this turn.
+            -   <details><summary>Details</summary>
+
+                from 
+                > You can expend 1 Essence Shard to gain 1d8 temporary hit points. You can choose to expend one or more additional Essence Shards to increase the temporary hit points gained by 1d8 per additional shard.
+
+                to
+                > You can expend 1 Essence Shard to gain temporary hit points equal to 1d8 + your Charisma modifier. You can choose to expend one or more additional Essence Shards to increase the temporary hit points gained by 1d8 per additional shard.
+                > Additionally, if this ability is the first bonus action you've taken during this turn, you can choose to immediately take one additional bonus action.
+                </details>
+
+        - Grasping Talons (1st level Boon of Eldritch Hunger)
+            - Reach effect duration increased to 1 minute (was until end of next turn).
+            - Added: Can grant an additional bonus action if it's the first bonus action taken this turn.
+            -   <details><summary>Details</summary>
+
+                from 
+                > You can expend 1 Essence Shard to increase the reach of your Reaping Claws by 5 feet until the end of your next turn.
+
+                to
+                > You can expend 1 Essence Shard to increase the reach of your Reaping Claws by 5 feet for 1 minute.
+                > Additionally, if this ability is the first bonus action you've taken during this turn, you can choose to immediately take one additional bonus action.
+                </details>
+        
+        - Netherwalk (1st level Boon of Eldritch Hunger)
+            - Essence Shard cost reduced to 1 (was 2).
+            - Added: Can grant an additional bonus action if it's the first bonus action taken this turn.
+            -   <details><summary>Details</summary>
+
+                from
+                > You can expend 2 Essence Shards to increase your walking speed by 20 feet for 10 minutes.
+
+                to
+                > You can expend 1 Essence Shard to increase your walking speed by 20 feet for 10 minutes.
+                > Additionally, if this ability is the first bonus action you've taken during this turn, you can choose to immediately take one additional bonus action.
+                </details>
+
+        - Mindrazor (6th level Boon of Eldritch Hunger)
+            - Damage bonus duration increased to 1 minute (was until end of next turn).
+            -   <details><summary>Details</summary>
+
+                from
+                > You can expend 3 Essence Shards to add an extra 3d8 psychic damage to the damage of your Reaping Claws until the end of your next turn.
+
+                to
+                > You can expend 3 Essence Shards to add an extra 3d8 psychic damage to the damage of your Reaping Claws for 1 minute.
+                </details>
+
+        - Bloodrazor (6th level Boon of Eldritch Hunger)
+            - Crit range increase duration changed to 1 minute (was until end of next turn).
+            -   <details><summary>Details</summary>
+
+                from
+                > You can expend 3 Essence Shards to increase the critical range of attacks you make with your Reaping Claws by 2 until the end of your next turn.
+
+                to
+                > You can expend 3 Essence Shards to increase the critical range of attacks you make with your Reaping Claws by 2 for 1 minute.
+                </details>
+
+        - Phase Shift (6th level Boon of Eldritch Hunger)
+            - Added: Can grant an additional bonus action if it's the first bonus action taken this turn.
+            -   <details><summary>Details</summary>
+
+                from
+                > You can expend 2 Essence Shards to teleport to an unoccupied space you can see within 30 feet.
+
+                to
+                > You can expend 2 Essence Shards to teleport to an unoccupied space you can see within 30 feet.
+                > Additionally, if this ability is the first bonus action you've taken during this turn, you can choose to immediately take one additional bonus action.
+                </details>
+
+        - Eviscerate (10th level Boon of Eldritch Hunger)
+            - Essence Shard cost increased to 4 (was 3).
+            - Advantage effect duration increased to 1 minute (was until end of next turn).
+            -   <details><summary>Details</summary>
+
+                from
+                > You can expend 3 Essence Shards to gain advantage on melee weapon attacks until the end of your next turn.
+
+                to
+                > You can expend 4 Essence Shards to gain advantage on melee weapon attacks for 1 minute.
+                </details>
+
+        - Ravenous Feast (10th level)
+            - Removed as a standalone feature.
+            - Effects partly integrated into Void Form and Essence Shards features.
+            -   <details><summary>Details</summary>
+
+                previously
+                > You gain an additional Essence Shard when you land a critical hit with your claws against a creature for the first time on each turn and when you reduce a creature to 0 hit points for the first time on each turn.
+                > 
+                > Additionally, the damage die of your Reaping Claws grows to a d10.
+                </details>
+
+
+        - Feeding Frenzy (14th level)
+            - Devouring effect text expanded and clarified.
+            - Added: Gain Essence Shard upon devouring a target if Void Form is active.
+            - Minor wording changes for clarity
+            -   <details><summary>Details</summary>
+
+                from
+                > As an action, you can unleash your patron’s hunger. Choose one creature you can see within 60 feet of you which must make a Charisma saving throw against your spell save DC. On a failed saving throw, the creature takes 10d10 psychic damage, and half as much on a successful save. 
+                > If this ability reduces the creature’s hit points to 0, it dies and you can choose to use this ability again immediately as part of the same action. 
+                > 
+                > Aberrations have disadvantage on the saving throw and take an extra 5d10 psychic damage on a failed save, or half as much on a successful save. When a creature is killed by this ability, its corpse is dragged into the void to be devoured by your patron.
+                >
+                > Once you use this feature, you can't use it again until you finish a long rest.
+                
+                to
+                > As an action, you can unleash your patron’s hunger onto one creature you can see within 60 feet. The target must make a Charisma saving throw against your spell save DC. If the target is an aberration, it has disadvantage on this saving throw.
+                > On a failed save, the target takes 10d10 psychic damage, or 15d10 psychic damage if it's an aberration. On a successful save, the creature takes half as much damage.
+                > 
+                > The target, along with everything it's wearing or carrying, is dragged into the void and devoured by your patron if this damage leaves it with 0 hit points. A creature devoured this way leaves behind no corpse and can be restored to life only by means of a true resurrection or a wish spell.
+                >
+                > If a target is devoured this way, you can use this ability again immediately as part of the same action. If your Void Form is active, you also gain one Essence Shard.
+                >
+                > Once you use this feature, you can't use it again until you finish a long rest.
+                </details>
+        </details>
+
+    - Mythic Powers now regain expended uses on an extended rest.
+
+    - All Exotic Currencies are now consumable items. The item type of the following items has been changed from 'loot' to 'consumable':
+        - Dreamfeather
+        - Hearthstone
+        - Soul Coin
+
+    - Alchemy Harvesting requestor messages are now visible to all players. 
+
+    </details>
+
+-   <details><summary><h2>Removed</h2></summary>
+
+    - Alchemy Recipe for Potion of Immediate Rest
+    - Electrum Pieces. Any electrum pieces owned were converted to silver pieces.
+
+    </details>
+
 # 2.7.0 - 2025/05/25
 
 -   <details>
