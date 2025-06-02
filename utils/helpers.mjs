@@ -1,3 +1,7 @@
+/**
+ * @import { Actor5e } from "../system/dnd5e/module/documents/_module.mjs";
+ */
+
 export class Helpers {
     static SECONDS = {
         IN_ONE_MINUTE: 60,
@@ -543,6 +547,18 @@ export class Helpers {
             if (key in obj) result[key] = obj[key];
             return result;
         }, {});
+    }
+
+    /**
+     * Adds or removes exhaustion levels from an actor.
+     * @param {Actor5e} actor 
+     * @param {number} delta 
+     * @returns {Promise<Actor5e>}
+     */
+    static async addExhaustion(actor, delta) {
+        const currEx = actor.system.attributes.exhaustion;
+        const newEx = Math.clamp(currEx + delta, 0, CONFIG.DND5E.conditionTypes.exhaustion.levels);
+        return actor.update({"system.attributes.exhaustion": newEx});
     }
 }
 

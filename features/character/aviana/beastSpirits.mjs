@@ -1,6 +1,7 @@
 import { MODULE } from "../../../scripts/constants.mjs";
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
 import { Helpers } from "../../../utils/helpers.mjs";
+import ChatCardButtons from "../../../utils/chatCardButtons.mjs";
 const debug = false;
 
 export default {
@@ -9,6 +10,7 @@ export default {
         CONFIG.DND5E.featureTypes.class.subtypes.beastPower = "Spirit Beast Power";
 
         TaliaCustomAPI.add({activateSpirit, chooseSpirit}, "ItemMacros");
+        registerButtons();
     }
 }
 
@@ -47,8 +49,27 @@ const blessingsDatabase = {
     },
 };
 
+
 /**
- *
+ * Registers chat card buttons for the "Beast Spirit's Blessing" item.
+ */
+function registerButtons() {
+    ChatCardButtons.register({
+        itemName: "Beast Spirit's Blessing",
+        buttons: [{
+            label: "Choose Spirit",
+            callback: ({item}) => chooseSpirit(item)
+        }, {
+            label: "Gain Exhaustion",
+            callback: async({actor}) => await Helpers.addExhaustion(actor, 1)
+        }]
+    })
+}
+
+/**
+ * Prompts the user to choose a spirit and activates its blessings.
+ * @param {Item5e} item The "Beast Spirit's Blessing" item.
+ * @returns {Promise<void>}
  */
 async function chooseSpirit(item) {
     const {DialogV2} = foundry.applications.api;
@@ -81,11 +102,11 @@ async function chooseSpirit(item) {
     await activateSpirit(actor, result.spiritName);
 }
 
-/*  ItemMacro for items of type "Spirit Beast's Blessing"
 
-*/
 /**
- *
+ * Activates the blessings of the chosen spirit for the actor.
+ * @param {Actor5e} actor The actor to activate the spirit for.
+ * @param {string} chosenSpirit The name of the chosen spirit.
  */
 async function activateSpirit(actor, chosenSpirit) {
     const rollData = actor.getRollData();

@@ -1,19 +1,34 @@
-/*
-    adds changes to all the various status condition types
-*/
-
 export default {
     register() {
         modifyExistingStatusEffects();
         addNewStatusEffects();
-        fixExhaustion();
+        fixExhaustionConfig();
+        fixExhaustionDeletion();
     }
 }
 
 /**
- *
+ * When the exhaustion active effect is deleted, the system doesn't update 
+ * the actor accordingly the change is only applied locally, not to the source.
+ * This hook on `deleteActiveEffect` ensures the exhaustion value on the actor 
+ * is kept in sync when the active effect is deleted.
  */
-function fixExhaustion() {
+function fixExhaustionDeletion() {
+    Hooks.on("deleteActiveEffect", async (effect, options, userId) => {
+        if(game.user.id !== userId) return;
+        if(effect._id !== dnd5e.documents.ActiveEffect5e.ID.EXHAUSTION) return;
+
+        const actor = effect.parent;
+        if( !(actor instanceof dnd5e.documents.Actor5e )) return;
+
+        await actor.update({"system.attributes.exhaustion": 0});
+    });
+}
+
+/**
+ * Fixes the configuration for the exhaustion status effect.
+ */
+function fixExhaustionConfig() {
     const newExhaustionIconRef = "TaliaCampaignCustomAssets/c_Icons/svg/exhaustion/exhaustion.svg";
     const exhaustionJournalEntryPage = "Compendium.talia-custom.rules.JournalEntry.ZkD6R9Ye9Sr77OCt.JournalEntryPage.Wjki4nD4YAgKCtNl";
     CONFIG.DND5E.conditionTypes.exhaustion.reference = exhaustionJournalEntryPage;  
@@ -57,7 +72,17 @@ const STATUS_EFFECTS_MODIFICATIONS = {
     encumbered: {},
     ethereal: {}, 
     exceedingCarryingCapacity: {},  
-    exhaustion: {}, 
+    exhaustion: {
+        changes: [
+            {key: "system.bonuses.spell.dc", mode: 2, value: "- @attributes.exhaustion", priority: 20},
+            {key: "system.bonuses.abilities.check", mode: 2, value: "- @attributes.exhaustion", priority: 20},
+            {key: "system.bonuses.abilities.save", mode: 2, value: "- @attributes.exhaustion", priority: 20},
+            {key: "system.bonuses.msak.attack", mode: 2, value: "- @attributes.exhaustion", priority: 20},
+            {key: "system.bonuses.mwak.attack", mode: 2, value: "- @attributes.exhaustion", priority: 20},
+            {key: "system.bonuses.rsak.attack", mode: 2, value: "- @attributes.exhaustion", priority: 20},
+            {key: "system.bonuses.rwak.attack", mode: 2, value: "- @attributes.exhaustion", priority: 20},
+        ]
+    },
     flying: {},
     frightened: {}, 
     grappled: {
@@ -150,7 +175,7 @@ function modifyExistingStatusEffects() {
 }
 
 /**
- *
+ * Adds new custom status effects to the CONFIG.statusEffects and CONFIG.DND5E.conditionTypes.
  */
 function addNewStatusEffects() {
     const effectsToAdd = {
