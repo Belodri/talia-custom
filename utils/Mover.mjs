@@ -13,7 +13,7 @@ export default class Mover {
     #target = {
         x: null,
         y: null,
-        elevation: null,
+        elevation: -1,
     }
 
     #crosshairOptions;
@@ -68,6 +68,7 @@ export default class Mover {
         }
 
         this.#crosshairOptions = foundry.utils.mergeObject({
+            distance: (this.token.document.width * canvas.grid.distance) / 2,
             location: {
                 obj: this.token,
                 showRange: true,
@@ -80,7 +81,7 @@ export default class Mover {
             snap: {
                 position: this.snapMode,
                 resolution: 1,
-                size: this.snapMode,
+                size: this.snapMode,    //has to be same as snap mode for some reason?
             }
         }, options);
 
