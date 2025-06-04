@@ -98,9 +98,11 @@ function psychicTeleportation() {
             callback: async({item, message, token}) => {
                 const rd = item.actor.getRollData();
                 const scaleDie = rd.scale.soulknife[PSI_SCALE_DIE];
-                const maxDistance = scaleDie.faces * 10;
+                const maxRange = scaleDie.faces * 10;
 
-                const mover = await new Mover(token).selectTarget(maxDistance);
+                const mover = await new Mover(token)
+                    .setCrosshairOptions({"location.limitMaxRange": maxRange})
+                    .getAndSetLocation();
                 if(!mover) return;
 
                 const res = await mover.executeMode("TELEPORT", {tint: "#00030d"});
