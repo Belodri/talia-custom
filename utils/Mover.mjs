@@ -16,6 +16,10 @@ export default class Mover {
         elevation: null,
     }
 
+    #crosshairOptions;
+
+    #crosshairCallbacks;
+
     get targetPos() {
         return {
             x: this.#target.x,
@@ -25,46 +29,47 @@ export default class Mover {
 
     get targetElevation() { return this.#target.elevation; }
 
+    get snapMode() {
+        return Math.max(1, this.token.document.width) % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER;
+    }
+
     constructor(token) {
         if(token instanceof TokenDocument) token = token.object;
         if( !(token instanceof Token) ) throw new Error(`Argument 'token' must be instance of Token or TokenDocument`);
 
         this.token = token;
         this.scene = token.scene;
-    }
 
-
-    /**
-     * Sets the target location for the teleport directly.
-     * @param {number} x 
-     * @param {number} y 
-     * @param {number} [elevation] 
-     */
-    setTarget(x, y, elevation = null) {
-        const rect = this.scene.dimensions.sceneRect;
-        this.#target.x = Math.clamp(x, rect.x, rect.x + rect.width);
-        this.#target.y = Math.clamp(y, rect.y, rect.y + rect.height);
-        if(Number.isSafeInteger(elevation)) this.#target.elevation = Math.max(elevation, -1);
-        return this;
+        this.setCrosshairOptions();
+        this.setCrosshairCallbacks();
     }
 
     /**
-     * Lets the user select the target location via crosshair.
-     * @param {number} maxDist                  The maximum distance the user is allowed to select. Is rounded to the nearest minimum grid distance.
-     * @param {object} crosshairOptions         Options to override the default crosshair options.
-     * @param {object} crosshairCallbackOptions Options to override the default crosshair callback options.
-     * @returns {Promise<this|null>}            Null if the selection of a location was cancelled.
+     * Rounds a given number to the nearest multiple of the grid distance.
+     * @param {number} number The number to round.
+     * @returns {number} The rounded number.
      */
-    async selectTarget(maxDist = 5, crosshairOptions = {}, crosshairCallbackOptions = {}) {
-        if(this.scene.grid.type !== CONST.GRID_TYPES.SQUARE) throw new Error("Select target only possible with square grids.");
-        maxDist = Math.round(maxDist / this.scene.grid.distance) * this.scene.grid.distance;
+    roundToGridDistance(number) {
+        return Math.round(number / this.scene.grid.distance) * this.scene.grid.distance;
+    }
 
-        const snapMode = Math.max(1, this.token.document.width) % 2 === 0 ? CONST.GRID_SNAPPING_MODES.VERTEX : CONST.GRID_SNAPPING_MODES.CENTER;
+    /**
+     * Sets the options for the crosshair. Provided options override the defaults.
+     * @param {object} [options]    Options object. Can be in dot notation.
+     * @returns {this}
+     */
+    setCrosshairOptions(options={}) {
+        options = foundry.utils.expandObject(options);
 
-        const options = foundry.utils.mergeObject({
+        // Ensure that min and max range limits are always rounded to grid.
+        for(let locKey of ["limitMaxRange", "limitMinRange"]) {
+            const val = options.location?.[locKey];
+            if(typeof val === "number") options.location[locKey] = this.roundToGridDistance(val);
+        }
+
+        this.#crosshairOptions = foundry.utils.mergeObject({
             location: {
                 obj: this.token,
-                limitMaxRange: maxDist,
                 showRange: true,
                 wallBehavior: Sequencer.Crosshair.PLACEMENT_RESTRICTIONS.ANYWHERE,
                 displayRangePoly: true,
@@ -73,23 +78,68 @@ export default class Mover {
             },
             gridHighlight: true,
             snap: {
-                position: snapMode,
+                position: this.snapMode,
                 resolution: 1,
-                size: snapMode,
+                size: this.snapMode,
             }
-        }, crosshairOptions);
+        }, options);
 
-        const callbacks = foundry.utils.mergeObject({
+        return this;
+    }
+
+    /**
+     * Sets the callbacks for the crosshair. Provided callbacks override the default.
+     * @param {object} [callbacks]
+     * @returns {this}
+     */
+    setCrosshairCallbacks(callbacks={}) {
+        this.#crosshairCallbacks = foundry.utils.mergeObject({
             [Sequencer.Crosshair.CALLBACKS.INVALID_PLACEMENT]: async (crosshair) => {
                 await Sequencer.Helpers.wait(100);
                 this.token.control();
             }
-        }, crosshairCallbackOptions);
+        }, callbacks);
 
-        const location = await Sequencer.Crosshair.show(options, callbacks);
-        if(!location) return null;
+        return this;
+    }
 
-        return this.setTarget(location.x, location.y);
+    /**
+     * @typedef {object} TargetData
+     * @property {number} x
+     * @property {number} y
+     * @property {number} [targetElevation]
+     */
+
+    /**
+     * Sets the target location for the teleport.
+     * @param {TargetData}
+     * @returns {this}
+     */
+    setTarget({x, y, targetElevation}={}) {
+        if(!Number.isFinite(x) || !Number.isFinite(y)) throw new Error("Invalid arguments. x and y must be finite numbers.");
+        const rect = this.scene.dimensions.sceneRect;
+        this.#target.x = Math.clamp(x, rect.x, rect.x + rect.width);
+        this.#target.y = Math.clamp(y, rect.y, rect.y + rect.height);
+        if(Number.isSafeInteger(targetElevation)) this.#target.elevation = Math.max(targetElevation, -1);
+        return this;
+    }
+
+    /**
+     * Lets the user select the target location via crosshair on a square grid.
+     * @returns {Promise}   The crosshairPlaceable in-flight. Resolves to a location when one is selected or null if cancelled. 
+     */
+    async getLocation() {
+        if(this.scene.grid.type !== CONST.GRID_TYPES.SQUARE) throw new Error("Selecting location only possible with square grids.");
+        return Sequencer.Crosshair.show(this.#crosshairOptions, this.#crosshairCallbacks);
+    }
+
+    /**
+     * Lets the user select the target location via crosshair and sets the selected target.
+     * @returns {Promise<this|null>}            Null if the selection of a location was cancelled.
+     */
+    async getAndSetLocation() {
+        const location = await this.getLocation()
+        return location ? this.setTarget(location) : null
     }
 
     /**
