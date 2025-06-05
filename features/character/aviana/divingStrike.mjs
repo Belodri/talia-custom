@@ -78,10 +78,8 @@ class DivingStrike extends Mover {
         const res = await this.setTarget(loc)
             .executeMode("JUMP");
         if(!res) return;
-
+        
         await this.#updateBab();
-        this.token.control();
-        this.token.layer._sendToBackOrBringToFront(true);
     }
 
     /**

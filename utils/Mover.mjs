@@ -190,6 +190,10 @@ export default class Mover {
             console.error(err);
             return false;
         }
+
+        this.token.control();
+        this.token.layer._sendToBackOrBringToFront(true);
+
         if(fixElevation) await this.fixElevation(this.targetElevation);
         return true;
     }
