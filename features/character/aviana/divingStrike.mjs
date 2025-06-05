@@ -80,6 +80,8 @@ class DivingStrike extends Mover {
         if(!res) return;
 
         await this.#updateBab();
+        this.token.control();
+        this.token.layer._sendToBackOrBringToFront(true);
     }
 
     /**
@@ -129,7 +131,7 @@ class DivingStrike extends Mover {
     async #updateBab() {
         //calculate damage
 
-        const { diceSize, distanceInterval } = this.constructor.CONFIG;
+        const { diceSize, distanceInterval } = this.constructor.CONFIG.bonus;
         const path = canvas.grid.measurePath([this.startCenter, this.token.center], {});
         const diceCount = Math.floor(path.distance/distanceInterval);
         const damageDiceString = diceCount ? `${diceCount}${diceSize}` : "0";
