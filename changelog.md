@@ -1,3 +1,27 @@
+# 2.9.0 - 2025/06/15
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - GM Macro 'Teleport Selected Tokens'
+    </details>
+
+-   <details><summary><h2>Fixed</h2></summary>
+
+    - RestManager
+        - Rest results are now public by default.
+        - Added a message detailing rest begin and end
+
+    - Exhaustion
+        - Now actually affects rolls and spell DC (It didn't do anything before)
+        - Removing the exhaustion effect now actually removes it from the actor
+
+    - Fixed various bugs with jumping and teleportation abilities
+        - Jump action
+        - Eagle Spirit's Diving Strike
+        - Fey Step
+        - Soulknife's Psychic Teleportation
+    </details>
+
 # 2.8.0 - 2025/06/01
 
 -   <details><summary><h2>Added</h2></summary>
