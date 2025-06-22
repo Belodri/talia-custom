@@ -10,6 +10,14 @@ export default {
 }
 
 class Exporter {
+    static CONFIG = {
+        /** Journals that have any of these strings in their names will be included in the selection. */
+        journalFolderNamePartials: [
+            "Player",
+            "Rules",
+        ]
+    }
+
     static DEFAULT_SETTLEMENT_NAME = "Promise";
 
     static async runMacro() { return new Exporter()._runMacro(); }
@@ -85,16 +93,20 @@ class Exporter {
                 label: u.name,
                 value: u.id,
                 selected: true
-            }));
+            }))
+            .sort((a,b) => a.label.localeCompare(b.label));
         const playersCheckboxes = makeCheckboxes("playerIds", "Players", playerOptions);
 
         const journalOptions = game.journal
-            .filter(j => j.folder?.name.includes("Player") && j.ownership.default >= 2)
+            .filter(j => j.ownership.default >= 2 
+                && Exporter.CONFIG.journalFolderNamePartials.some(str => j.folder?.name.includes(str))
+            )
             .map(j => ({
                 label: j.name,
                 value: j.id,
                 selected: true,
-            }));
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label));
         const journalCheckboxes = makeCheckboxes("journalIds", "Journals", journalOptions);
 
         const settlementField = new StringField({
@@ -241,7 +253,7 @@ class Exporter {
                 name: j.name,
                 pages: j.pages
                     .filter(p => (p.ownership.default >= 2 || p.ownership.default === -1) 
-                        && p.type === "text" && p.text.format === 1)
+                        && p.type === "text")
                     .sort((a,b) => a.sort !== b.sort ? a.sort - b.sort : a._stats.createdTime - b._stats.createdTime)
                     .map(p => ({
                         name: p.name,
