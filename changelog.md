@@ -1,3 +1,18 @@
+# 2.10.0 - 2025/06/22
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Personal chests for Emilio, Naami, and Kyrin 
+    - Added the journals 'Homebrew Rules' and 'Homebrew Conditions' to website export data (will be visible on the next website update after this session).
+    - Added remaining books 'Alchemical Ingredients And Brews' and 'Divinities - A Working Catalogue' to the 'Books' journal.
+    </details>
+
+-   <details><summary><h2>Fixed</h2></summary>
+
+    - Opening Shalkoc's Snack Pack should now correctly update the Spice List journal entry again.
+    - Exporter for website data should now correctly handle Markdown formatted journal entries in addition to raw HTML.
+    </details>
+
 # 2.9.0 - 2025/06/15
 
 -   <details><summary><h2>Added</h2></summary>
