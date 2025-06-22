@@ -19,8 +19,8 @@ export default {
         };
         TaliaCustomAPI.add({chefFeat_chatButton: Cooking.itemButtonMacro}, "ItemMacros");
         Hooks.once("ready", () => {
-            if(game.user.name !== "Shalkoc") return;
-
+            if(!game.user.isGM && game.user.name !== "Shalkoc") return;
+            
             Hooks.on("renderContainerSheet", (app, html, data) => {
                 if(data.document?.name === "Snack Pack") {
                     updateSpiceListJournal(data.document);
@@ -34,11 +34,11 @@ export default {
 /**
  * 
  * @param {Item} container 
- * @returns 
+ * @returns {void}
  */
 async function updateSpiceListJournal(container) {
     const CONFIG = {
-        journalName: "Shalkoc's Notes",
+        journalName: "Notes - Shalkoc",
         pageName: "Spice List",
     }
 
