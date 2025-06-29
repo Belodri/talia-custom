@@ -1,3 +1,14 @@
+# 2.11.0 - 2025/06/22
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Items
+        - Wand of Catnap
+        - Beacon of Doom
+        - Transdimensional Anchor
+        - Transdimensional Anchorchain
+    </details>
+
 # 2.10.0 - 2025/06/22
 
 -   <details><summary><h2>Added</h2></summary>
