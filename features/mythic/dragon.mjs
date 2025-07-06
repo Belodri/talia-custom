@@ -68,7 +68,7 @@ function instinctiveGreed() {
      * MUTATES rollDataConfig
      */
     Hooks.on("dnd5e.preRollDamage", (item, rollDataConfig) => {
-        const featItem = item.actor.itemTypes.feat.find(i => i.name === "Instinctive Greed");
+        const featItem = item?.actor?.itemTypes?.feat?.find(i => i.name === "Instinctive Greed");
         if(!featItem) return;
 
         //only add damage if the item deals poison damage natively

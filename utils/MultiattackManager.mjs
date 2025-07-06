@@ -113,7 +113,7 @@ class Multiattack {
      * @param {DamageRollConfiguration} config 
      */
     static onPreRollDamage(item, config) {
-        const instance = Multiattack.tracked.get(item.uuid);
+        const instance = Multiattack.tracked.get(item?.uuid);
         if(!instance?.awaitsDamageHook) return;
 
         instance._onDamage(config); //async
