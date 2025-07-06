@@ -1,3 +1,21 @@
+# 2.12.0 - 2025/07/06
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Items
+        - Spidersilk Bomb
+        - Spidersilk Bandage
+        - Spidersilk Rope
+        - Tanglefoot Arrow
+    - Spells
+        - Planetrotting
+    </details>
+
+-   <details><summary><h2>Fixed</h2></summary>
+
+    - Various errors when rolling damage from chat messages without linked items.
+    </details>
+
 # 2.11.0 - 2025/06/22
 
 -   <details><summary><h2>Added</h2></summary>
