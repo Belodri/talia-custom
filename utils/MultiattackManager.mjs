@@ -202,7 +202,7 @@ class Multiattack {
      * @returns {void}
      */
     static onRenderChatMessage5e(message, html) {
-        const button = html[0].querySelector("[data-action^='talia-repeat-attack']");
+        const button = html?.[0]?.querySelector?.("[data-action^='talia-repeat-attack']");
         if(!button) return;
 
         button.dataset.messageId = message.id;

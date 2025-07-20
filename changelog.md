@@ -1,3 +1,23 @@
+# 2.14.0 - 2025/07/20
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Items
+        - Sickle of the Bloody Harvest
+        - Spriggan Staff
+    - Spells
+        - Speak with Plants
+        - Grasping Vine
+        - Wall of Thorns
+        - Locate Animals or Plants
+    </details>
+
+-   <details><summary><h2>Fixed</h2></summary>
+
+    - Error when trying to determine an item's ability to multiattack if the item isn't embedded on an actor.
+    - 3rd party module incorrectly displaying suppressed active effects in the sidebar.  
+    </details>
+
 # 2.12.0 - 2025/07/06
 
 -   <details><summary><h2>Added</h2></summary>
