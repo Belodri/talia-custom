@@ -17,6 +17,13 @@ class RestManager {
         postRestMsg: true,
     }
 
+    /** How many days per type of rest. */
+    static REST_INTERVAL_IN_D = {
+        short: 1,
+        long: 5,
+        extended: 30
+    };
+
     static REST_CONFIG_OVERRIDES = {
         dialog: false,
         autoHD: false,
@@ -27,6 +34,10 @@ class RestManager {
         long: "longRest",
         extended: "extendedRest"
     };
+
+    static SC_Timestamp() { return SimpleCalendar.api.timestamp(); }
+
+    static SC_TimestampToDateDisplay(timestamp) { return SimpleCalendar.api.timestampToDate(timestamp).display; }
 
     /**
      * @returns {Promise<Map<[uuid: string], {actor: Actor5e, restResult: RestResult}>>}
@@ -41,10 +52,12 @@ class RestManager {
             game.settings.set("core", "rollMode", RestManager.CONFIG.resultMsgMode);
         }
 
+        const preRestTimestamp = RestManager.SC_Timestamp();
+
         try {
             const results = await RestManager.rest(choices.actors, choices.config);
             if(RestManager.CONFIG.postRestMsg && results.size) {
-                await RestManager.postRestMessage(choices.config.type);
+                await RestManager.postRestMessage(choices.config, preRestTimestamp);
             }
 
             return results;
@@ -79,76 +92,41 @@ class RestManager {
     }
 
     /**
-     * @param {string} restType 
+     * @param {RestConfiguration} config
+     * @param {number} preRestTimestamp 
      * @returns {Promise<ChatMessage>}
      */
-    static async postRestMessage(restType) {
-        const {start, end} = this._getStartEndFormat(restType);
-        const sameDay = start.day === end.day 
-            && start.monthName === end.monthName 
-            && start.year === end.year;
+    static async postRestMessage(config, preRestTimestamp) {
+        const { type, duration } = config;
 
+        const postRestTimestamp = this.SC_Timestamp();
+        const restEndStr = this.timestampToString(postRestTimestamp);
+        
+        const nextRestTimeout = this.REST_INTERVAL_IN_D[type];
+        const nextRestTimestamp = preRestTimestamp + ( nextRestTimeout * 60 * 60 * 24 );
+        const nextRestStr = this.timestampToString(nextRestTimestamp);
+
+        const content = `
+            <h2>${type.capitalize()} Rest</h2>
+            <p><stong>Finished: ${restEndStr}</stong></p>
+            <p><strong>Next on: ${nextRestStr}</strong></p>
+        `;
+        
         const msgData = {
-            content: `<h2>${restType.capitalize()} Rest</h2>`,
+            content,
             speaker: ChatMessage.implementation._getSpeakerFromUser({ user: game.user })
         };
-
-        if(sameDay) {
-            // Tuesday, Nonus 28th 1497 from 15:08 to 16:08
-            msgData.content += `<p>${start.weekday}, ${start.monthName} ${start.day}${start.daySuffix} ${start.year} from ${start.hour}:${start.minute} to ${end.hour}:${end.minute}</p>`;
-        } else {
-            // From Tuesday, Nonus 28th 1497 at 15:08
-            // To Wednesday, Nonus 29th 1497 at 15:08
-            const startLine = `<p>From ${start.weekday}, ${start.monthName} ${start.day}${start.daySuffix} ${start.year} at ${start.hour}:${start.minute}</p>`;
-            const endLine = `<p>To ${end.weekday}, ${end.monthName} ${end.day}${end.daySuffix} ${end.year} at ${end.hour}:${end.minute}</p>`;
-            msgData.content += startLine + endLine;
-        }
 
         return ChatMessage.implementation.create(msgData);
     }
 
-    /**
-     * @typedef {object} DateTimeFormat
-     * @property {string} day
-     * @property {string} daySuffix      
-     * @property {string} monthName
-     * @property {string} weekday   
-     * @property {string} year   
-     * @property {string} hour
-     * @property {string} minute
-     */
 
-    /**
-     * Gets the start and end date formats for the rest type.
-     * Start date is calculated by subtracting the rest duration from the current date.
-     * @param {"short"|"long"|"extended"} restType 
-     * @returns {{end: DateTimeFormat, start: DateTimeFormat}}
-     */
-    static _getStartEndFormat(restType) {
-        const { timestamp, timestampToDate } = SimpleCalendar.api;
-        const durInMinutes = CONFIG.DND5E.restTypes[restType].duration[game.settings.get("dnd5e", "restVariant")];
+    static timestampToString(timestamp) {
+        const { day, daySuffix, monthName, weekday, year, time } = this.SC_TimestampToDateDisplay(timestamp);
+        const [hour, minute] = time.split(":");
 
-        const endTimestamp = timestamp();
-        const startTimestamp = endTimestamp - (durInMinutes * 60);
-
-        const format = (timeInS) => {
-            const { day, daySuffix, monthName, weekday, year, time } = timestampToDate(timeInS).display;
-            const timeParts = time.split(":");
-            return {
-                day,
-                daySuffix,
-                monthName,
-                weekday,
-                year,
-                hour: timeParts[0],
-                minute: timeParts[1],
-            }
-        }
-
-        return {
-            end: format(endTimestamp),
-            start: format(startTimestamp)
-        }
+        // End: Tuesday, Nonus 28th 1497 at 16:08
+        return `${weekday}, ${monthName} ${day}${daySuffix} ${year} at ${hour}:${minute}`;
     }
 
     /**
@@ -156,15 +134,16 @@ class RestManager {
      * @property {Actor[]} actors
      * @property {object} config
      * @property {"short"|"long"|"extended"} config.type
-     * @property {boolean} newDay
-     * @property {boolean} advanceTime
+     * @property {boolean} config.newDay
+     * @property {boolean} config.advanceTime
+     * @property {number} config.duration
      */
 
     /**
      * @returns {Promise<RestDialogChoices | null>}
      */
     static async configureRestDialog() {
-        const { StringField, BooleanField } = foundry.data.fields;
+        const { StringField, BooleanField, NumberField } = foundry.data.fields;
         const { createMultiSelectInput, createFormGroup } = foundry.applications.fields;
 
         const restTypeField = new StringField({
@@ -182,24 +161,38 @@ class RestManager {
             })
         }).outerHTML;
 
-        const advanceTimeField = new BooleanField({
-            label: "Advance time?",
-            initial: true,
-        }).toFormGroup({},{name: "advanceTime"}).outerHTML;
+        const advanceTimeByHoursField = new NumberField({
+            label: "Advance Time (h)",
+            nullable: false,
+            required: true,
+            min: 0,
+            initial: 0
+        }).toFormGroup({}, {name:"advanceTimeByHours"}).outerHTML;
+
+        const advanceTimeByDaysField = new NumberField({
+            label: "Advance Time (d)",
+            nullable: false,
+            required: true,
+            min: 0,
+            initial: 0
+        }).toFormGroup({}, {name:"advanceTimeByDays"}).outerHTML;
 
         return foundry.applications.api.DialogV2.prompt({
             window: { title: "Configure Rest" },
             position: { width: 1200 },
-            content: restTypeField + advanceTimeField + restingActorsField,
+            content: restTypeField + advanceTimeByHoursField + advanceTimeByDaysField + restingActorsField,
             ok: { 
                 callback: (_, button) => {
                     const chosen = new FormDataExtended(button.form).object;
+                    const totalAdvanceTimeMin = ( chosen.advanceTimeByDays * 24 * 60 ) + ( chosen.advanceTimeByHours * 60 );
+
                     return {
                         actors: chosen.actorUuids.map(uuid => fromUuidSync(uuid)),
                         config: {
                             type: chosen.type,
                             newDay: chosen.type !== "short",    //any newDay stuff refreshes on any long or extended rest.
-                            advanceTime: chosen.advanceTime,
+                            advanceTime: !!totalAdvanceTimeMin,
+                            duration: totalAdvanceTimeMin
                         }
                     }
                 }
