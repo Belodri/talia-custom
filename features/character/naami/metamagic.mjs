@@ -19,6 +19,7 @@ const METAMAGICS = [
     { itemName: "Metamagic: Heightened Spell", registerButtonFn: heightened },
     { itemName: "Metamagic: Twinned Spell", registerButtonFn: twinned },
     { itemName: "Metamagic: Extended Spell", registerButtonFn: extended },
+    { itemName: "Metamagic: Empowered Spell", registerButtonFn: empowered },
 ]
 
 
@@ -124,9 +125,9 @@ function extended(itemName = "Metamagic: Extended Spell") {
     ]});
 
     // Chat card button creates the metamagic effect on the actor
-    async function extendedButton(item, channelled=false) {
+    async function extendedButton(item, isChanneled=false) {
         const eff = item.effects
-            .find(e => e.name.includes(channelled ? "(Channelled)" : "(Warded)"));
+            .find(e => e.name.includes(isChanneled ? "(Channelled)" : "(Warded)"));
         await eff.update({disabled: false});
     }
 
@@ -219,4 +220,29 @@ function extended(itemName = "Metamagic: Extended Spell") {
             if(!eff.disabled) eff.update({disabled: true});
         }
     });
+}
+
+function empowered(itemName = "Metamagic: Empowered Spell") {
+    ChatCardButtons.register({ itemName, buttons: [
+        { label: "Warded", callback: ({item}) => empoweredButton(item, false) },
+        { label: "Channeled", callback: ({item}) => empoweredButton(item, true) },
+        rollFatigueButton
+    ]});
+
+    async function empoweredButton(item, isChanneled=false) {
+        const eff = item.effects
+            .find(e => e.name.includes(isChanneled ? "(Channelled)" : "(Warded)"));
+        await eff.update({disabled: false});
+    }
+
+    // simply disable the effect after the first valid item use
+    Hooks.on("dnd5e.useItem", (item, config, options) => {
+        if(item.type !== "spell") return;
+        const featureItem = item.actor?.items?.getName(itemName);
+        if(!featureItem) return;
+        
+        for(const eff of featureItem.effects) {
+            if(!eff.disabled) eff.update({"disabled": true});
+        }
+    })
 }
