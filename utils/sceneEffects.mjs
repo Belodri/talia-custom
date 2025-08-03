@@ -1,3 +1,7 @@
+/**
+ * @import D20Roll from "../system/dnd5e/module/dice/d20-roll.mjs";
+ */
+
 import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
 
@@ -5,6 +9,7 @@ export default {
     register() {
         TaliaCustomAPI.add({SceneEffectManager}, "none");
         SceneEffectManager.registerHooks();
+        SceneEffectEffects.register();
     }
 }
 
@@ -308,5 +313,177 @@ class SceneEffectManager {
 
     static hasSceneEffects(scene) {
         return !!scene.flags[MODULE.ID]?.[SceneEffectManager.sceneFlagKey]?.length
+    }
+}
+
+class SceneEffectEffects {
+    static register() {
+        Hooks.on("talia_postConfigureD20Modifiers", SceneEffectEffects.clockworkPrecision);
+    }
+
+    /**
+     * "D20 tests can have neither advantage nor disadvantage. 
+     * Whenever you roll the d20 of a d20 test, you instead roll 2d20 and keep the one closest to 10. 
+     * Modifiers still apply as normal."
+     * 
+     * @param {D20Roll} d20Roll     The D20Roll instance to be modified 
+     * @returns {void}
+     */
+    static clockworkPrecision(d20Roll) {
+        const { data } = d20Roll;
+        const isActive = foundry.utils.getProperty(data, "flags.talia-custom.clockworkPrecision");
+        if(!isActive) return;
+
+        const d20 = d20Roll.terms[0];
+
+        // Ensure no advantage or disadvantage
+        d20.modifiers = d20.modifiers.filter(m => m !== "kh" && m !== "kl");
+        d20Roll.options.advantageMode = 0;
+        d20.options.advantage = false;
+        d20.options.disadvantage = false;
+
+        // Add the custom keepClosestTo modifier 
+        d20.number = 2;
+        d20.modifiers.push("kct");
+    }
+}
+
+class RollTester_ClockworkPrecision {
+    static DEFAULT_ITERATIONS = 1000000;
+
+    static test(diceNumber, diceFaces, {iterations, printResults = true} = {}) {
+        const tester = new RollTester_ClockworkPrecision(diceNumber, diceFaces, iterations).evaluate();
+        if(printResults) tester.printResults();
+        return tester;
+    }
+
+    #dice;
+
+    #faces;
+
+    #middle;
+
+    #iterations;
+
+    #evaluated = false;
+
+    #counts = new Map();
+
+    #probabilities = new Map();
+
+    #maxProbability = 0;
+
+    get dice() { return this.#dice; }
+
+    get faces() { return this.#faces };
+
+    get evaluated() { return this.#evaluated; }
+
+    get counts() { return this.#counts; }
+
+    get probabilities() { return this.#probabilities; }
+
+    get maxProbability() { return this.#maxProbability; }
+
+    constructor(dice, faces, iterations = RollTester_ClockworkPrecision.DEFAULT_ITERATIONS) {
+        this.#dice = dice;
+        this.#faces = faces;
+        this.#iterations = iterations;
+        this.#middle = Math.round(faces/2);
+
+        for(let i = 1; i <= faces; i++) {
+            this.#counts.set(i, 0);
+        }
+    }
+
+    evaluate() {
+        if(this.#evaluated) throw new Error("This instance has already been evaluated.");
+        
+        for(let i = 0; i < this.#iterations; i++) {
+            const result = this.#evaluateSingleRoll();
+            this.#counts.set(result, this.#counts.get(result) + 1);
+        }
+
+        this.#setProbabilities();
+
+        this.#evaluated = true;
+        return this;
+    }
+
+
+    #evaluateSingleRoll(rerollCounter = 0) {
+        if(rerollCounter >= 100) throw new Error("Recursion limit reached.");
+
+        const rolls = [];
+        for(let i = 0; i < this.#dice; i++) {
+            rolls.push(this.#getSingleDie());
+        }
+
+        let nearestRoll = null;
+        let minDist = Infinity;
+        let forceReroll = false;
+
+        for(const roll of rolls) {
+            if(nearestRoll === null) {
+                nearestRoll = roll;
+                minDist = Math.abs(this.#middle - roll);
+                continue;
+            }
+
+            const rollDist = Math.abs(this.#middle - roll);
+            if(rollDist < minDist) {
+                nearestRoll = roll;
+                minDist = rollDist;
+                forceReroll = false;
+                continue;
+            } else if(rollDist > minDist) continue;
+            
+            // Same result
+            if(roll === nearestRoll) continue;
+
+            // Equal distance but different value
+            forceReroll = true;
+        }
+
+        return forceReroll 
+            ? this.#evaluateSingleRoll(rerollCounter + 1)
+            : nearestRoll
+    }
+
+    #getSingleDie() {
+        return Math.floor(Math.random() * this.#faces) + 1;
+    }
+
+    #setProbabilities() {
+        for(const [dieFace, count] of this.#counts.entries()) {
+            const probability = (count / this.#iterations) * 100;
+            this.#probabilities.set(dieFace, probability);
+            if(probability > this.#maxProbability) this.#maxProbability = probability;
+        }
+
+        return this;
+    }
+
+    printResults() {
+        if(!this.#evaluated) throw new Error("This instance must be evaluated before results can be printed.");
+
+        console.log(`--- Distribution for ${this.#dice}d${this.#faces} (keep closest to ${this.#middle}) ---`);
+        console.log(`--- Over ${this.#iterations.toLocaleString()} simulations... ---\n`);
+        console.log("Result | Probability | Distribution");
+        console.log("-------|-------------|--------------------------------------------------");
+
+        const BAR_WIDTH = 50;
+        for (let i = 1; i <= 20; i++) {
+            const prob = this.#probabilities.get(i);
+            const probString = prob.toFixed(3).padStart(7, ' ');
+            const barLength = Math.round((prob / this.#maxProbability) * BAR_WIDTH);
+            const bar = '█'.repeat(barLength);
+            const resultString = String(i).padStart(2, ' ');
+            
+            console.log(`   ${resultString}  |   ${probString}% | ${bar}`);
+        }
+        console.log("-------|-------------|--------------------------------------------------");
+
+        return this;
     }
 }

@@ -17,6 +17,7 @@ import MultiattackManager from "./MultiattackManager.mjs";
 import currencyChatLogger from "./currencyChatLogger.mjs";
 import CombatTriggers from "./CombatTriggers.mjs";
 import multiroll from "./multiroll.mjs";
+import RollModifiers from "./RollModifiers.mjs";
 
 export const TaliaUtils = {
     Helpers,
@@ -26,6 +27,7 @@ export const TaliaUtils = {
 
 export default {
     registerSection() {
+        RollModifiers.register();
         utilHooks.register();
         CombatTriggers.init();
         spellbookManager.register();
