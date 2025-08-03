@@ -1,3 +1,45 @@
+# 2.15.0 - 2025/08/03
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Items
+        - Painter's Plume
+        - Angel's Grace
+    - Spells
+        - Shield of Faith
+        - Sanctuary
+        - Detect Evil and Good
+        - Beacon of the Martyr
+        - Aura of Purity
+        - Dispel Evil and Good
+        - Crown of Radiance
+
+    - Rest: Chat message denoting rest duration now also includes the next date and time that type of rest can be taken.
+    - Realm Effect: Clockwork Precision
+    - Die modifer: "keepClosestTo" `kct`
+    </details>
+
+-   <details><summary><h2>Changed</h2></summary>
+
+    - Sickle of the Bloody Harvest: 
+        - No longer requires attunement
+        - Reduced the attack and damage bonus from 3 to 2
+
+    - Coordinated Hunt (Spirit Warrior - Wolf)
+        from:
+        > "When a creature that is threatened by both you and at least one of your allies makes an attack, you can use your reaction to let each of your allies make one weapon or spell attack against the threatened creature."
+
+        to:
+        > "When a creature that is threatened by both you and at least one of your allies makes an attack, you can use your reaction to let one of your allies make a single weapon attack against the threatened creature."
+
+    </details>
+
+-   <details><summary><h2>Fixed</h2></summary>
+
+    - Rest: Chat message denoting rest duration should now be accurate.
+
+    </details>
+
 # 2.14.0 - 2025/07/20
 
 -   <details><summary><h2>Added</h2></summary>
