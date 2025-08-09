@@ -1,31 +1,46 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
 import ChatCardButtons from "../../../utils/chatCardButtons.mjs";
-import ChanneledMetamagic from "./channeledMetamagic.mjs";
+import { ChannelledMetamagic } from "./channelledMetamagic.mjs";
 
 export default {
     register() {
-        METAMAGICS.forEach(config => {
+        METAMAGIC_REGISTRATIONS.forEach(config => {
             config.registerButtonFn?.(config.itemName);
         });
     }
 }
-const rollFatigueButton = { label: "Roll Channeling Fatigue", callback: ChanneledMetamagic.channel };
 
-const METAMAGICS = [
-    { itemName: "Metamagic: Careful Spell", registerButtonFn: defaultButton },
-    { itemName: "Metamagic: Distant Spell", registerButtonFn: defaultButton },
-    { itemName: "Metamagic: Subtle Spell", registerButtonFn: defaultButton },
-    { itemName: "Metamagic: Heightened Spell", registerButtonFn: heightened },
-    { itemName: "Metamagic: Twinned Spell", registerButtonFn: twinned },
-    { itemName: "Metamagic: Extended Spell", registerButtonFn: extended },
-    { itemName: "Metamagic: Empowered Spell", registerButtonFn: empowered },
-    { itemName: "Metamagic: Piercing Spell", registerButtonFn: defaultButton },
-    { itemName: "Metamagic: Quickened Spell", registerButtonFn: defaultButton },
-    { itemName: "Metamagic: Seeking Spell", registerButtonFn: defaultButton },
-    { itemName: "Metamagic: Transmuted Spell", registerButtonFn: defaultButton },
-]
+export const METAMAGIC_OPTIONS = {
+    careful: { itemName: "Metamagic: Careful Spell", key: "careful", name: "Careful" },
+    distant: { itemName: "Metamagic: Distant Spell", key: "distant", name: "Distant" },
+    empowered: { itemName: "Metamagic: Empowered Spell", key: "empowered", name: "Empowered" },
+    extended: { itemName: "Metamagic: Extended Spell", key: "extended", name: "Extended" },
+    piercing: { itemName: "Metamagic: Piercing Spell", key: "piercing", name: "Piercing" },
+    quickened: { itemName: "Metamagic: Quickened Spell", key: "quickened", name: "Quickened" },
+    subtle: { itemName: "Metamagic: Subtle Spell", key: "subtle", name: "Subtle" },
+    twinned: { itemName: "Metamagic: Twinned Spell", key: "twinned", name: "Twinned" },
+    seeking: { itemName: "Metamagic: Seeking Spell", key: "seeking", name: "Seeking" },
+    transmuted: { itemName: "Metamagic: Transmuted Spell", key: "transmuted", name: "Transmuted" },
+    heightened: { itemName: "Metamagic: Heightened Spell", key: "heightened", name: "Heightened" },
+};
 
+
+const METAMAGIC_REGISTRATIONS = [
+    { itemName: METAMAGIC_OPTIONS.careful.itemName, registerButtonFn: defaultButton },
+    { itemName: METAMAGIC_OPTIONS.distant.itemName, registerButtonFn: defaultButton },
+    { itemName: METAMAGIC_OPTIONS.subtle.itemName, registerButtonFn: defaultButton },
+    { itemName: METAMAGIC_OPTIONS.heightened.itemName, registerButtonFn: heightened },
+    { itemName: METAMAGIC_OPTIONS.twinned.itemName, registerButtonFn: twinned },
+    { itemName: METAMAGIC_OPTIONS.extended.itemName, registerButtonFn: extended },
+    { itemName: METAMAGIC_OPTIONS.empowered.itemName, registerButtonFn: empowered },
+    { itemName: METAMAGIC_OPTIONS.piercing.itemName, registerButtonFn: defaultButton },
+    { itemName: METAMAGIC_OPTIONS.quickened.itemName, registerButtonFn: defaultButton },
+    { itemName: METAMAGIC_OPTIONS.seeking.itemName, registerButtonFn: defaultButton },
+    { itemName: METAMAGIC_OPTIONS.transmuted.itemName, registerButtonFn: defaultButton },
+];
+
+const rollFatigueButton = { label: "Roll Channeling Fatigue", callback: ({message}) => ChannelledMetamagic.channel({message}) };
 
 function defaultButton(itemName) {
     ChatCardButtons.register({ itemName, buttons: [
@@ -124,14 +139,14 @@ function extended(itemName = "Metamagic: Extended Spell") {
 
     ChatCardButtons.register({ itemName, buttons: [
         { label: "Warded", callback: ({item}) => extendedButton(item, false) },
-        { label: "Channeled", callback: ({item}) => extendedButton(item, true) },
+        { label: "Channelled", callback: ({item}) => extendedButton(item, true) },
         rollFatigueButton
     ]});
 
     // Chat card button creates the metamagic effect on the actor
-    async function extendedButton(item, isChanneled=false) {
+    async function extendedButton(item, isChannelled=false) {
         const eff = item.effects
-            .find(e => e.name.includes(isChanneled ? "(Channelled)" : "(Warded)"));
+            .find(e => e.name.includes(isChannelled ? "(Channelled)" : "(Warded)"));
         await eff.update({disabled: false});
     }
 
@@ -229,13 +244,13 @@ function extended(itemName = "Metamagic: Extended Spell") {
 function empowered(itemName = "Metamagic: Empowered Spell") {
     ChatCardButtons.register({ itemName, buttons: [
         { label: "Warded", callback: ({item}) => empoweredButton(item, false) },
-        { label: "Channeled", callback: ({item}) => empoweredButton(item, true) },
+        { label: "Channelled", callback: ({item}) => empoweredButton(item, true) },
         rollFatigueButton
     ]});
 
-    async function empoweredButton(item, isChanneled=false) {
+    async function empoweredButton(item, isChannelled=false) {
         const eff = item.effects
-            .find(e => e.name.includes(isChanneled ? "(Channelled)" : "(Warded)"));
+            .find(e => e.name.includes(isChannelled ? "(Channelled)" : "(Warded)"));
         await eff.update({disabled: false});
     }
 
