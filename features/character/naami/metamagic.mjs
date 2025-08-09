@@ -20,6 +20,10 @@ const METAMAGICS = [
     { itemName: "Metamagic: Twinned Spell", registerButtonFn: twinned },
     { itemName: "Metamagic: Extended Spell", registerButtonFn: extended },
     { itemName: "Metamagic: Empowered Spell", registerButtonFn: empowered },
+    { itemName: "Metamagic: Piercing Spell", registerButtonFn: defaultButton },
+    { itemName: "Metamagic: Quickened Spell", registerButtonFn: defaultButton },
+    { itemName: "Metamagic: Seeking Spell", registerButtonFn: defaultButton },
+    { itemName: "Metamagic: Transmuted Spell", registerButtonFn: defaultButton },
 ]
 
 
