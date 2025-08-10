@@ -1,3 +1,27 @@
+# 2.16.0 - 2025/08/010
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Items
+        - Clockwork Looking Glass
+
+    - Features
+        - Gift of Eyes
+        - Diamond Soul
+        - Overchannel
+        - Metamagic: Careful Spell
+        - Metamagic: Distant Spell
+        - Metamagic: Extended Spell
+        - Metamagic: Empowered Spell
+        - Metamagic: Piercing Spell
+        - Metamagic: Quickened Spell
+        - Metamagic: Transmuted Spell
+        - Focused Metamagic
+        - Metamagic Mastery
+        - Event Horizon
+    
+    </details>
+
 # 2.15.0 - 2025/08/03
 
 -   <details><summary><h2>Added</h2></summary>
