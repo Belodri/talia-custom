@@ -1,9 +1,11 @@
-import channeledMetamagic from "./channeledMetamagic.mjs";
+import channeledMetamagic from "./channelledMetamagic.mjs";
 import metamagic from "./metamagic.mjs";
+import metamagicMastery from "./metamagicMastery.mjs"
 
 export default {
     registerSubsection() {
-        channeledMetamagic.register();
         metamagic.register();
+        channeledMetamagic.register();
+        metamagicMastery.register();
     }
 }
