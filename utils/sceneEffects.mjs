@@ -132,6 +132,7 @@ class SceneEffectManager {
         (async () => {
             const promises = [];
             for(const token of scene.tokens) {
+                if(!token?.actor?.uuid) continue;
                 promises.push(SceneEffectManager.applySceneEffectsToActor(token, scene).then(result => ({
                     [token.actor.uuid]: result
                 })));
