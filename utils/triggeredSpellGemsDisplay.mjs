@@ -11,6 +11,7 @@ export default {
 class GemDisplay {
     static CONFIG = {
         triggerConditionFlag: "spellGem.triggerCondition",
+        userFlagToggleState: "spellGemDisplayToggle",
         itemTypeValue: "spellGem",
         debounceDelay: 50,
         anchorId: "hotbar-page-controls",
@@ -38,6 +39,7 @@ class GemDisplay {
 
     static init() {
         Hooks.on("getSceneControlButtons", GemDisplay._onGetSceneControlButtonsHook);
+        Hooks.on("renderSceneControls", GemDisplay._onRenderSceneControls);
     }
 
     static configure(newConfig) {
@@ -63,8 +65,35 @@ class GemDisplay {
         });
     }
 
-    /** @param {boolean} value */
-    static toggle(value) {
+    static #controlHookRecGuard = false;
+
+    /**
+     * When scene controls are rendered, ensure flag, displayUI, and controlsUI are synced.
+     */
+    static _onRenderSceneControls() {
+        // recursion guard
+        if(GemDisplay.#controlHookRecGuard) { 
+            GemDisplay.#controlHookRecGuard = false;
+            return;
+        }
+        GemDisplay.#controlHookRecGuard = true;
+        
+        // sync flag, displayUI, and controlsUI
+        const uiState = ui.controls?.control?.tools?.find?.(t => t.name === "trigger-gem-display")?.active;
+        if(typeof uiState !== "boolean") return;
+
+        const toggleFlag = game.user.getFlag(MODULE.ID, GemDisplay.CONFIG.userFlagToggleState) ?? true;
+
+        if(GemDisplay.active !== toggleFlag) GemDisplay.toggle(toggleFlag, false);  // sync state with flag
+        if(GemDisplay.active !== uiState) ui.controls.render();   // sync ui with state - rerender controls to update button state
+    }
+
+    /** 
+     * @param {boolean} value                   Toggle on (true) or off (false)?
+     * @param {boolean} [setUserFlag = true]    Set the new toggle state as a flag on the user?
+     */
+    static toggle(value, setUserFlag = true) {
+        if(setUserFlag) game.user.setFlag(MODULE.ID, GemDisplay.CONFIG.userFlagToggleState, value);    // async
         return value ? GemDisplay.#create() : GemDisplay.#destroy();
     }
 
@@ -254,6 +283,7 @@ class GemDisplay {
     }
 
     setElementContent = foundry.utils.debounce(() => {
+        if(!this.#element) return;
         const content = [...this.#items.values()]
             .map(i => this.#getParagraph(i))
             .sort((a, b) => a.localeCompare(b))
