@@ -4,7 +4,7 @@ import Mover from "../../../utils/Mover.mjs";
 export default {
     register() {
         ChatCardButtons.register({
-            itemName: "Jump",
+            itemName: ["Jump", "Interceptor Rocket Straps"],
             buttons: [{
                 label: "Jump",
                 callback: jump
