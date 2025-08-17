@@ -47,7 +47,7 @@ export default class ChatCardButtons {
      * Registers an array of buttons to a chat card for a specific item.
      * The callback function's argument is an object with { event: Event, message: Message, speaker: Speaker, item: Item, actor: Actor, scene: Scene?, token: Token? }
      * @param {object} options                          The configuration options for button registration
-     * @param {string} options.itemName                 The name of the item for which buttons are added
+     * @param {string | string[]} options.itemName      The name of the item(s) for which buttons are added
      * @param {boolean} [options.isPartialName=false]   If false, requires an exact item name match, otherwise matches all items containing `itemName` as a substring
      * @param {ChatCardButtonConfig[]} options.buttons  An array of button configurations
      * @param {Function} [options.displayFilter]            Optional function to conditionally render buttons. Receives (item, chatData, options) and if it explicitly returns `false`, no buttons are added.
@@ -94,13 +94,28 @@ export default class ChatCardButtons {
      *   }
      * });
      * 
+     * // Register button for two different items that should have identical buttons
+     * ChatCardButtons.register({
+     *   itemName: ["Jump", "Leap"],
+     *   isPartialName: true,
+     *   buttons: [
+     *     {
+     *       label: "Jump",
+     *       callback: async ({ item, actor, event }) => {
+     *         actor.executeJump();
+     *       }
+     *     }
+     *   ]
+     * });
+     * 
      * @returns {void}
      */
     static register({itemName, isPartialName = false, buttons, displayFilter = undefined}) {
-        
-
         // validate config;
-        if(!itemName || typeof itemName !== "string") throw new Error("Invalid itemName argument.");
+        const itemNameArr = itemName instanceof Array
+            ? itemName
+            : [itemName];
+        if(!itemNameArr?.length || itemNameArr.some(name => typeof name !== "string")) throw new Error("Invalid itemName argument.");
         if(!buttons || !(buttons instanceof Array) || !buttons.length) throw new Error("Invalid buttons argument.");
 
         // Wrap buttons to ensure consistent callback signature
@@ -129,15 +144,17 @@ export default class ChatCardButtons {
 
 
         // Register item configuration
-        if(!this.#registered.has(itemName)) {
-            this.#registered.set(itemName, {
-                itemName, 
-                isPartialName, 
-                buttons: wrappedButtons, 
-                displayFilter
-            });
-        } else {
-            console.warn(`itemName: "${itemName}" already registered. Skipping button register.`);
+        for(const name of itemNameArr) {
+            if(!this.#registered.has(name)) {
+                this.#registered.set(name, {
+                    itemName: name, 
+                    isPartialName, 
+                    buttons: wrappedButtons, 
+                    displayFilter
+                });
+            } else {
+                console.warn(`itemName: "${name}" already registered. Skipping button register.`);
+            }
         }
     }
 
