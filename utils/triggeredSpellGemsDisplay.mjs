@@ -40,6 +40,7 @@ class GemDisplay {
     static init() {
         Hooks.on("getSceneControlButtons", GemDisplay._onGetSceneControlButtonsHook);
         Hooks.on("renderSceneControls", GemDisplay._onRenderSceneControls);
+        Hooks.on("updateUser", GemDisplay._onUpdateUser);
     }
 
     static configure(newConfig) {
@@ -60,40 +61,68 @@ class GemDisplay {
             icon: "fas fa-gem",
             toggle: true,
             active: GemDisplay.active,
-            onClick: toggled => GemDisplay.toggle(toggled),
+            onClick: toggled => 
+                // Save the new toggle state on the user flag. 
+                // The following updateUser hook handles the toggle of the actual display.
+                game.user.setFlag(MODULE.ID, GemDisplay.CONFIG.userFlagToggleState, toggled),
             button: true
         });
     }
 
-    static #controlHookRecGuard = false;
+    /**
+     * Toggle the gem display if the user flag changes.
+     * @param {User} userDoc 
+     * @param {object} changed 
+     * @param {object} options 
+     * @param {string} userId 
+     */
+    static _onUpdateUser(userDoc, changed, options, userId) {
+        if(userId !== game.user.id) return;
+        const newDisplayState = changed.flags?.[MODULE.ID]?.[GemDisplay.CONFIG.userFlagToggleState];
+        if(typeof newDisplayState === "boolean") GemDisplay.toggle(newDisplayState);
+    }
+
+    static #controlHookRecGuardActive = false;
 
     /**
      * When scene controls are rendered, ensure flag, displayUI, and controlsUI are synced.
      */
-    static _onRenderSceneControls() {
-        // recursion guard
-        if(GemDisplay.#controlHookRecGuard) { 
-            GemDisplay.#controlHookRecGuard = false;
-            return;
-        }
-        GemDisplay.#controlHookRecGuard = true;
-        
-        // sync flag, displayUI, and controlsUI
-        const uiState = ui.controls?.control?.tools?.find?.(t => t.name === "trigger-gem-display")?.active;
-        if(typeof uiState !== "boolean") return;
-
+    static async _onRenderSceneControls() {
+        if(GemDisplay.#controlHookRecGuardActive) return;
         const toggleFlag = game.user.getFlag(MODULE.ID, GemDisplay.CONFIG.userFlagToggleState) ?? true;
 
-        if(GemDisplay.active !== toggleFlag) GemDisplay.toggle(toggleFlag, false);  // sync state with flag
-        if(GemDisplay.active !== uiState) ui.controls.render();   // sync ui with state - rerender controls to update button state
+        // sync display state with flag
+        if(GemDisplay.active !== toggleFlag) GemDisplay.toggle(toggleFlag);  
+
+        // sync controlsUI with flag
+        const uiState = ui.controls?.control?.tools?.find?.(t => t.name === "trigger-gem-display")?.active;
+        
+        // No need to sync if the gem display button is not in the currently shown tools list or if it's already in sync.
+        if(typeof uiState !== "boolean" || GemDisplay.active === uiState) return;
+
+        GemDisplay.#controlHookRecGuardActive = true;        
+        try {
+            // Rerender controls to update button state
+            // Use _render so we can await the result and unset the recursion guard.
+            await ui.controls._render();    
+        } catch (err) {
+            // Since we're bypassing Application#render, 
+            // we're manually implementing its error handling here
+            ui.controls._state = Application.RENDER_STATES.ERROR;
+            Hooks.onError("Application#render", err, {
+                msg: `An error occurred while rendering ${ui.controls.constructor.name} ${ui.controls.appId}`,
+                log: "error"
+            });
+        } finally {
+            // Either way, unset the recursion guard
+            GemDisplay.#controlHookRecGuardActive = false;
+        }
     }
 
     /** 
-     * @param {boolean} value                   Toggle on (true) or off (false)?
-     * @param {boolean} [setUserFlag = true]    Set the new toggle state as a flag on the user?
+     * @param {boolean} value   Toggle on (true) or off (false)?
      */
-    static toggle(value, setUserFlag = true) {
-        if(setUserFlag) game.user.setFlag(MODULE.ID, GemDisplay.CONFIG.userFlagToggleState, value);    // async
+    static toggle(value) {
         return value ? GemDisplay.#create() : GemDisplay.#destroy();
     }
 
