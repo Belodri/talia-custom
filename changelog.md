@@ -1,4 +1,41 @@
-# 2.16.0 - 2025/08/010
+# 2.17.0 - 2025/08/17
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Spells
+        - Krail's Rupture
+        - Sorcerous Burst
+        - Resurrection
+        - Tenser's Transformation
+        - Flesh to Stone
+        - Catapult
+        - Scrying
+        - Flawed Design
+        - Greater Catapult
+        - Fly
+
+    - Features
+        - Telekinetic Movement
+
+    - Items
+        - Gold locket with painted portrait inside
+        - Martyr's Locket
+        - Interceptor Rocket Straps
+        - Tinkertop Boltblaster 1000
+
+    - UI/UX
+        - The toggle state for the display of spell gem triggers now persists through reloads.
+
+    - Dev/API
+        - `ChatCardButtons#register()` can now register the same button for multiple items at once.
+    </details>
+
+-   <details><summary><h2>Fixed</h2></summary>
+
+    - Error during application of scene effects when tokens of deleted actors were present on a scene.
+    </details>
+
+# 2.16.0 - 2025/08/10
 
 -   <details><summary><h2>Added</h2></summary>
 
