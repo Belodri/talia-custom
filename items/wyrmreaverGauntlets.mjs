@@ -30,7 +30,7 @@ async function invokingTheRunesButton(item, actor) {
     }
 
     const uses = item.system.uses.value;
-    if(newUses < 1) {
+    if(uses < 1) {
         ui.notifications.warn("No uses remaining.");
         return;
     }
