@@ -1,3 +1,33 @@
+# 2.18.0 - 2025/09/14
+
+-   <details><summary><h2>Added</h2></summary>
+
+    - Item
+        - Hearthkeeper's Spark
+        - Gloves of Thievery
+        - Sheeshah of Revelations
+        - Magma Mantle
+        - Incense of Recovery (Minor, Moderate, Major)
+        - Earthboard
+
+    </details>
+
+-   <details><summary><h2>Changed</h2></summary>
+
+    - Promise
+        - Added additional effects to numerous buildings
+        - Buffed the attribute bonuses granted by the Sewer System building
+        - Added progress requirement to Alchemist's Workshop building
+        - Reduced the attribute requirements of the Pathfinder Society Lodge building
+    - Mythic Legend 2 - Godbreaker: Buffed
+
+    </details>
+
+-   <details><summary><h2>Fixed</h2></summary>
+
+    - Wyrmreaver Gauntlets: Invoking the Runes
+    </details>
+
 # 2.17.0 - 2025/08/17
 
 -   <details><summary><h2>Added</h2></summary>
