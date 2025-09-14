@@ -54,7 +54,7 @@
         "unlocked": []
       },
       "flavorText": "A haven for locals and travellers alike, the inn stands as a cornerstone of the community, a place where the weary find respite and the curious find intrigue.",
-      "effectText": ""
+      "effectText": "Downtime Activity: Training (Dice Set, Playing Cards Set);"
     },
     {
       "id": "barracks",
@@ -110,7 +110,7 @@
         "unlocked": []
       },
       "flavorText": "Billowing smoke and glowing embers mark the heart of the smithy, where metal meets fire to create everything from horseshoes to blades.",
-      "effectText": ""
+      "effectText": "Downtime Activity: Training (Smith's Tools); +1 bonus to skill checks using Smith's Tools while in the smithy;"
     },
     {
       "id": "brothel",
@@ -138,7 +138,7 @@
         "unlocked": []
       },
       "flavorText": "Whispers of discontent fill the streets as the brothel flourishes, a gilded cage where the powerful indulge while the common folk see their dignity sold one night at a time.",
-      "effectText": ""
+      "effectText": "Downtime Activity: Training (Disguise Kit);"
     },
     {
       "id": "watchtower",
@@ -193,7 +193,7 @@
         "buildings": [],
         "unlocked": []
       },
-      "flavorText": "A place of refuge for those without families, the orphanage provides care for the town’s lost children, though whispers from the guilds bemoan the loss of cheap labor.",
+      "flavorText": "A place of refuge for those without families, the orphanage provides care for the town's lost children, though some of the guilds' members bemoan the loss of cheap labor.",
       "effectText": ""
     },
     {
@@ -221,8 +221,8 @@
         "buildings": [],
         "unlocked": []
       },
-      "flavorText": "A symbol of the town’s might and wealth, the monument inspires awe in some but frustration in others, who see it as an unnecessary display of vanity.",
-      "effectText": ""
+      "flavorText": "A symbol of the town's might and wealth, the monument inspires awe in some but frustration in others, who see it as an unnecessary display of vanity.",
+      "effectText": "+1 bonus to Charisma (Persuasion) and Charisma (Intimidation) checks against nobles and high-ranking officials from other factions."
     },
     {
       "id": "graveyard",
@@ -278,7 +278,7 @@
         "unlocked": []
       },
       "flavorText": "The library stands as a testament to the value of knowledge, where every book and tome represents a step toward a brighter, more enlightened future.",
-      "effectText": ""
+      "effectText": "Downtime Activity: Training (Calligrapher's Supplies); +1 bonus to skill checks using Calligrapher's Supplies while in the library;"
     },
     {
       "id": "sewer_system",
@@ -288,10 +288,10 @@
         "capacity": 0,
         "attributes": {
           "authority": 0,
-          "economy": 1,
-          "community": 3,
-          "progress": 2,
-          "intrigue": 1
+          "economy": -1,
+          "community": 8,
+          "progress": 0,
+          "intrigue": 3
         }
       },
       "requirements": {
@@ -334,7 +334,7 @@
         "unlocked": []
       },
       "flavorText": "While the school strengthens the community and pushes for progress, it also teaches the value of questioning authority—something not all are eager to see.",
-      "effectText": ""
+      "effectText": "Downtime Activity: Training (Language (Common, Dwarvish, Elven, Giant, Gnomish, Halfling, Orc))"
     },
     {
       "id": "jail",
@@ -361,8 +361,8 @@
         "buildings": [],
         "unlocked": []
       },
-      "flavorText": "Behind its barred windows, the jail holds those who defy the law, its presence a quiet warning to any who might challenge the town’s authority.",
-      "effectText": ""
+      "flavorText": "Behind its barred windows, the jail holds those who defy the law, its presence a quiet warning to any who might challenge the town's authority.",
+      "effectText": "Downtime Activity: Training (Thieves' Tools)"
     },
     {
       "id": "stables",
@@ -389,7 +389,7 @@
         "buildings": [],
         "unlocked": []
       },
-      "flavorText": "The stables provide not only shelter for horses but also serve as a hub for the town’s mounted forces, ensuring swift responses to any threats.",
+      "flavorText": "The stables provide not only shelter for horses but also serve as a hub for the town's mounted forces, ensuring swift responses to any threats.",
       "effectText": ""
     },
     {
@@ -417,8 +417,8 @@
         "buildings": [],
         "unlocked": []
       },
-      "flavorText": "The fighting pit draws crowds and coin alike, but some fear its focus on bloodsport dulls the town’s desire for anything more meaningful.",
-      "effectText": ""
+      "flavorText": "The fighting pit draws crowds and coin alike, but some fear its focus on bloodsport dulls the town's desire for anything more meaningful.",
+      "effectText": "Downtime Activity: Pit Fighting & Magical Dueling"
     },
     {
       "id": "dwarven_brewery",
@@ -446,11 +446,11 @@
         "unlocked": ["Dwarven Brewmaster"]
       },
       "flavorText": "The air around the Dwarven Brewery is always thick with the smell of brewing ale. It is a place where dwarven tradition meets celebration, its warm hearth a beacon on cold nights.",
-      "effectText": "8 bottles of the legendary Bugman’s Ale are available for purchase each month."
+      "effectText": "Trader (Bugman's Ale) ; Downtime Activity: Training (Brewer's Supplies); +1 bonus to skill checks using Brewer's Supplies while in the brewery;"
     },
     {
-      "id": "private_laboratory",
-      "name": "Private Laboratory",
+      "id": "alchemists_laboratory",
+      "name": "Alchemist's Laboratory",
       "scale": 1,
       "modifiers": {
         "capacity": 0,
@@ -467,14 +467,14 @@
           "authority": 0,
           "economy": 0,
           "community": 0,
-          "progress": 0,
+          "progress": 4,
           "intrigue": 0
         },
         "buildings": ["glasshouse"],
         "unlocked": []
       },
       "flavorText": "A modest workshop of bubbling flasks and pungent fumes, the alchemist's laboratory is a sanctuary for discovery, where one mind's quiet pursuit of knowledge might yield wonders.",
-      "effectText": "Reduces the time to craft potions by 30 minutes."
+      "effectText": "Downtime Activity: Training (Alchemist's Tools); +1 bonus to skill checks using Alchemist's Tools while in the laboratory;"
     },
     {
       "id": "park",
@@ -530,7 +530,7 @@
         "unlocked": []
       },
       "flavorText": "Hidden behind unmarked doors and veiled glances, the black market thrives in defiance of law and morality, a realm where rare and illicit goods, services, and secrets are only a matter of coin.",
-      "effectText": ""
+      "effectText": "Trader (Illicit goods); (optional) Increase available items for Downtime Activity: Buying a Magic Item by 1d4 but increase purchase price for all offered items 1d4 x 25%"
     },
     {
       "id": "construction_yard",
@@ -614,7 +614,7 @@
         "unlocked": ["Glassblower"]
       },
       "flavorText": "From humble drinking vessels to intricate lenses, the Glasshouse provides the city with objects of both utility and exquisite beauty.",
-      "effectText": "Activity: Apprenticeship (Gain proficiency with glassblower's tools after spending 2d4 extended rests on this activity.)"
+      "effectText": "Downtime Activity: Training (Glassblower's Tools); +1 bonus to skill checks using Glassblower's Tools while in the glasshouse;"
     },
     {
       "id": "carpenters_workshop",
@@ -641,8 +641,8 @@
         "buildings": [],
         "unlocked": ["Carpenter"]
       },
-      "flavorText": "From dawn to dusk, the hum of saws and the scent of fresh timber define the carpenter’s workshop, a place where craftsmanship turns rough wood into everything from simple furniture to the grand beams of the city’s halls",
-      "effectText": "Activity: Apprenticeship (Gain proficiency with carpenter's tools after spending 2d4 extended rests on this activity.)"
+      "flavorText": "From dawn to dusk, the hum of saws and the scent of fresh timber define the carpenter's workshop, a place where craftsmanship turns rough wood into everything from simple furniture to the grand beams of the city's halls",
+      "effectText": "Downtime Activity: Training (Carpenter's Tools); +1 bonus to skill checks using Carpenter's Tools while in the workshop;"
     },
     {
       "id": "stonemasons_workshop",
@@ -670,7 +670,7 @@
         "unlocked": ["Mason"]
       },
       "flavorText": "Chisels strike stone with rhythmic precision, echoing through the city as calloused hands carve the foundation of its future.",
-      "effectText": "Activity: Apprenticeship (Gain proficiency with mason's tools after spending 2d4 extended rests on this activity.)"
+      "effectText": "Downtime Activity: Training (Mason's Tools); +1 bonus to skill checks using Mason's Tools while in the workshop;"
     },
     {
       "id": "academy",
@@ -697,8 +697,8 @@
         "buildings": [],
         "unlocked": []
       },
-      "flavorText": "Within its halls of thought, scholars question the old ways and craft the new, the academy’s influence rippling through the city as it births both wisdom and unrest.",
-      "effectText": "Unlocks Loremaster position"
+      "flavorText": "Within its halls of thought, scholars question the old ways and craft the new, the academy's influence rippling through the city as it births both wisdom and unrest.",
+      "effectText": "+1d4 bonus to Downtime Activity: Research checks"
     },
     {
       "id": "pathfinder_society_lodge",
@@ -717,16 +717,16 @@
       "requirements": {
         "attributes": {
           "authority": 0,
-          "economy": 8,
+          "economy": 2,
           "community": 0,
-          "progress": 8,
-          "intrigue": 8
+          "progress": 4,
+          "intrigue": 4
         },
         "buildings": [],
         "unlocked": []
       },
       "flavorText": "Within its sturdy walls, the lodge fosters daring ventures and questionable alliances, attracting mercenaries, explorers, and the intrigue that inevitably follows in their wake.",
-      "effectText": "Enables hiring adventurers for missions"
+      "effectText": "Adventurers can be hired and sent on missions"
     },
     {
       "id": "goblin_quarters",
@@ -754,7 +754,7 @@
         "unlocked": []
       },
       "flavorText": "Chaotic, noisy, and endlessly inventive, the goblin quarters overflow with peculiar contraptions and questionable experiments, their ingenuity both a marvel and a menace.",
-      "effectText": ""
+      "effectText": "Downtime Activity: Training (Instrument (Bagpipes, Drum, Horn), Language (Goblin));"
     },
     {
       "id": "botanical_garden",
@@ -782,11 +782,11 @@
         "unlocked": ["Botanist"]
       },
       "flavorText": "Nestled in vibrant greenery, the botanical garden blends nature and science, its carefully tended plants offering rare resources to those who know how to harvest their potential.",
-      "effectText": "Enables the planting and farming of various herbs."
+      "effectText": "Trader (Herbs); Gold cost of Downtime Activity: Brewing Healing Potions is reduced by 20%"
     },
     {
       "id": "architects_guild",
-      "name": "Architect’s Guild",
+      "name": "Architect's Guild",
       "scale": 2,
       "modifiers": {
         "capacity": 1,
@@ -815,7 +815,7 @@
     {
       "id": "nexus_of_binding",
       "name": "Nexus of Binding",
-      "scale": 6,
+      "scale": 1,
       "modifiers": {
         "capacity": 0,
         "attributes": {
@@ -838,7 +838,7 @@
         "unlocked": ["Nullstone Monolith"]
       },
       "flavorText": "Built around the Nullstone Monolith, the nexus sacrifices innovation and trade to create a sanctuary impervious to magical intrusion.",
-      "effectText": "While bound, the Nullstone Monolith prevents teleportation magic in and out of a 10 mile radius sphere."
+      "effectText": "Prevents planar travel in a 10 mile radius sphere. Can be activated and deactivated as an action."
     },
     {
       "id": "glims_emporium_of_exotic_flavours",
@@ -865,8 +865,8 @@
         "buildings": [],
         "unlocked": ["Glim Billowdwaddle"]
       },
-      "flavorText": "Glim Billowdwaddle’s bustling emporium draws spice merchants and food enthusiasts alike, though its extravagance has stirred resentment among the common folk.",
-      "effectText": "Trader: Spices; The number of spices for sale each month scales with the settlement's Economy."
+      "flavorText": "Glim Billowdwaddle's bustling emporium draws spice merchants and food enthusiasts alike, though its extravagance has stirred resentment among the common folk.",
+      "effectText": "Trader (Spices);"
     },
     {
       "id": "shrine",
@@ -922,7 +922,7 @@
         "unlocked": []
       },
       "flavorText": "The temple is more than a place of prayer—it is a cornerstone of the community, where traditions are upheld and the people find unity.",
-      "effectText": ""
+      "effectText": "Downtime Activity: Religious Service"
     },
     {
       "id": "monastery",
@@ -950,7 +950,7 @@
         "unlocked": []
       },
       "flavorText": "Within these walls, monks devote themselves to prayer and labor, their careful craftsmanship supporting both their faith and the city beyond.",
-      "effectText": "Trader"
+      "effectText": "Trader (Holy Water, Restorative Potions);"
     },
     {
       "id": "cathedral",
@@ -978,7 +978,7 @@
         "unlocked": ["Patron Deity"]
       },
       "flavorText": "Towering over the city as a fortress of faith, the cathedral is both a place of worship and a symbol of divine protection. Few dare challenge a city under the watchful gaze of its patron deity.",
-      "effectText": "Grants the patron deity's blessing to the city as long as its edicts are followed."
+      "effectText": "While the city follows the deity's edicts, the deity grants a realm effect to the city."
     },
     {
       "id": "engineers_workshop",
@@ -1006,7 +1006,7 @@
         "unlocked": []
       },
       "flavorText": "A noisy, chaotic space where problems are solved with gears, levers, and the occasional explosion. Some see it as the future—others see it as a disaster waiting to happen.",
-      "effectText": "Trader"
+      "effectText": "Trader (gadgets & bombs); Downtime Activity: Training (Tinker's Tools); +1 bonus to skill checks using Tinker's Tools while in the workshop;"
     },
     {
       "id": "airship_dockyard",
@@ -1090,7 +1090,7 @@
         "unlocked": []
       },
       "flavorText": "Vendors call out their wares, children weave through the crowds, and deals are struck with firm handshakes. The old ways of trade and barter hold strong in this lively square.",
-      "effectText": ""
+      "effectText": "Trader (basic goods)"
     },
     {
       "id": "training_grounds",
@@ -1118,7 +1118,7 @@
         "unlocked": []
       },
       "flavorText": "A place where warriors are made, not through words, but through sweat, bruises, and unwavering discipline.",
-      "effectText": "Activity: Training (Gain proficiency with a weapon of your choice after spending 2d4 extended rests on this activity.)"
+      "effectText": "Downtime Activity: Training (Weapon)"
     },
     {
       "id": "homeless_shelter",
@@ -1202,7 +1202,7 @@
         "unlocked": []
       },
       "flavorText": "A city well-defended is a city that endures. The walls ensure safety, though merchants grumble at the restricted flow of goods.",
-      "effectText": ""
+      "effectText": "The city's authority is doubled for defense against sieges."
     },
     {
       "id": "stocks",
@@ -1305,7 +1305,7 @@
     {
       "id": "plague_outbreak",
       "name": "Plague Outbreak",
-      "monthsDuration": 6,
+      "monthsDuration": 3,
       "modifiers": {
         "capacity": -1,
         "attributes": {
@@ -1334,7 +1334,7 @@
         }
       },
       "effectText": "",
-      "flavorText": "Dark clouds gather, and fierce winds bring chaos. Markets close, shipments are delayed, and the city's economy falters under nature’s fury."
+      "flavorText": "Dark clouds gather, and fierce winds bring chaos. Markets close, shipments are delayed, and the city's economy falters under nature's fury."
     },
     {
       "id": "heroic_deed",
