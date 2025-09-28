@@ -39,7 +39,7 @@ const blessingsDatabase = {
         "Keen Senses": 6,
         "Pack Tactics": 6,
         "Hamstringing": 10,
-        "Coodinated Hunt": 14,
+        "Coordinated Hunt": 14,
     },
     "Spirit of the Eagle": {
         "Keen Sight": 6,
