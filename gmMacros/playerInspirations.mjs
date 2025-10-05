@@ -1,15 +1,19 @@
 import { TaliaCustomAPI } from "../scripts/api.mjs";
+import { MODULE } from "../scripts/constants.mjs";
 
 export default {
     register() {
-        TaliaCustomAPI.add({rollPlayerInspirations}, "GmMacros");
+        TaliaCustomAPI.add({rollInspirations}, "GmMacros");
+        TaliaCustomAPI.add({clearInspirations}, "GmMacros");
     }
 }
+
+const FLAG_KEY = "isInspiration";
 
 /**
  *
  */
-async function rollPlayerInspirations() {
+async function rollInspirations() {
     const packFolder = game.packs.get("talia-custom.rollable-tables").folders.find(f => f.name === "Inspirations");
     const activePlayers = game.users.players.filter(p => p.active === true)
     
@@ -56,9 +60,6 @@ async function rollPlayerInspirations() {
             return [num1, num2];
         }
 
-        
-        //value.tableRoll = await new Roll(rollFormula).evaluate();
-
         const randomNums = getUniqueRandomNumbers(tableSize);
         value.tableTextResults = randomNums.map(d => {
             const indexVal = d - 1;
@@ -73,13 +74,23 @@ async function rollPlayerInspirations() {
             `;
             
         const speaker = ChatMessage.getSpeaker({alias: "Aerelia"});
-        //await game.dice3d.showForRoll(value.tableRoll, game.user, true, null, false, null, speaker);
         const msg = await ChatMessage.create({
             speaker: speaker,
             content,
             whisper: [activePlayers.find(p => p.name === key)._id],
+            flags: { [MODULE.ID]: { [FLAG_KEY]: true } }
         });
         //pin for all
         game.modules.get("pinned-chat-message").api.pinnedMessage(msg);
     }
+}
+
+/** Clears existing inspiration messages, whether pinned or not. */
+function clearInspirations() {
+    game.messages
+        .filter(m => m.getFlag(MODULE.ID, FLAG_KEY))
+        .forEach(m => {
+            m.flags = null; // remove pin
+            m.delete();
+        });
 }
