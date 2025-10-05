@@ -17,10 +17,11 @@ export async function createSpellGem(actor, chosenArgs) {
     const scroll = await getDocumentClass("Item").createScrollFromSpell(chosenArgs.chosenSpell, changes, createScrollConfig);
     const workingObj = scroll.toObject();
 
+    workingObj.system.properties = workingObj.system.properties.filter(p => p !== "wild");
+
     //fixes after creating the scroll but before creating the actual spell gem on the actor
     foundry.utils.mergeObject(workingObj, {
-        "system.description.value": `${chosenArgs.isTrigger ? `<p><strong>Trigger: </strong>${chosenArgs.triggerConditions}</p><hr>` : ""}${workingObj.system.description.value}`,
-        "system.properties": ["mgc", "somatic"],
+        "system.description.value": `${chosenArgs.isTrigger ? `<p><strong>Trigger: </strong>${chosenArgs.triggerConditions}</p><hr>` : ""}${workingObj.system.description.value}`
     });
     
     const [newItem] = await actor.createEmbeddedDocuments("Item", [workingObj]);
