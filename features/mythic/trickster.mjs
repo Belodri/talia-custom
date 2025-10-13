@@ -2,11 +2,16 @@ import { MODULE } from "../../scripts/constants.mjs";
 import ChatCardButtons from "../../utils/chatCardButtons.mjs";
 import { Helpers } from "../../utils/helpers.mjs";
 
+/** 
+ * @import { Actor5e, Item5e } from "../../system/dnd5e/module/documents/_module.mjs";
+ */
+
 export default {
     register() {
         register_masterOfChance();
         register_aSeriesOfUnfortunateEvents();
         register_convincingArguments();
+        BorrowedLuck.register();
     }
 }
 
@@ -149,4 +154,145 @@ function register_convincingArguments() {
             }
         ]
     });
+}
+
+class BorrowedLuck {
+    static #CONFIG = {
+        anchorId: "players",
+        elementId: "borrowed-luck",
+        elementStyles: {
+            "display": "block",
+            "width": "var(--players-width)",
+            "margin": "0 5px 5px 15px",
+            "padding": "0",
+            "padding-inline": "10px",
+            "border": "1px solid var(--color-border-dark)",
+            "backgroundColor": 'rgba(0, 0, 0, 0.7)',
+            "color": 'white',
+            "border-radius": "5px",
+            "pointer-events": "all"
+        },
+        entryStyles: {
+            "display": "block"
+        }
+    }
+
+    /** @type {HTMLElement} */
+    static #element;
+
+    /** @type {Map<string, HTMLSpanElement>} */
+    static #displayedItems = new Map();
+
+    static register() {
+        Hooks.on("dnd5e.useItem", (item) => {
+            if(BorrowedLuck.#isValidItem(item)) BorrowedLuck.#createRollMessage(item);
+        });
+
+        Hooks.once("ready", () => {
+            if(game.user.isGM) {
+                BorrowedLuck.#initDisplay();
+                Hooks.on("updateItem", BorrowedLuck.#onUpdateItem);
+            }
+        });
+    }
+
+    static #initDisplay() {
+        const element = BorrowedLuck.#createRootElement();
+
+        const { anchorId } = BorrowedLuck.#CONFIG;
+        const anchorElement = document.getElementById(anchorId);
+        if (!anchorElement) throw new Error(`Anchor element with id "${anchorId}" not found`);
+        anchorElement.parentElement.insertBefore(element, anchorElement);
+
+        BorrowedLuck.#element = element;
+
+        for(const actor of game.actors) {
+            const item = actor.items.find(BorrowedLuck.#isValidItem);
+            if(item) BorrowedLuck.#updateItemSpan(item);
+        }
+    }
+
+    static #onUpdateItem(item, changed) {
+        if(typeof changed?.system?.uses?.value !== "number") return;
+        if(BorrowedLuck.#isValidItem(item)) BorrowedLuck.#updateItemSpan(item);
+    }
+
+    /**
+     * @param {Item5e} item 
+     * @returns {boolean}
+     */
+    static #isValidItem(item) {
+        return item?.name === "Borrowed Luck"
+            && item.system?.type?.value === "mythic"
+            && item.actor;
+    }
+
+    /** @param {Item5e} item  */
+    static #updateItemSpan(item) {
+        const span = BorrowedLuck.#displayedItems.get(item.uuid) ?? (() => {
+            const spanEle = BorrowedLuck.#createItemSpanElement(item);
+            BorrowedLuck.#element.appendChild(spanEle);
+            BorrowedLuck.#displayedItems.set(item.uuid, spanEle);
+            return spanEle;
+        })();
+
+
+        const { value, max } = item.system.uses;
+        const gmUses = max - value;
+        span.textContent = `GM ${gmUses} - ${value} ${item.actor.name}`;
+    }
+
+    static #createRootElement() {
+        const { anchorId, elementId, elementStyles } = BorrowedLuck.#CONFIG;
+
+        const element = document.createElement("div");
+        element.id = elementId;
+        Object.assign(element.style, elementStyles);
+        return element;
+    }
+
+    /** @param {Item5e} item  */
+    static #createItemSpanElement(item) {
+        const span = document.createElement("span");
+        span.dataset.borrowedLuckItemUuid = item.uuid;
+        Object.assign(span.style, BorrowedLuck.#CONFIG.entryStyles);
+
+        span.addEventListener("click", BorrowedLuck.#onClick);
+
+        return span;
+    }
+
+    /** @param {MouseEvent} event  */
+    static async #onClick(event) {
+        const uuid = event.currentTarget.dataset?.borrowedLuckItemUuid;
+        if(!uuid) return;
+
+        const item = fromUuidSync(uuid, { strict: false });
+        if(!(item instanceof dnd5e.documents.Item5e)) return;
+
+        event.preventDefault();
+
+        const { value, max } = item.system.uses;
+        const gmUses = max - value;
+
+        if(gmUses) {
+            await item.update({"system.uses.value": item.system.uses.value + 1});
+            await BorrowedLuck.#createRollMessage();
+        } else ui.notifications.warn("No GM uses remaining.");
+    }
+
+    static async #createRollMessage(item = undefined) {
+        const roll = await new Roll("1d20").evaluate();
+
+        const chatData = {
+            user: game.user.id,
+            flavor: `<h2>Borrowed Luck${item ? "" : " - GM"}</h2>`,
+            content: roll.total,
+            speaker: item ? ChatMessage.getSpeaker({ actor: item.actor, token: item.actor.token }) : { alias: game.user.name },
+            rolls: [roll]
+        };
+
+        ChatMessage.applyRollMode(chatData, CONFIG.Dice.rollModes.publicroll);
+        await ChatMessage.create(chatData);
+    }
 }
