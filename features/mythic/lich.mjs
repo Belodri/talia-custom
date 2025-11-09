@@ -77,7 +77,7 @@ function essence_tithe() {
  */
 function rite_of_profane_power() {
     const ABILITY_CONFIG = {
-        effectDurationInSeconds: 60 * 60 * 24,      //24h
+        effectDurationInSeconds: 60 * 60 * 24 * 7,      //7 days
     }
 
     ChatCardButtons.register({
@@ -129,7 +129,14 @@ function rite_of_profane_power() {
                         origin: item.uuid,
                         description: `<p>Whenever you cast a ${schoolsCfg[chosenSchoolId].label} spell by expending a spell slot, the spell is treated as if it were cast using a spell slot ${chosenSchoolId === "nec" ? "two levels" : "one level"} higher, up to a maximum of 9th level.</p>`,
                         flags: {
-                            dae: { stackable: "noneName"}
+                            dae: { stackable: "noneName"},
+                            effectmacro: {
+                                dnd5e: {
+                                    longRest: {
+                                        script: "effect.delete();"
+                                    }
+                                }
+                            }
                         },
                         duration: {
                             seconds: ABILITY_CONFIG.effectDurationInSeconds
