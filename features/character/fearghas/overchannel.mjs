@@ -171,7 +171,6 @@ class Overchannel {
         const overchannel = config.talia?.overchannel;
         if(!overchannel?.use) return;
 
-        Overchannel.getOverchannelItem(item.actor);
         const overchannelItem = item.actor.items.get(overchannel.itemId);
         if(!overchannelItem) throw new Error(`Overchannel | Could not find overchannel item with id '${overchannel.itemId}'`);
 
