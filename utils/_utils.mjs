@@ -13,7 +13,6 @@ import triggeredSpellGemsDisplay from "./triggeredSpellGemsDisplay.mjs";
 import DetectionChecker from "./detectionChecker.mjs";
 import overrideTileOcclusion from "./overrideTileOcclusion.mjs";
 import Resting from "./Resting.mjs";
-import MultiattackManager from "./MultiattackManager.mjs";
 import currencyChatLogger from "./currencyChatLogger.mjs";
 import CombatTriggers from "./CombatTriggers.mjs";
 import multiroll from "./multiroll.mjs";
@@ -41,7 +40,6 @@ export default {
         triggeredSpellGemsDisplay.register();
         overrideTileOcclusion.register();
         Resting.register();
-        MultiattackManager.register();
         currencyChatLogger.register();
         multiroll.register();
 
