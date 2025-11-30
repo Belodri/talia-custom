@@ -39,6 +39,17 @@ function fixExhaustionConfig() {
     sE.reference = exhaustionJournalEntryPage;
     sE.levels = 10;
     sE.img = newExhaustionIconRef;
+
+    // Remove preset exhaustion effects from conditionEffects CONFIG
+    const effectSets = CONFIG.DND5E.conditionEffects;
+
+    for(const set of Object.values(effectSets)) {
+        if(!(set instanceof Set) || !set.size) continue;
+
+        for(const item of set) {
+            if(typeof item === "string" && item.startsWith("exhaustion")) set.delete(item);
+        }
+    }
 }
 
 // keys are id and values are updates to the object
