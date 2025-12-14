@@ -6,6 +6,7 @@ import wyrmreaverGauntlets from "./wyrmreaverGauntlets.mjs";
 import otherItemCategories from "./otherItemCategories.mjs";
 import armorOfTheLitrRune from "./armorOfTheLitrRune.mjs"
 import bagOfScolding from "./bagOfScolding.mjs";
+import autophagistsArmlets from "./autophagistsArmlets.mjs"
 
 export default {
     registerSection() {
@@ -17,6 +18,7 @@ export default {
         otherItemCategories.register();
         armorOfTheLitrRune.register();
         bagOfScolding.register();
+        autophagistsArmlets.register();
     }
 }
 
