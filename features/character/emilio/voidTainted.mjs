@@ -1,9 +1,19 @@
+import { TaliaCustomAPI } from "../../../scripts/api.mjs";
 import ChatCardButtons from "../../../utils/chatCardButtons.mjs";
 
 export default {
     register() {
         addBoonsOfEldritchHunger();
-        reapingClawsButton();
+        TaliaCustomAPI.add({addEssenceShards, onEnterVoidForm, onExitVoidForm}, "ItemMacros");
+
+        ChatCardButtons.register({
+            itemName: "Reaping Claws",
+            displayFilter: (item) => item?.actor?.items?.some(i => i.name === "Essence Shards"),
+            buttons: [{
+                label: "Gain Essence Shard",
+                callback: async({actor}) => await addEssenceShards(actor, 1)
+            }]
+        });
     }
 }
 
@@ -12,21 +22,61 @@ function addBoonsOfEldritchHunger() {
     CONFIG.DND5E.featureTypes.class.subtypes.boonsOfEldritchHunger = "Boons of Eldritch Hunger";
 }
 
-/** Adds a button to the 'Reaping Claws' item which adds 1 Essence Shard. */
-function reapingClawsButton() {
-    ChatCardButtons.register({
-        itemName: "Reaping Claws",
-        displayFilter: (item) => item?.actor?.items?.some(i => i.name === "Essence Shards"),
-        buttons: [{
-            label: "Gain Essence Shard",
-            callback: async({actor}) => {
-                const shardItem = actor.items.getName("Essence Shards");
-                if(!shardItem?.system?.uses) return ui.notifications.error("Reaping Claws | Unable to find item 'Essence Shards'.");
+/**
+ * 
+ * @param {Actor} actor 
+ * @param {number} amount
+ * @returns {Promise<Item | undefined>} Updated item or null if unsuccessful.
+ */
+async function addEssenceShards(actor, amount) {
+    const shardItem = actor?.items?.getName("Essence Shards");
+    if(!shardItem) {
+        ui.notifications.error("Error: Void Form cannot find Essence Shards.");
+        return;
+    }
 
-                const { uses } = shardItem.system;
-                if(uses.value < uses.max) await shardItem.update({"system.uses.value": uses.value + 1});
-                ui.notifications.info(`Essence Shards: ${shardItem.system.uses.value}/${shardItem.system.uses.max}`);
-            }
-        }]
-    })
+    const change = { amount };
+
+
+    if(Hooks.call("talia.preAddEssenceShards", shardItem, change ) === false) return;
+
+    const { max, value } = shardItem.system.uses;
+    const newValue = Math.min(max, value + (change?.amount ?? 0));
+    
+    if(newValue === value) return;
+
+    await shardItem.update({"system.uses.value": newValue});
+    ui.notifications.info(`Essence Shards: ${shardItem.system.uses.value}/${shardItem.system.uses.max}`);
+
+    return shardItem;
+}
+
+/**  */
+async function onExitVoidForm(actor) {
+    const shardItem = actor?.items?.getName("Essence Shards");
+    if(!shardItem) {
+        ui.notifications.error("Error: Void Form cannot find Essence Shards.");
+        return;
+    }
+
+    await shardItem.update({"system.uses.value": 0});
+}
+
+/**  */
+async function onEnterVoidForm(actor) {
+    const shardItem = actor?.items?.getName("Essence Shards");
+    if(!shardItem) {
+        ui.notifications.error("Error: Void Form cannot find Essence Shards.");
+        return;
+    }
+
+    const level = actor.getRollData().classes?.warlock?.levels ?? 0;
+    if(level < 6) return;
+
+    let minShards = 6;
+
+    if(level < 10) minShards = 2;
+    else if(level < 14) minShards = 4;
+
+    await addEssenceShards(actor, minShards);
 }
