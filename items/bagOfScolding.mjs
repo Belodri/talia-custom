@@ -96,7 +96,7 @@ const JOKES = [
     "They say laughter is the best medicine, so your face must cast Cure Wounds.",
     "You look like you put a ruler under your pillow, to see how long you sleep.",
     "I heard you put a bounty out on yourself so for once you could feel wanted.",
-    "One of my previous owners was an oily bog hag whow as constantly cracked out on fey shrooms. I miss her dearly whenever I see you.",
+    "One of my previous owners was an oily bog hag who was constantly cracked out on fey shrooms. I miss her dearly whenever I see you.",
     "Oh I bet you're fun at parties. You do know what a party is right?",
     "No you can't have a health potion! What? I'm just trying to do your friends a favour.",
     "You sound like you're 4'3\" in heels.",
@@ -105,6 +105,6 @@ const JOKES = [
     "You're the loveliest hag in the coven.",
     "You've got all the good sense of a mind flayer's last meal.",
     "I suspected you'd fallen out of the idiot tree, but I didn't know you were dragged through Stupid Forest afterward.",
-    "There's nothing about your looks that a full-face helmet wouldn't improve."
+    "There's nothing about your looks that a full-face helmet wouldn't improve.",
+    "I have many questions about you and I want none of them answered."
 ];
-
