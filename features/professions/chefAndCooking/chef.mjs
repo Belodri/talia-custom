@@ -414,13 +414,6 @@ class Cooking {
     }
 
     /**
-     * @returns {Item5e[]}  Array of loot items with subtype "meal"
-     */
-    get mealItems() {
-        return this.actor.itemTypes.loot.filter( i => i.system?.type?.subtype === "meal");
-    }
-
-    /**
      * @returns {Item5e[]} Array of all loot items with type "food" on the actor.
      */
     get foodItems() {
