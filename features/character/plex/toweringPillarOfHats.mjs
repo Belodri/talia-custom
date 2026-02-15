@@ -1,6 +1,9 @@
 export default {
     register() {
         Hooks.on("updateItem", (item, change) => {
+            const obj = item.actor?.ownership ?? {};
+            if(obj[game.user.id] ?? 1 < 3) return; // todo: Replace with proper ownership check.
+
             if(item.system?.type?.value === "hat" && typeof (change.system?.equipped) === "boolean") {
                 updateEffect(item.actor);
             }
