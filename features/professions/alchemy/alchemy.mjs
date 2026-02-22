@@ -217,6 +217,19 @@ const RECIPES = {
         {name: "Snow Moss", quantity: 2}, 
         {name: "Volcano Poppy", quantity: 1}
     ]},
+    elixirOfClearMind: { name: "Elixir of Clear Mind", rarity: "rare", ingredients: [
+        {name: "Shatterstone", quantity: 2},
+        {name: "Water Flower", quantity: 1}
+    ]},
+    potionOfMinorAgility: { name: "Potion of Minor Agility", rarity: "rare", ingredients: [
+        {name: "Water Flower", quantity: 3}
+    ]},
+    potionOfMinorBrawn: { name: "Potion of Minor Brawn", rarity: "rare", ingredients: [
+        {name: "Giant's Nail", quantity: 3}
+    ]},
+    potionOfMinorEndurance: { name: "Potion of Minor Endurance", rarity: "rare", ingredients: [
+        {name: "Ooze Drops", quantity: 3}
+    ]}
 };
 
 
