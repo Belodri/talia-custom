@@ -1,5 +1,7 @@
 import { MODULE } from "../../scripts/constants.mjs";
 
+// TODO: Remove this entirely in favor of SpellbookManager
+
 export default {
     _onInit() {
         CONFIG.DND5E.equipmentTypes.spellbook = CONFIG.DND5E.miscEquipmentTypes.spellbook = "Spellbook";

@@ -1,208 +1,302 @@
 import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
-
-/**
- * @typedef SpellData
- * @property {string} name 
- * @property {string} uuid
- * @property {string} _id
- * @property {boolean} isLocked
- */
+import Item5e from "../system/dnd5e/module/documents/item.mjs";
 
 export default {
     register() {
-
         CONFIG.DND5E.equipmentTypes.spellbook = CONFIG.DND5E.miscEquipmentTypes.spellbook = "Spellbook";
-
-
-        Hooks.on("talia-custom.postEquip", async (item) => {
-            if(!Spellbook.isSpellbook(item)) return;
-            return await new Spellbook(item).addSpellsToActor();
-        });
-        
-        Hooks.on("talia-custom.postUnEquip", async (item) => {
-            if(!Spellbook.isSpellbook(item)) return;
-            return await new Spellbook(item).removeSpellsFromActor(false);
-        });
-        
-        Hooks.on("talia-custom.postAttune", async (item) => {
-            if(!Spellbook.isSpellbook(item) || !Spellbook.isEquipped(item)) return;
-            return await new Spellbook(item).addSpellsToActor();
-        })
-        
-        Hooks.on("talia-custom.postUnAttune", async (item) => {
-            if(!Spellbook.isSpellbook(item)) return;
-            return await new Spellbook(item).removeSpellsFromActor(true);
-        });
-
-        TaliaCustomAPI.add({SpellbookManager: {
-            addSpell: Spellbook.addSpellToBookMacro,
-            removeSpell: Spellbook.removeSpellFromBookMacro
-        }}, "none");
+        Spellbook.registerHooks();
+        SpellbookTab.init();
     }
 }
 
-class Spellbook {
-    constructor(item) {
-        this.item = item;
+/**
+ * @typedef {{
+ *  img: string,
+ *  name: string,
+ *  uuid: string,
+ *  localId?: string
+ * }} SpellData
+ */
+
+/**
+ * @typedef {{[key: string]: spellData}} SpellsData
+ */
+
+class SpellbookTab {
+    constructor(app, [html]) {
+        this.app = app;
+        this.item = app.item;
+        this.sheetHtml = html;
     }
 
-    static defaultChanges = {
-        "system.preparation.mode": "always",
-        "system.preparation.prepared": false
+    static instances = new Map();
+
+    static TEMPLATE = `modules/${MODULE.ID}/templates/spellbookTab.hbs`;
+
+    static init() {
+        Hooks.once("tidy5e-sheet.ready", (api) => {
+            const myTab = new api.models.HtmlTab({
+                title: "Spellbook",
+                tabId: `${MODULE.ID}`,
+                html: "",
+                enabled(data) {
+                    return Spellbook.isSpellbook(data.item);
+                },
+                onRender(params) {
+                    const item = params.data.item;
+                    if(!Spellbook.isSpellbook(item)) return;
+
+                    const app = params.app;
+                    const html = [params.element];
+                    const instance = SpellbookTab.instances.get(app.appId);
+                    if(instance) {
+                        instance.render(params.tabContentsElement);
+                    } else {
+                        const newInstance = new SpellbookTab(app, html);
+                        SpellbookTab.instances.set(app.appId, newInstance);
+                        newInstance.render(params.tabContentsElement);
+                    }
+                }
+            });
+
+            api.registerItemTab(myTab, { autoHeight: true });
+        });
+    }
+
+    async _dragEnd(event) {
+        if(!this.app.isEditable) return;
+        const data = TextEditor.getDragEventData(event);
+        if(data.type !== "Item") return;
+        return this.#addSpellToItem(data.uuid);
+    }
+
+    async _handleRemoveClick(event) {
+        const sourceUuid = event.currentTarget.closest("[data-source-uuid]").dataset.sourceUuid;
+        return this.#removeSpellFromItem(sourceUuid);
     }
 
     /**
-     * @returns {SpellData[]}
+     * @param {HTMLElement} spellsTab 
      */
-    get spellDataArray() {
-        return this.item.flags?.["talia-custom"]?.spellbook?.spells || [];
+    async render(spellsTab) {
+        const div = document.createElement("div");
+        div.innerHTML = await this.#renderSpellList();
+        const c = div.firstElementChild;
+        spellsTab.appendChild(c);
+
+        c.querySelectorAll(".item-delete").forEach(n => n.addEventListener("click", this._handleRemoveClick.bind(this)));
+
+        const dragDrop = {
+            dragSelector: ".item",
+            dropSelector: `.${MODULE.ID}`,
+            permissions: {drop: () => this.app.isEditable},
+            callbacks: {drop: this._dragEnd},
+        };
+        spellsTab.addEventListener("drop", dragDrop.callbacks.drop.bind(this));
+    }
+
+    async #renderSpellList() {
+        return renderTemplate(SpellbookTab.TEMPLATE, {
+            sources: this.sources,
+            isOwner: this.item.isOwner
+        });
+    }
+
+    async #addSpellToItem(uuid) {
+        const currentSources = this.sources;
+        if(currentSources.some(s => s.uuid === uuid)) return;
+
+        const item = await fromUuid(uuid);
+        if(item.type !== "spell") return;
+        if(item.pack === null) return;  // not in compendium
+
+        const { name, img } = item;
+        await this.#setSourcesFlag([...currentSources, { name, img, uuid }]);
+    }
+
+    async #removeSpellFromItem(uuid) {
+        const newSources = this.sources.filter(s => s.uuid !== uuid);
+        await this.#setSourcesFlag(newSources);
+    }
+
+    async #setSourcesFlag(newSources = []) {
+        await this.item.setFlag(MODULE.ID, Spellbook.FLAGS.BOOK_SPELL_SOURCES, newSources);
+    }
+
+    /**
+     * @returns {SpellSource[]}
+     */
+    get sources() {
+        return this.item.getFlag(MODULE.ID, Spellbook.FLAGS.BOOK_SPELL_SOURCES) ?? [];
+    }
+}
+
+/**
+ * @typedef {object} SpellSource
+ * @property {string} name
+ * @property {string} img
+ * @property {string} uuid
+ */
+
+class Spellbook {
+    static SPELLBOOK_ITEM_FLAG = "spellbookSpells";
+
+    static FLAGS = {
+        BOOK_SPELL_SOURCES: "spellbook.sources",
+        SPELL_ORIGIN: "spellbook.origin"
+    }
+
+    static registerHooks() {
+        Hooks.on("updateItem", async (item, changed, options, userId) => {
+            const proceed = userId === game.user.id
+                && item.isEmbedded
+                && item.actor instanceof Actor
+                && Spellbook.isSpellbook(item)
+                && item.actor.permission === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+            if(!proceed) return;
+
+            // Has changes to equipment status?
+            const equipmentChanged = foundry.utils.hasProperty(changed, "system.equipped");
+            const attunementChanged = foundry.utils.hasProperty(changed, "system.attuned");
+            if(equipmentChanged || attunementChanged) await new Spellbook(item).syncSpellsWithParentActor();
+        });
     }
 
     static isSpellbook(item) {
         return item.type === "equipment" && item.system?.type?.value === "spellbook";
     }
 
-    static isEquipped(item) {
-        return item.system?.equipped === true;
+    constructor(item) {
+        if(!Spellbook.isSpellbook(item)) throw new Error(`Argument "item" is not a valid Spellbook.`);
+        /** @type {Item & Item5e} */
+        this.item = item;
     }
 
-    get isAttuned() {
-        return this.item.system?.attuned === true;
+    /** @returns {Actor} */
+    get actor() { return this.item.actor; }
+
+    /**
+     * @returns {SpellSource[]}
+     */
+    get sources() {
+        return this.item.getFlag(MODULE.ID, Spellbook.FLAGS.BOOK_SPELL_SOURCES) ?? [];
     }
 
-    get requiresAttunement() {
-        return this.item.system?.attunement === "required"
-    }
-
-    get grantedSpells() {
-        return this.item.actor.items.filter(i => i.flags?.[MODULE.ID]?.spellbook?.source === this.item.uuid);
-    }
-
-    async addSpellToBook(uuid, isLocked = false, changes = {}) {
-        const spell = await fromUuid(uuid);
-        if(!spell) {
-            ui.notifications.error("The spell wasn't found in the compendium.");
-            return null;
+    get canActorAccessSpells() {
+        if(!this.item.isEmbedded) return false;
+        if(!(this.item.actor instanceof Actor)) return false;
+        if(!this.item.system.equipped) return false;
+        if(this.item.system.attunement === "required") {
+            if(!this.item.system.attuned) return false;
         }
 
-        const spells = this.spellDataArray;
-        const spellData = spells.find(i => i.uuid === spell.uuid);
-        if(spellData) {
-            spellData.name = spell.name;
-            spellData.uuid = spell.uuid;
-            spellData._id = spell._id;
-            spellData.isLocked = isLocked;
-            spellData.changes = changes;
-        } else {
-            spells.push({
-                name: spell.name,
-                uuid: spell.uuid,
-                _id: spell._id,
-                isLocked,
-                changes
-            });
-        }
-        return this.updateSpellsOnBook(spells);
-    }
-
-    async removeSpellFromBook({name = "", uuid = ""}) {
-        if(!name && !uuid) {
-            ui.notifications.error("You need to provide either a name or a uuid.");
-            return null;
-        }
-        const spells = this.spellDataArray.filter(i => i.name !== name && i.uuid !== uuid);
-        return await this.updateSpellsOnBook(spells);
+        return true;
     }
 
     /**
-     * Overrides the current SpellDataArray
-     * @param {SpellData[]} spellDataArray 
-     * @returns 
+     * 
+     * @param {string[]} sourceUuids 
+     * @param {boolean} updateParent 
      */
-    async updateSpellsOnBook(spellDataArray) {
-        return await this.item.setFlag("talia-custom", "spellbook.spells", spellDataArray);
+    async addSpellSources(sourceUuids = [], updateParent = false) {
+        const currentSources = this.sources;
+        const currentSourceUuids = new Set(currentSources.map(s => s.uuid));
+
+        const toAdd = [];
+        for(const uuid of sourceUuids) {
+            if(currentSourceUuids.has(uuid)) continue;
+            if(!uuid.startsWith("Compendium")) continue;
+            
+            const itemOrIndex = fromUuidSync(uuid, { strict: false });
+            if(!itemOrIndex || itemOrIndex.type !== "spell") continue;
+
+            const { name, img } = itemOrIndex;
+            toAdd.push({ name, img, uuid })
+        }
+
+        if(toAdd.length) await this.#setSourcesFlag([...currentSources, ...toAdd]);
+        if(updateParent && this.item.isEmbedded && this.actor instanceof Actor) await this.syncSpellsWithParentActor();
     }
 
-    async addSpellsToActor() {
-        const forbidLocked = this.requiresAttunement && !this.isAttuned;
-        const pack = game.packs.get(MODULE.customItemsPackKey);
-        const grantedSpellNames = this.grantedSpells.map(i => i.name);
+    /**
+     * 
+     * @param {string[]} sourceUuids 
+     * @param {boolean} updateParent 
+     */
+    async removeSpellSources(sourceUuids = [], updateParent = false) {
+        const currentSources = this.sources;
 
-        const spellObjectArray = [];
-        for(const spellData of this.spellDataArray) {
-            if(spellData.isLocked && forbidLocked) continue;
-            if(grantedSpellNames.includes(spellData.name)) continue;
+        const toRemove = new Set(sourceUuids);
+        const newSources = this.sources.filter(s => !toRemove.has(s.uuid));
 
-            const doc = await pack.getDocument(spellData._id);
-            if(!doc) {
-                ui.notifications.warn(`The item ${spellData.name} could not be found in the compendium.`);
-                continue;
+        if(newSources.length !== currentSources.length) await this.#setSourcesFlag(newSources);
+        if(updateParent && this.item.isEmbedded && this.actor instanceof Actor) await this.syncSpellsWithParentActor();
+    }
+
+    async #setSourcesFlag(newSources = []) {
+        return await this.item.setFlag(MODULE.ID, Spellbook.FLAGS.BOOK_SPELL_SOURCES, newSources);
+    }
+
+    async syncSpellsWithParentActor() {
+        if(!this.item.isEmbedded || !(this.actor instanceof Actor)) return;
+
+        const allowAccess = this.canActorAccessSpells;
+        const sourceUuids = new Set(this.sources.map(s => s.uuid));
+
+        const toRemoveIds = [];
+        const alreadyAddedSourceUuids = new Set();
+
+        for(const spell of this.actor.itemTypes.spell) {
+            const origin = spell.getFlag(MODULE.ID, Spellbook.FLAGS.SPELL_ORIGIN);
+            // Is the spell from THIS spellbook?
+            if(origin?.bookUuid !== this.item.uuid) continue;
+
+            // Remove if not in source map or if access is denied.
+            if(!allowAccess || !sourceUuids.has(origin.sourceUuid)) toRemoveIds.push(spell.id);
+
+            // Track if the spell is already added if access is allowed.
+            if(allowAccess) alreadyAddedSourceUuids.add(origin.sourceUuid);
+        }
+
+        // Create spells as needed
+        if(allowAccess) {
+            const toAddSourceUuids = sourceUuids.filter(uuid => !alreadyAddedSourceUuids.has(uuid));
+            await this.#createSpellsOnParentActor(toAddSourceUuids);
+        }
+        
+        // Delete spells as needed
+        if(toRemoveIds.length) await this.#deleteSpellsFromParentActor(toRemoveIds);
+    }
+
+    async #createSpellsOnParentActor(sourceUuids = []) {
+        if(!this.item.isEmbedded || !(this.actor instanceof Actor)) return;
+
+        const sourceItems = await Promise.all(sourceUuids.map(fromUuid));
+
+        const spellObjects = [];
+        for(const item of sourceItems) {
+            const obj = item.toObject();
+
+            const origin = {
+                sourceUuid: item.uuid,  // is source uuid as it comes from compendium
+                bookUuid: this.item.uuid
             }
 
-            const spellObj = doc.toObject();
-            const changesObj = foundry.utils.mergeObject(Spellbook.defaultChanges, {
-                flags: {
-                    [MODULE.ID]: {
-                        spellbook: {
-                            source: this.item.uuid,
-                            isLocked: spellData.isLocked
-                        }
-                    }
-                },
-                ...spellData.changes
+            foundry.utils.mergeObject(obj, {
+                [`flags.${MODULE.ID}.${Spellbook.FLAGS.SPELL_ORIGIN}`]: origin,
+                "system.preparation.mode": "always",
+                "system.preparation.prepared": false
             });
-            foundry.utils.mergeObject(spellObj, changesObj);
-            spellObjectArray.push(spellObj);
+
+            spellObjects.push(obj);
         }
 
-        //add spells to the actor
-        return await Item.createDocuments(spellObjectArray, {parent: this.item.actor});
+        return Item.createDocuments(spellObjects, { parent: this.actor });
     }
 
-    async removeSpellsFromActor(lockedOnly = false) {
-        const spells = lockedOnly ? 
-            this.grantedSpells.filter(i => i.flags?.[MODULE.ID]?.spellbook?.isLocked === true)
-            : this.grantedSpells;
-        const ids = spells.map(i => i.id);
-        return await Item.deleteDocuments(ids, {parent: this.item.actor});
+    async #deleteSpellsFromParentActor(idsToDelete = []) {
+        if(this.item.isEmbedded && this.actor instanceof Actor) 
+            return Item.deleteDocuments(idsToDelete, { parent: this.actor });
     }
-
-    /**
-     * Adds a single spell to a spellbook item.
-     * @param {Item5e} bookItem The item to which the spells should be added
-     * @param {string} spellUuid The uuid of the spell inside the compendium
-     * @param {boolean} isLocked A locked spell requires the book to be attuned. 
-     * @param {object} changes Changes that should be applied to the spell when it's added to the actor. Overrides default changes.
-     * @returns {Promise<Item5e>}
-     */
-    static async addSpellToBookMacro(bookItem, spellUuid, isLocked = false, changes = {}) {
-        if(!Spellbook.isSpellbook(bookItem)) {
-            ui.notifications.warn("bookItem is not a spellbook");
-            return;
-        }
-        const book = new Spellbook(bookItem);
-        return await book.addSpellToBook(spellUuid, isLocked, changes);
-    }
-
-    /**
-     * Removes a single spell to a spellbook item.
-     * @param {Item5e} bookItem The item from which the spells should be removed
-     * @param {string} spellName The name of the spell to be removed
-     * @param {string} spellUuid The uuid of the spell to be removed
-     * @returns {Promise<Item5e>}
-     */
-    static async removeSpellFromBookMacro(bookItem, spellName = "", spellUuid = "") {
-        if(!spellName && !spellUuid) {
-            ui.notifications.warn("A spellName or a spellUuid need to be provided.");
-            return;
-        }
-        if(!Spellbook.isSpellbook(bookItem)) {
-            ui.notifications.warn("bookItem is not a spellbook");
-            return;
-        }
-        const book = new Spellbook(bookItem);
-        return await book.removeSpellFromBook({name: spellName, uuid: spellUuid});
-    }
-
 }

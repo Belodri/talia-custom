@@ -1,0 +1,25 @@
+<div>
+    {{log this}}
+    <ol class="items-list">
+        
+        {{#each sources}}
+        <li class="item flexrow" data-source-uuid="{{uuid}}">
+
+            <div class="item-name flexrow">
+                <div class="item-image" style="background-image: url({{img}});"></div>
+                <h4 class="truncate">{{name}}</h4>
+            </div>
+
+            <div class="item-controls flexrow">
+                {{#if @root/isOwner}}
+                    <a class="item-control item-delete" data-tooltip="Remove">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                {{/if}}
+            </div>
+
+        </li>
+        {{/each}}
+
+    </ol>
+</div>
