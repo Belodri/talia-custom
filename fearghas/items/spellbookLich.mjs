@@ -1,4 +1,5 @@
-import { Spellbooks } from "./spellbooks.mjs";
+import { MODULE } from "../../scripts/constants.mjs"
+import { Spellbook } from "../../utils/spellbookManager.mjs"
 
 export default {
     _onInit() {},
@@ -8,14 +9,20 @@ export default {
 }
 
 /**
- *
+ * 
+ * @param {Item} item 
+ * @param {object} config 
+ * @param {object} options 
  */
 async function spellbookLichMain(item, config, options) {
-    const bookName = "Strength through suffering (of others)";
-    const addedSpellNames = Spellbooks.bookDatabase[bookName].spellList;
+    if(item.type !== "spell") return;
 
-    if(!item.actor?.name?.includes("Fearghas") || !addedSpellNames.includes(item.name)) return;
-    const spellbook = item.actor.items.getName(bookName);
-    if(!spellbook || !spellbook.system.equipped) return;
-    await spellbook.use();
+    const bookOriginUuid = Spellbook.getSpellbookItemUuid(item);
+    if(!bookOriginUuid) return;
+
+    const BOOK_NAME = "Strength through suffering (of others)";
+    const bookItem = item.actor.items.getName(BOOK_NAME);
+    if(!bookItem || bookItem.uuid !== bookOriginUuid) return;
+
+    if(!bookItem.system.equipped) await bookItem.use();
 }

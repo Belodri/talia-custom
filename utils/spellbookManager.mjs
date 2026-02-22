@@ -2,6 +2,10 @@ import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
 import Item5e from "../system/dnd5e/module/documents/item.mjs";
 
+// TODO: Fix performance issue caused by Handlebars rendering repeatedly when dropping items. 
+// Number of rerenders increases exponentially with each dropped item and resets on closing the sheet.
+// Deleting an item does not seem to cause this issue.
+
 export default {
     register() {
         CONFIG.DND5E.equipmentTypes.spellbook = CONFIG.DND5E.miscEquipmentTypes.spellbook = "Spellbook";
@@ -32,9 +36,21 @@ class SpellbookTab {
 
     static instances = new Map();
 
-    static TEMPLATE = `modules/${MODULE.ID}/templates/spellbookTab.hbs`;
+    static TEMPLATES = {
+        spellbookTab: `modules/${MODULE.ID}/templates/spellbookTab.hbs`
+    };
+
+    static preloadTemplates() {
+        loadTemplates(SpellbookTab.TEMPLATES);
+    }
+
+    // Caching instances and deleting them manually, 
+    // otherwise handlebars keeps them alive and tanks performance.
+    static #instances = new Map();
 
     static init() {
+        SpellbookTab.preloadTemplates();
+
         Hooks.once("tidy5e-sheet.ready", (api) => {
             const myTab = new api.models.HtmlTab({
                 title: "Spellbook",
@@ -49,7 +65,7 @@ class SpellbookTab {
 
                     const app = params.app;
                     const html = [params.element];
-                    const instance = SpellbookTab.instances.get(app.appId);
+                    const instance = SpellbookTab.#instances.get(app.appId);
                     if(instance) {
                         instance.render(params.tabContentsElement);
                     } else {
@@ -62,6 +78,10 @@ class SpellbookTab {
 
             api.registerItemTab(myTab, { autoHeight: true });
         });
+
+        Hooks.on("closeItemSheet", async(app) => {
+            SpellbookTab.#instances.delete(app.appId);
+        })
     }
 
     async _dragEnd(event) {
@@ -76,10 +96,20 @@ class SpellbookTab {
         return this.#removeSpellFromItem(sourceUuid);
     }
 
+    #lastRender;
+
     /**
      * @param {HTMLElement} spellsTab 
      */
     async render(spellsTab) {
+        const DEBOUNCE_MS = 50;
+        if(this.#lastRender && (Date.now() - this.#lastRender) < DEBOUNCE_MS) return;
+
+        this.#render(spellsTab);
+        this.#lastRender = Date.now();
+    }
+
+    async #render(spellsTab) {
         const div = document.createElement("div");
         div.innerHTML = await this.#renderSpellList();
         const c = div.firstElementChild;
@@ -97,7 +127,7 @@ class SpellbookTab {
     }
 
     async #renderSpellList() {
-        return renderTemplate(SpellbookTab.TEMPLATE, {
+        return renderTemplate(SpellbookTab.TEMPLATES.spellbookTab, {
             sources: this.sources,
             isOwner: this.item.isOwner
         });
@@ -139,9 +169,13 @@ class SpellbookTab {
  * @property {string} uuid
  */
 
-class Spellbook {
-    static SPELLBOOK_ITEM_FLAG = "spellbookSpells";
+/**
+ * @typedef {object} SpellOriginFlag
+ * @property {string} bookUuid
+ * @property {string} sourceUuid
+ */
 
+export class Spellbook {
     static FLAGS = {
         BOOK_SPELL_SOURCES: "spellbook.sources",
         SPELL_ORIGIN: "spellbook.origin"
@@ -163,8 +197,21 @@ class Spellbook {
         });
     }
 
+    static getSpellbookItemUuid(spellItem) {
+        const origin = Spellbook.#getSpellOriginFlag(spellItem);
+        return origin?.bookUuid;
+    }
+
     static isSpellbook(item) {
         return item.type === "equipment" && item.system?.type?.value === "spellbook";
+    }
+
+    /**
+     * @param {Item} spell 
+     * @returns {SpellOriginFlag | null}
+     */
+    static #getSpellOriginFlag(spell) {
+        return spell.getFlag(MODULE.ID, Spellbook.FLAGS.SPELL_ORIGIN) ?? null;
     }
 
     constructor(item) {
@@ -197,9 +244,8 @@ class Spellbook {
     /**
      * 
      * @param {string[]} sourceUuids 
-     * @param {boolean} updateParent 
      */
-    async addSpellSources(sourceUuids = [], updateParent = false) {
+    async addSpellSources(sourceUuids = []) {
         const currentSources = this.sources;
         const currentSourceUuids = new Set(currentSources.map(s => s.uuid));
 
@@ -216,22 +262,21 @@ class Spellbook {
         }
 
         if(toAdd.length) await this.#setSourcesFlag([...currentSources, ...toAdd]);
-        if(updateParent && this.item.isEmbedded && this.actor instanceof Actor) await this.syncSpellsWithParentActor();
+        if(this.item.isEmbedded && this.actor instanceof Actor) await this.syncSpellsWithParentActor();
     }
 
     /**
      * 
      * @param {string[]} sourceUuids 
-     * @param {boolean} updateParent 
      */
-    async removeSpellSources(sourceUuids = [], updateParent = false) {
+    async removeSpellSources(sourceUuids = []) {
         const currentSources = this.sources;
 
         const toRemove = new Set(sourceUuids);
         const newSources = this.sources.filter(s => !toRemove.has(s.uuid));
 
         if(newSources.length !== currentSources.length) await this.#setSourcesFlag(newSources);
-        if(updateParent && this.item.isEmbedded && this.actor instanceof Actor) await this.syncSpellsWithParentActor();
+        if(this.item.isEmbedded && this.actor instanceof Actor) await this.syncSpellsWithParentActor();
     }
 
     async #setSourcesFlag(newSources = []) {
