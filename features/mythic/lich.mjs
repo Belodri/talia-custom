@@ -1,9 +1,11 @@
+import { MODULE } from "../../scripts/constants.mjs";
 import ChatCardButtons from "../../utils/chatCardButtons.mjs"
 
 export default {
     register() {
         essence_tithe();
         rite_of_profane_power();
+        arcane_athanasia();
     }
 }
 
@@ -158,5 +160,72 @@ function rite_of_profane_power() {
                 }
             }
         ]
+    });
+}
+
+/**
+ * Registers the Arcane Athanasia feature.
+ * Updates a flag on the item whenever it is used, increasing the cost with every use.
+ * The flag is reset to the minimum value on long rest.
+ * Flag value can also be changed via GM-only chat card button
+ */
+function arcane_athanasia() {
+    const FEATURE_NAME = "Arcane Athanasia";
+    const COST_FLAG = "combinedSlotCost";
+    const COST_PER_USE = 5;
+
+    const getCost = (item) => item.getFlag(MODULE.ID, COST_FLAG) ?? COST_PER_USE;
+    const setCost = async (item, cost) => item.setFlag(MODULE.ID, COST_FLAG, cost);
+    const getItemFromActor = (actor) => actor.itemTypes.feat.find(i => i.name === FEATURE_NAME);
+
+    Hooks.on("dnd5e.useItem", async (item, config, options) => {
+        if(item?.name !== FEATURE_NAME) return;
+        if(item.type !== "feat") return;
+
+        await setCost(item, getCost(item) + COST_PER_USE);
+    });
+
+    Hooks.on("dnd5e.preRestCompleted", async (actor, result, config) => {
+        if(!result.longRest) return;    // only on long/extended rest
+
+        const item = getItemFromActor(actor);
+        if(!item) return;
+
+        // Reset cost to base.
+        result.updateItems.push({_id: item.id, [`flags.talia-custom.${COST_FLAG}`]: COST_PER_USE});
+    });
+
+    // GM-only button for setting the cost flag
+    ChatCardButtons.register({
+        itemName: FEATURE_NAME,
+        displayFilter: (item, chatData, options) => game.user.isGM,
+        buttons: [{
+            label: "(GM) Set Cost",
+            callback: async({item}) => {
+
+                const numGroup = new foundry.data.fields.NumberField({
+                    label: "Cost",
+                    hint: "Set the spell slot cost of the next use.",
+                    required: true,
+                    min: COST_PER_USE,
+                    step: COST_PER_USE,
+                    integer: true,
+                    initial: getCost(item)
+                }).toFormGroup({}, {name: "cost"}).outerHTML;
+
+                const result = await foundry.applications.api.DialogV2.prompt({
+                    window: { title: FEATURE_NAME },
+                    content: numGroup,
+                    modal: true,
+                    rejectClose: false,
+                    ok: {
+                        label: `Ok`,
+                        callback: (event, button) => new FormDataExtended(button.form).object
+                    }
+                });
+
+                if(result?.cost) await setCost(item, result.cost);
+            }
+        }]
     });
 }
