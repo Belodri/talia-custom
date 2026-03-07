@@ -10,6 +10,7 @@ import darkness from "./darkness.mjs";
 import polymorph from "./polymorph.mjs";
 import rayOfEnfeeblement from "./rayOfEnfeeblement.mjs";
 import tetherEssence from "./tetherEssence.mjs";
+import nystulsMagicAura from "./nystulsMagicAura.mjs";
 
 
 export default {
@@ -26,5 +27,6 @@ export default {
         polymorph.register();
         rayOfEnfeeblement.register();
         tetherEssence.register();
+        nystulsMagicAura.register();
     }
 }
