@@ -1,11 +1,14 @@
 import { TaliaCustomAPI } from "../../../scripts/api.mjs";
 import { TaliaUtils } from "../../../utils/_utils.mjs";
 
+/**
+ * @import DialogV2 from "../../../foundry/client-esm/applications/api/dialog.mjs";
+ */
+
 /*
     Required modules & settings:
         - Requestor
         - dfreds ce
-        - ItemMacroButtons
 */
 
 export default {
@@ -116,6 +119,8 @@ class Cooking {
         }
     }
 
+    static #DIALOG_ID = "dialog-chef";
+
     /*----------------------------------------------------------------------------
                     Static Methods            
     ----------------------------------------------------------------------------*/
@@ -157,6 +162,15 @@ class Cooking {
         });
     }
 
+    /**
+     * Gets the dialog created by this class if rendered.
+     * @returns {DialogV2 | undefined}
+     */
+    static getOpenDialog() {
+        const dialog = foundry.applications.instances.get(Cooking.#DIALOG_ID);
+        if(dialog?.rendered) return dialog;
+    }
+
     /*----------------------------------------------------------------------------
                     Instance Properties            
     ----------------------------------------------------------------------------*/
@@ -182,6 +196,16 @@ class Cooking {
     /** @type {{[key: string]: string} | null} An object with the meal names in human readable form as keys and their respective image paths as values. */
     allMealItemImagePaths = null;
 
+    /**
+     * @typedef {object} DialogChoiceResults
+     * @property {string} foodItemUuid      The uuid of the food item to be used.
+     * @property {number} servings          The chosen number of servings. Defaults to 0.
+     * @property {string} baseMealName      The chosen base meal item; Used to determine the name of the meal (can be overridden) and the image used to display the meal in chat.
+     * @property {string} alternateMealName The name of the meal. If left blank will default to the name of the base meal item.
+     * @property {string} mealDescription
+     * @property {string} spiceId           The id of the spice item to be used, or "none" of none was chosen.
+     */
+
     /*----------------------------------------------------------------------------
                     Instance Methods            
     ----------------------------------------------------------------------------*/
@@ -194,12 +218,10 @@ class Cooking {
 
     /**
      * Lets the user choose food, spice and number of servings through a dialog.
-     * @param {object} [prevArgs]           The results of the previous iteration.
+     * @param {Partial<DialogChoiceResults>} [prevArgs]           The results of the previous iteration.
      * @returns {Promise<this>}
      */
     async chooseParams(prevArgs = {}) {
-        if(this.isDialogOpen) return this;    //cancel if a dialog is already open
-
         const chosen = await this._choicesDialog(prevArgs);
         if(!chosen) return this;    //cancel
 
@@ -240,8 +262,8 @@ class Cooking {
 
     /**
      * Creates the dialog and let's the user choose options.
-     * @param {object} [prevArgs]           The results of the previous iteration.
-     * @returns {Promise<object | null>}    The results of the dialog. Null if cancelled.
+     * @param {Partial<DialogChoiceResults>} prevArgs           The results of the previous iteration.
+     * @returns {Promise<DialogChoiceResults | null>}    The results of the dialog. Null if cancelled.
      */
     async _choicesDialog(prevArgs) {
         const {DialogV2} = foundry.applications.api;
@@ -253,7 +275,7 @@ class Cooking {
             label: "Drag & Drop the food item here",
             required: true,
             initial: prevArgs.foodItemUuid,
-        }).toFormGroup({},{name: "foodItemUuid"}).outerHTML;
+        }).toFormGroup({}, { name: "foodItemUuid", value: prevArgs.foodItemUuid }).outerHTML;
 
         const selectServingsGroup = new NumberField({
             label: `Servings`,
@@ -299,14 +321,14 @@ class Cooking {
 
         const content = selectFoodItemGroup + selectServingsGroup + selectBaseMealGroup + alternateMealNameGroup + optionalMealDescriptionGroup + selectGroupSpice;
 
+        const openDialog = Cooking.getOpenDialog();
+
         return await DialogV2.prompt({
+            id: Cooking.#DIALOG_ID,
             window: {
-                title: this.chefFeatItem.name,
+                title: "Chef",
             },
-            position: {
-                width: 800,
-                height: "auto",
-            },
+            position: openDialog ? {...openDialog.position} : { width: 800, height: "auto" },
             content,
             modal: false,
             rejectClose: false,
@@ -427,19 +449,5 @@ class Cooking {
         return new Set(this.foodItems
             .filter(i => i.system.container)
             .map(i => this.actor.items.get(i.system.container)));
-    }
-
-    /**
-     * Checks if a dialog with the same title as the chef feat item is currently open.
-     * 
-     * @returns {boolean} 
-     * - `true` if a dialog with the matching title exists in the foundry applications instances
-     * - `false` if no such dialog is currently open
-     */
-    get isDialogOpen() {
-        for(let v of foundry.applications.instances.values()) {
-            if(v.options?.window?.title === this.chefFeatItem.name) return true;
-        }
-        return false;
     }
 }
