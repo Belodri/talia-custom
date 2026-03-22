@@ -1,15 +1,19 @@
-import { TaliaCustomAPI } from "../scripts/api.mjs";
 import { MODULE } from "../scripts/constants.mjs";
-import { ItemHookManager } from "../utils/ItemHookManager.mjs";
+import ChatCardButtons from "../utils/chatCardButtons.mjs";
 
 export default {
     register() {
-        //ItemHookManager.register("Contingency", itemMacro);
-
-        TaliaCustomAPI.add({contingency: {
-            choose: chooseContingencySpell,
-            trigger: triggerContingencySpell
-        }}, "ItemMacros");
+        ChatCardButtons.register({
+            itemName: "Contingency",
+            buttons: [{
+                label: "Choose Spell",
+                callback: ({item}) => chooseContingencySpell(item)
+            }, {
+                label: "Trigger Spell",
+                callback: ({item}) => triggerContingencySpell(item)
+            }],
+            displayFilter: (item) => item.type === "spell"
+        });
     }
 }
 
@@ -61,7 +65,7 @@ async function chooseContingencySpell(item) {
     const validSpells = actor.itemTypes.spell.filter(i => {
         const is = i.system;
         return is.activation.cost === 1 &&
-            is.activation.type === "action" &&
+            ["action", "bonus"].includes(is.activation.type) &&
             is.level <= 5 &&
             is.target.type
     });
