@@ -54,7 +54,7 @@ class Logger {
         Hooks.on("tidy5e-sheet.renderActorSheet", Logger.onRenderTidy5eActorSheet);
         Hooks.on("preUpdateActor", Logger.onPreUpdateActor);
         Hooks.once("ready", () => {
-            if(game.user.isGM) {
+            if(game.user.isTheGM) {
                 Hooks.on("updateActor", Logger.onUpdateActor);
                 Hooks.on("deleteActor", Logger.onDeleteActor);
             }
@@ -181,13 +181,13 @@ class Logger {
             .sort(([kA, vA], [kB, vB]) => 
                 CONFIG.DND5E.currencies[kA].conversion - CONFIG.DND5E.currencies[kB].conversion
             )
-            .map(([k, v]) => `${v} ${CONFIG.DND5E.currencies[k].abbreviation}`)
+            .map(([k, v]) => `${Math.abs(v)} ${CONFIG.DND5E.currencies[k].abbreviation}`)
             .join(", ");
     
         const label = Logger.CONFIG.messageLabels[inMainCurrency < 0 ? "spent" : "gained"];
         const mainCurrency = Object.values(CONFIG.DND5E.currencies)
             .find(v => v.conversion === 1) ?? "gp";
-        const content = `${label} <strong>${inMainCurrency}${mainCurrency.abbreviation}</strong> (${diffDetails})`;
+        const content = `${label} <strong>${Math.abs(inMainCurrency)}${mainCurrency.abbreviation}</strong> (${diffDetails})`;
 
         return ChatMessage.implementation.create({
             speaker: ChatMessage.implementation.getSpeaker({actor: this.actor}),
