@@ -1,9 +1,14 @@
+/**
+ * @import { Actor5e } from "../../system/dnd5e/module/documents/_module.mjs";
+ */
+
 import ChatCardButtons from "../../utils/chatCardButtons.mjs";
 
 export default {
     register() {
         instinctiveGreed();
         mystifyingMiasma();
+        draconicForm();
     }
 }
 
@@ -153,5 +158,37 @@ function mystifyingMiasma() {
                 }
             }
         ]
+    })
+}
+
+function draconicForm() {
+    ChatCardButtons.register({
+        itemName: "Draconic Form",
+        buttons: [
+            {
+                label: "Apply Transformation",
+                callback: async({item}) => {
+                    const eff = item.effects.contents[0];
+                    if(!eff) throw new Error("Item effect missing.");
+
+                    if(eff.disabled) await eff.update({"disabled": false});
+                }
+            },
+            {
+                label: "Revert Transformation",
+                callback: async({item}) => {
+                    const eff = item.effects.contents[0];
+                    if(!eff) throw new Error("Item effect missing.");
+
+                    if(!eff.disabled) await eff.update({"disabled": true});
+                }
+            }
+        ],
+        /*  
+        displayFilter: (item, chatdata, options) => {
+            const mr = item.actor.getFlag("talia-custom", "mythicRank");
+            return Number.isInteger(mr) && mr >= 3;
+        }
+        */
     })
 }
