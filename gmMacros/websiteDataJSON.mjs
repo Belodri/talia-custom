@@ -42,9 +42,9 @@ class Exporter {
 
         let jsonString;
         try {
-            const actorItems = this.#getActorItems();
+            const actorItems = await this.#getActorItems();
             const settlementData = await this.#getSettlementData();
-            const journalData = this.#getJournalData();
+            const journalData = await this.#getJournalData();
 
             const exportData = {
                 actorItems,
@@ -138,32 +138,33 @@ class Exporter {
 
     //#region Items
 
-    #getActorItems() {
+    async #getActorItems() {
         const actorItems = {};
         for(const user of this.#playerUsers) {
-            const itemsArray = [];
-            for(const item of user.character.items) {
-                const itemData = this.#getItemData(item);
-                if(itemData) itemsArray.push(itemData);
-            }
-            actorItems[user.character.name] = itemsArray
+            actorItems[user.character.name] = await Promise.all(user.character.items
+                .filter(i => this.#isItemAllowed(i))
+                .map(async i => await this.#getItemData(i)));
         }
         return actorItems;
     }
 
     /**
-     * 
      * @param {Item} item 
      */
-    #getItemData(item) {
+    #isItemAllowed(item) {
         const allowedTypes = [
             "feat", "spell", "consumable", "container", "equipment", "loot", "tool", "weapon"
         ];
-        if(!allowedTypes.includes(item.type)) return null;
+        return allowedTypes.includes(item.type)
+    }
 
+    /**
+     * @param {Item} item 
+     */
+    async #getItemData(item) {
         const data = {
             name: item.name,
-            description: this.#cleanPageHTML(item.system.description.value),
+            description: this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
         };
 
         if(item.type === "spell") {
@@ -247,22 +248,40 @@ class Exporter {
     
     //#region Journal
 
-    #getJournalData() {
-        return this.#journals
-            .map(j => ({
+    /**
+     * @typedef {object} PageData
+     * @property {string} name
+     * @property {"journal-pages"} section
+     * @property {string} content
+     */
+
+    /**
+     * @typedef {object} JournalData
+     * @property {string} name
+     * @property {PageData[]} pages
+     */
+
+    async #getJournalData() {
+        const journals = await Promise.all(
+            this.#journals.map(async j => ({
                 name: j.name,
-                pages: j.pages
-                    .filter(p => (p.ownership.default >= 2 || p.ownership.default === -1) 
-                        && p.type === "text")
-                    .sort((a,b) => a.sort !== b.sort ? a.sort - b.sort : a._stats.createdTime - b._stats.createdTime)
-                    .map(p => ({
-                        name: p.name,
-                        section: "journal-pages",
-                        content: this.#cleanPageHTML(p.text.content),
-                    }))
+                pages: await Promise.all(
+                    j.pages
+                        .filter(p => (p.ownership.default >= 2 || p.ownership.default === -1)
+                            && p.type === "text")
+                        .sort((a, b) => a.sort !== b.sort ? a.sort - b.sort : a._stats.createdTime - b._stats.createdTime)
+                        .map(async p => ({
+                            name: p.name,
+                            section: "journal-pages",
+                            content: this.#cleanPageHTML(await TextEditor.enrichHTML(p.text.content)),
+                        }))
+                ),
             }))
+        );
+
+        return journals
             .filter(obj => obj.pages.length)
-            .sort((a,b) => a.name.localeCompare(b.name));
+            .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     //#endregion
