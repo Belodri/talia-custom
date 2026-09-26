@@ -1,5 +1,9 @@
+// @ts-check
+
 import { TaliaCustomAPI } from "../scripts/api.mjs";
 import TaliaDate from "../utils/TaliaDate.mjs";
+import Building from "../world/settlement/building.mjs";
+import Effect from "../world/settlement/effect.mjs";
 import Settlement from "../world/settlement/settlement.mjs";
 export default {
     register() {
@@ -15,7 +19,9 @@ class Exporter {
         journalFolderNamePartials: [
             "Player",
             "Rules",
-        ]
+        ],
+        /** Whether to exclude items that are stored in personal item piles. */
+        excludeItemsFromOwnedPiles: false
     }
 
     static DEFAULT_SETTLEMENT_NAME = "Promise";
@@ -37,22 +43,12 @@ class Exporter {
     async _runMacro(clipboard=true) {
         if(!game.user.isGM) return null;
 
-        await this.#configureOptions();
+        await this.configureOptions();
         if(!this.#configured) return null;
 
         let jsonString;
         try {
-            const actorItems = await this.#getActorItems();
-            const settlementData = await this.#getSettlementData();
-            const journalData = await this.#getJournalData();
-
-            const exportData = {
-                actorItems,
-                settlementData,
-                journalData,
-                ingameDate: TaliaDate.now().displayString,
-            };
-
+            const exportData = await this.getExportData();
             jsonString = JSON.stringify(exportData, null, 2);
         } catch (err) {
             console.error("Exporter | Failed data gathering.", err);
@@ -71,7 +67,7 @@ class Exporter {
         return jsonString;
     }
 
-    async #configureOptions() {
+    async configureOptions() {
         const { DialogV2 } = foundry.applications.api;
         const { StringField } = foundry.data.fields;
         const { createMultiSelectInput, createFormGroup } = foundry.applications.fields;
@@ -136,152 +132,237 @@ class Exporter {
         }
     }
 
+    /**
+     * @returns {Promise<JsonSchema.Schema>}
+     */
+    async getExportData() {
+        const actorsData = await Promise.all(this.#playerUsers
+            .map(u => this.#getActorData(u)));
+
+        return {
+            actors: await Promise.all(this.#playerUsers
+                .map(u => this.#getActorData(u))),
+            settlement: await this.#getSettlementData(),
+            journals: await Promise.all(this.#journals
+                .map(j => this.#getJournalData(j))),
+            ingameDate: TaliaDate.now().displayString,
+        };
+    }
+
     //#region Items
 
-    async #getActorItems() {
-        const actorItems = {};
-        for(const user of this.#playerUsers) {
-            actorItems[user.character.name] = await Promise.all(user.character.items
-                .filter(i => this.#isItemAllowed(i))
-                .map(async i => await this.#getItemData(i)));
-        }
-        return actorItems;
-    }
-
-    /**
-     * @param {Item} item 
-     */
-    #isItemAllowed(item) {
-        const allowedTypes = [
+    /** @returns {Promise<JsonSchema.ActorData>} */
+    async #getActorData(user) {
+        const ownedItems = Exporter.CONFIG.excludeItemsFromOwnedPiles
+            ? [...user.character.items]
+            : [...user.character.items, ...this.#getOwnedItemPileItems(user)];
+        
+        const allowedItemTypes = [
             "feat", "spell", "consumable", "container", "equipment", "loot", "tool", "weapon"
         ];
-        return allowedTypes.includes(item.type)
+
+        const sorted = ownedItems
+            .reduce((acc, curr) => {
+                switch(curr.type) {
+                    case "spell":
+                        acc.spells.push(curr); break;
+                    case "feat":
+                        acc.features.push(curr); break;
+                    case "consumable":
+                    case "equipment":
+                    case "loot":
+                    case "container":
+                    case "tool":
+                    case "weapon":
+                        acc.physical.push(curr);
+                        break;
+                    default: break;
+                }
+
+                return acc;
+            }, { spells: [], features: [], physical: [] });
+
+        return {
+            name: user.character.name,
+            spells: await Promise.all(sorted.spells.map(i => this.#getSpellData(i))),
+            features: await Promise.all(sorted.features.map(i => this.#getFeatureData(i))),
+            physicalItems: await Promise.all(sorted.physical.map(i => this.#getPhysicalItemData(i, user))),
+        }
     }
 
-    /**
-     * @param {Item} item 
-     */
-    async #getItemData(item) {
-        const data = {
+    /** @returns {Promise<JsonSchema.SpellData>} */
+    async #getSpellData(item) {
+        return {
             name: item.name,
-            description: this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
-        };
-
-        if(item.type === "spell") {
-            data.section = "spell-items";
-            data.spellLevel = item.labels.level;
-            data.spellRange = item.labels.range;
-            data.spellSchool = item.labels.school;
-        } else if(item.type === "feat") {
-            data.section = "feature-items";
-            data.requirements = item.system.requirements;
-        } else {
-            data.section = "physical-items";
-            data.quantity = item.system.quantity;
-
-            const typeLabel = item.system.type?.label;
-            const subtypeLabel = item.system.type?.subtype;
-            data.combinedLabel = typeLabel && subtypeLabel
-                ? `${typeLabel} (${subtypeLabel})`
-                : typeLabel
-                    ? typeLabel
-                    : "Container";
-
-            data.attunementLabel = item.system.attunement === "required" 
-                ? "Requires Attunement" 
-                : "";
+            description: await this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
+            spellLevel: item.labels.level,
+            range: item.labels.range,
+            spellSchool: item.labels.school,
         }
+    }
 
-        return data;
+    /** @returns {Promise<JsonSchema.FeatureData>} */
+    async #getFeatureData(item) {
+        return {
+            name: item.name,
+            description: await this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
+            requirements: item.system.requirements
+        }
+    }
+
+    /** @returns {Promise<JsonSchema.ItemData>} */
+    async #getPhysicalItemData(item, user) {
+        const typeLabel = item.system.type?.label;
+        const subtypeLabel = item.system.type?.subtype;
+        const combinedLabel = typeLabel && subtypeLabel
+            ? `${typeLabel} (${subtypeLabel})` 
+            : typeLabel
+                ? typeLabel : "Container";
+
+        return {
+            name: item.name,
+            description: await this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
+            quantity: item.system.quantity,
+            inStorage: user.character.id !== item.parent.id,
+            typeLabel: combinedLabel,
+            requiresAttunement: item.system.attunement === "required"
+        }
+    }
+
+    
+    /**
+     * Gets the items from item piles that are owned by the given user.
+     * Item piles are considered owned by the user if the item pile is enabled and
+     * a) the pile is a vault where the user is the only user with access
+     * b) the pile actor is owned by the user, has no default ownership, and has no other player owners
+     * @param {User} user 
+     * @returns {Item[]}
+     */
+    #getOwnedItemPileItems(user) {
+        return game.actors
+            .filter(a => {
+                if(!ItemPiles.API.isValidItemPile(a)) return false;
+                
+                const flags = ItemPiles.API.getActorFlagData(a);
+                if(!flags.enabled) return false;
+
+                const isOwnedVault = flags.type === "vault"
+                    && flags.vaultAccess?.length === 1
+                    && flags.vaultAccess[0].uuid === user.uuid;
+
+                if(!isOwnedVault) {
+                    const isSoleOwner = a.ownership[user.id] === 3
+                        && a.ownership.default === 0
+                        && !game.users.players
+                            .filter(u => u.id !== user.id)
+                            .some(u => a.ownership[u.id] > 0);
+
+                    if(!isSoleOwner) return false;
+                }
+
+                return true;
+            })
+            .flatMap(a => a.items.contents);
     }
 
     //#endregion
 
     //#region Settlement
 
+    /**
+     * @returns {Promise<JsonSchema.SettlementData>}
+     */
     async #getSettlementData() {
         const settlement = Settlement.getName(this.#settlementName);
         if(!settlement) return null;
 
-        const app = settlement.app;
-        const context = await app._prepareContext();
+        settlement.prepareDerivedData();
 
-        const general = {
-            name: this.#settlementName,
-            attributes: { ...settlement.attributes },
-            capacity: { ...settlement.capacity },
-        };
-
-        const effects = context.effectsContext
-            .filter(e => e.isActive)
-            .map(e => ({
-                section: "effect-items",
-                endDateStr: e.endDateStr,
-                flavorText: e.flavorText,
-                grants: e.grants,
-                isTemporary: e.isTemporary,
-                name: e.name,
-                remainingDays: e.remainingDays
-            }));
-        
-        const buildings = context.buildingsContext
-            .map(b => ({
-                section: "building-items",
-                constructionDateDisplay: b.constructionDateDisplay,
-                effectText: b.effectText,
-                flavorText: b.flavorText,
-                grants: b.grants,
-                name: b.name,
-                isRecent: b.isRecent,
-                requires: b.requires,
-                scale: b.scale
-            }));
-        
+        /** @type {JsonSchema.SettlementData} */
         return {
-            general,
-            effects,
-            buildings,
+            name: this.#settlementName,
+            attributes: settlement.attributes,
+            capacity: {
+                max: settlement.capacity.max,
+                available: settlement.capacity.available
+            },
+            currentEffects: Object.values(settlement.effects)
+                .filter(e => e.isActive)
+                .map(e => this.#getActiveEffectData(e)),
+            buildings: Object.values(settlement.buildings)
+                .map(b => this.#getBuildingData(b))
         };
+    }
+
+    /**
+     * @param {Effect} effect 
+     * @returns {JsonSchema.SettlementEffectData}
+     */
+    #getActiveEffectData(effect) {
+        return {
+            name: effect.name,
+            flavorText: effect.flavorText,
+            remainingDays: effect.remainingDays,
+            effects: {
+                modifiers: {
+                    attributes: effect.modifiers.attributes,
+                    capacity: effect.modifiers.capacity
+                },
+                other: effect.effectText
+            }
+        }
+    }
+
+    /** 
+     * @param {Building} building 
+     * @returns {JsonSchema.SettlementBuildingData}
+     */
+    #getBuildingData(building) {
+        return {
+            name: building.name,
+            flavorText: building.flavorText,
+            scale: building.scale,
+            constructionDate: building.isBuilt ? building.constructionDate.displayString : undefined,
+            effects: {
+                modifiers: {
+                    attributes: building.modifiers.attributes,
+                    capacity: building.modifiers.capacity
+                },
+                other: building.effectText
+            },
+            requirements: {
+                attributes: building.requirements?.attributes ?? {},
+                buildings: [...building.requirements.buildings].map(id => Building.database.get(id).name) ?? [],
+                unlocks: [...building.requirements.unlocked]
+            }
+        }
     }
 
     //#endregion
     
     //#region Journal
 
-    /**
-     * @typedef {object} PageData
-     * @property {string} name
-     * @property {"journal-pages"} section
-     * @property {string} content
+    /** 
+     * @import {JournalEntryPage} from "../foundry/client/data/documents/journal-entry-page.js"
+     * @import {JournalEntry} from "../foundry/client/data/documents/journal-entry.js"
      */
 
     /**
-     * @typedef {object} JournalData
-     * @property {string} name
-     * @property {PageData[]} pages
+     * 
+     * @param {JournalEntry} entry 
+     * @returns {JsonSchema.JournalData}
      */
-
-    async #getJournalData() {
-        const journals = await Promise.all(
-            this.#journals.map(async j => ({
-                name: j.name,
-                pages: await Promise.all(
-                    j.pages
-                        .filter(p => (p.ownership.default >= 2 || p.ownership.default === -1)
-                            && p.type === "text")
-                        .sort((a, b) => a.sort !== b.sort ? a.sort - b.sort : a._stats.createdTime - b._stats.createdTime)
-                        .map(async p => ({
-                            name: p.name,
-                            section: "journal-pages",
-                            content: this.#cleanPageHTML(await TextEditor.enrichHTML(p.text.content)),
-                        }))
-                ),
-            }))
-        );
-
-        return journals
-            .filter(obj => obj.pages.length)
-            .sort((a, b) => a.name.localeCompare(b.name));
+    async #getJournalData(entry) {
+        return {
+            name: entry.name,
+            pages: await Promise.all(entry.pages
+                .filter(p => (p.ownership.default >= 2 || p.ownership.default === -1) && p.type === "text")
+                .sort((a, b) => a.sort !== b.sort ? a.sort - b.sort : a._stats.createdTime - b._stats.createdTime)
+                .map(async p => ({
+                    name: p.name,
+                    htmlContent: this.#cleanPageHTML(await TextEditor.enrichHTML(p.text.content)),
+                })))
+        };
     }
 
     //#endregion
@@ -306,3 +387,5 @@ class Exporter {
 
     //#endregion
 }
+
+
