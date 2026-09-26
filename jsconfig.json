@@ -1,13 +1,14 @@
 {
     "compilerOptions": {
-        "module": "ES6",
+        "module": "nodenext",
         "target": "ES2022",
         "lib": [
             "DOM",
             "ES2022"
         ],
         "allowJs": true,
-        "moduleResolution": "Node"
+        "checkJs": true,
+        "moduleResolution": "nodenext"
     },
     "exclude": ["node_modules", "**/node_modules/*"],
     "include": [
