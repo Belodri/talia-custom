@@ -1,5 +1,9 @@
 // @ts-check
 
+/**
+ * @import { parseUuid } from "../foundry/common/utils/helpers.mjs";
+ */
+
 import { TaliaCustomAPI } from "../scripts/api.mjs";
 import TaliaDate from "../utils/TaliaDate.mjs";
 import Building from "../world/settlement/building.mjs";
@@ -8,105 +12,123 @@ import Settlement from "../world/settlement/settlement.mjs";
 export default {
     register() {
         TaliaCustomAPI.add({
-            websiteDataJSON: Exporter.runMacro
+            websiteDataJSON: runMacro
         }, "GmMacros");
+        TaliaCustomAPI.add({WebsiteDataCollector});
     }
 }
 
-class Exporter {
-    static CONFIG = {
-        /** Journals that have any of these strings in their names will be included in the selection. */
-        journalFolderNamePartials: [
-            "Player",
-            "Rules",
-        ],
-        /** Whether to exclude items that are stored in personal item piles. */
-        excludeItemsFromOwnedPiles: false
+/**
+ * @returns {Promise<void>}
+ */
+async function runMacro() {
+    const collector = new WebsiteDataCollector();
+    await collector.configureViaDialog(["Player Documents", "Player Notes"], "Promise");
+    await collector.collectData();
+    await collector.exportJsonToClipboard();
+}
+
+
+class WebsiteDataCollector {
+    /**
+     * @type {{ users: User[], journals: JournalEntry[], settlement: Settlement | null }}
+     */
+    #config;
+
+    /**
+     * @type {JsonSchema.Schema}
+     */
+    #collectedData;
+
+    /**
+     * @param {string[]} userIds 
+     * @param {string[]} journalIds 
+     * @param {string | null} settlementName 
+     * @returns {WebsiteDataCollector} Instance for chaining
+     */
+    configure(userIds, journalIds, settlementName) {
+        const users = [...new Set(userIds)].map(id => game.users.get(id));
+        const journals = [...new Set(journalIds)].map(id => game.journal.get(id));
+        const settlement = Settlement.getName(settlementName);
+
+        this.#config = { users, journals, settlement }
+
+        return this;
     }
 
-    static DEFAULT_SETTLEMENT_NAME = "Promise";
+    /**
+     * @returns {Promise<void>}
+     */
+    async collectData() {
+        if(!this.#config)
+            throw new Error("Collector is not configured.");
 
-    static async runMacro() { return new Exporter()._runMacro(); }
-
-    #parser = new DOMParser();
-
-    #configured = false;
-
-    /** @type {User[]} */
-    #playerUsers;
-
-    /** @type {Journal[]} */
-    #journals;
-
-    #settlementName = "";
-
-    async _runMacro(clipboard=true) {
-        if(!game.user.isGM) return null;
-
-        await this.configureOptions();
-        if(!this.#configured) return null;
-
-        let jsonString;
         try {
-            const exportData = await this.getExportData();
-            jsonString = JSON.stringify(exportData, null, 2);
-        } catch (err) {
-            console.error("Exporter | Failed data gathering.", err);
-        }
+            const { actors, sharedStorage } = await ActorDataCollector.collect(this.#config.users);
+            const journals = await JournalDataCollector.collect(this.#config.journals);
+            const settlement = await SettlementDataCollector.collect(this.#config.settlement);
 
-        if(clipboard) {
-            try {
-                await navigator.clipboard.writeText(jsonString);
-                // eslint-disable-next-line no-alert
-                alert("JSON copied to clipboard!");
-            } catch (err) {
-                console.error("Exporter | Failed writing to clipboard.", err);
-            }
+            const ingameDate = TaliaDate.now().displayString;
+
+            this.#collectedData = { actors, sharedStorage, journals, settlement, ingameDate };
+
+        } catch(err) {
+            console.error("Exporter | Failed gathering data.");
+            throw err;
         }
-        
-        return jsonString;
     }
 
-    async configureOptions() {
+    exportJson() {
+        if(!this.#collectedData)
+            throw new Error("Data must be collected before it can be exported to JSON.");
+
+        return JSON.stringify(this.#collectedData, null, 2);
+    }
+
+    async exportJsonToClipboard() {
+        const jsonString = this.exportJson();
+
+        try {
+            await navigator.clipboard.writeText(jsonString);
+            // eslint-disable-next-line no-alert
+            alert("JSON copied to clipboard!");
+        } catch (err) {
+            console.error("Exporter | Failed writing to clipboard.", err);
+            throw err;
+        }
+    }
+
+    /**
+     * @param {string[]} journalFolderNames Journals within these folders will be included in the selection.
+     * @param {string} defaultSettlementName 
+     * @returns {Promise<void>}
+     */
+    async configureViaDialog(journalFolderNames, defaultSettlementName) {
         const { DialogV2 } = foundry.applications.api;
         const { StringField } = foundry.data.fields;
         const { createMultiSelectInput, createFormGroup } = foundry.applications.fields;
 
-        const makeCheckboxes = (name, label, options) => {
-            return createFormGroup({
+        const makeCheckboxes = (name, label, options) => 
+            createFormGroup({
                 label,
-                input: createMultiSelectInput({
-                    type: "checkboxes",
-                    name,
-                    options
-                })
+                input: createMultiSelectInput({ type: "checkboxes", name, options })
             }).outerHTML;
-        }
 
         const playerOptions = game.users.players
             .filter(u => u.character)
-            .map(u => ({
-                label: u.name,
-                value: u.id,
-                selected: true
-            }))
+            .map(u => ({ label: u.name, value: u.id, selected: true }))
             .sort((a,b) => a.label.localeCompare(b.label));
         const playersCheckboxes = makeCheckboxes("playerIds", "Players", playerOptions);
 
-        const journalOptions = game.journal
-            .filter(j => j.ownership.default >= 2 
-                && Exporter.CONFIG.journalFolderNamePartials.some(str => j.folder?.name.includes(str))
-            )
-            .map(j => ({
-                label: j.name,
-                value: j.id,
-                selected: true,
-            }))
+        const journalOptions = journalFolderNames
+            .flatMap(n => game.journal.folders.getName(n)?.contents ?? [])
+            .filter(j => j.ownership.default >= 2)
+            .map(j => ({ label: j.name, value: j.id, selected: true }))
             .sort((a, b) => a.label.localeCompare(b.label));
         const journalCheckboxes = makeCheckboxes("journalIds", "Journals", journalOptions);
 
         const settlementField = new StringField({
-            initial: Exporter.DEFAULT_SETTLEMENT_NAME,
+            initial: defaultSettlementName,
             blank: true,
             label: "Settlement Name",
         }).toFormGroup({},{name: "settlementName"}).outerHTML;
@@ -114,278 +136,467 @@ class Exporter {
 
         const res = await DialogV2.prompt({
             content: playersCheckboxes + settlementField + journalCheckboxes,
-            position: {
-                width: 1200,
-            },
-            ok: {
-                callback: (event, button) => new FormDataExtended(button.form).object
-            },
+            position: { width: 1200 },
+            ok: { callback: (event, button) => new FormDataExtended(button.form).object },
             rejectClose: false,
             modal: true,
         });
 
         if(res) {
-            this.#settlementName = res.settlementName ?? "";
-            this.#playerUsers = res.playerIds.map(id => game.users.get(id)) ?? [];
-            this.#journals = res.journalIds.map(id => game.journal.get(id)) ?? [];
-            this.#configured = true;
+            this.configure(res.playerIds, res.journalIds, res.settlementName);
+        }
+    }
+}
+
+
+class SettlementDataCollector {
+    /**
+     * @param {Settlement} settlement
+     * @returns {Promise<JsonSchema.SettlementData>}
+     */
+    static async collect(settlement) {
+        settlement.prepareDerivedData();
+
+        return {
+            name: settlement.name,
+            attributes: { ...settlement.attributes },
+            capacity: { ...settlement.capacity },
+            currentEffects: SettlementDataCollector.#processEffects(Object.values(settlement.effects)),
+            buildings: SettlementDataCollector.#processBuildings(Object.values(settlement.buildings))
         }
     }
 
     /**
-     * @returns {Promise<JsonSchema.Schema>}
+     * @param {Building[]} buildings 
+     * @returns {JsonSchema.SettlementBuildingData[]} 
      */
-    async getExportData() {
-        const actorsData = await Promise.all(this.#playerUsers
-            .map(u => this.#getActorData(u)));
+    static #processBuildings(buildings) {
+        return buildings
+            .map(b => ({
+                name: b.name,
+                flavorText: b.flavorText,
+                scale: b.scale,
+                constructionDate: b.isBuilt ? b.constructionDate.displayString : null,
+                effects: {
+                    attributes: b.modifiers.attributes,
+                    capacity: b.modifiers.capacity,
+                    other: b.effectText
+                },
+                requirements: {
+                    attributes: b.requirements?.attributes ?? {},
+                    buildings: [...b.requirements.buildings].map(id => Building.database.get(id).name) ?? [],
+                    unlocks: [...b.requirements.unlocked]
+                }
+            }));
+    }
 
+    /**
+     * @param {Effect[]} effects 
+     * @returns {JsonSchema.SettlementEffectData[]} 
+     */
+    static #processEffects(effects) {
+        return effects
+            .filter(e => e.isActive)
+            .map(e => ({
+                name: e.name,
+                flavorText: e.flavorText,
+                remainingDays: e.remainingDays,
+                effects: {
+                    attributes: e.modifiers.attributes,
+                    capacity: e.modifiers.capacity,
+                    other: e.effectText
+                }
+            }));
+    }
+}
+
+
+class JournalDataCollector {
+    /**
+     * @param {JournalEntry[]} journals 
+     * @returns {Promise<JsonSchema.JournalData[]>}
+     */
+    static async collect(journals) {
+        return Promise.all(journals.map(JournalDataCollector.#processJournal));
+    }
+
+    /**
+     * @param {JournalEntry} journal 
+     * @returns {Promise<JsonSchema.JournalData>}
+     */
+    static async #processJournal(journal) {
         return {
-            actors: await Promise.all(this.#playerUsers
-                .map(u => this.#getActorData(u))),
-            settlement: await this.#getSettlementData(),
-            journals: await Promise.all(this.#journals
-                .map(j => this.#getJournalData(j))),
-            ingameDate: TaliaDate.now().displayString,
+            name: journal.name,
+            pages: await Promise.all(journal.pages
+                .filter(p => (p.ownership.default >= 2 || p.ownership.default === -1) 
+                    && p.type === "text")
+                .sort((a, b) => a.sort !== b.sort ? a.sort - b.sort : a._stats.createdTime - b._stats.createdTime)
+                .map(async (p, i) => ({
+                    name: p.name,
+                    index: i,
+                    htmlContent: HtmlCleaner.clean(await TextEditor.enrichHTML(p.text.content)),
+                })))
+        }
+    }
+}
+
+
+class ActorDataCollector {
+    /**
+     * @param {User[]} users
+     * @returns {Promise<{ actors: JsonSchema.ActorData[], sharedStorage: JsonSchema.SharedStorageData }>}
+     */
+    static async collect(users) {
+        const collector = new ActorDataCollector(users);
+        collector.#withOwnedItems();
+        const result = await collector.#process();
+        return result;
+    }
+
+    /**
+     * @typedef {object} SharedDTO
+     * @property {"sharedDto"} discriminator 
+     * @property {JsonSchema.Currency} currency
+     * @property {Item[]} physicalItemsStored
+     */
+
+    /**
+     * @typedef {object} UserCharDTO
+     * @property {"userCharDto"} discriminator 
+     * @property {Actor} actor
+     * @property {User} user
+     * @property {JsonSchema.Currency} currency
+     * @property {Item[]} spells
+     * @property {Item[]} features
+     * @property {Item[]} physicalItemsCarried
+     * @property {Item[]} physicalItemsStored
+     */
+
+    /** @type {Map<string, UserCharDTO>} UserId to UserCharDTO map */
+    #userDtos = new Map();
+
+    /** @type {SharedDTO} */
+    #shared;
+
+    /**
+     * @param {User[]} users 
+     */
+    constructor(users) {
+        this.#userDtos = new Map(users.map(u => [u.id, ActorDataCollector.#createCharDto(u)]));
+
+        this.#shared = {
+            currency: { pp: 0, gp: 0, sp: 0, cp: 0 },
+            physicalItemsStored: [],
+            discriminator: "sharedDto"
         };
     }
 
-    //#region Items
+    /**
+     * 
+     * @param {User} user 
+     * @returns {UserCharDTO}
+     */
+    static #createCharDto(user) {
+        const actor = user.character;
+        const currency = actor.system.currency;
 
-    /** @returns {Promise<JsonSchema.ActorData>} */
-    async #getActorData(user) {
-        const ownedItems = Exporter.CONFIG.excludeItemsFromOwnedPiles
-            ? [...user.character.items]
-            : [...user.character.items, ...this.#getOwnedItemPileItems(user)];
-        
-        const allowedItemTypes = [
-            "feat", "spell", "consumable", "container", "equipment", "loot", "tool", "weapon"
-        ];
+        const spells = [];
+        const features = [];
+        const physicalItemsCarried = [];
 
-        const sorted = ownedItems
-            .reduce((acc, curr) => {
-                switch(curr.type) {
+        for(const item of actor.items.contents) {
+            switch(item.type) {
+                case "spell":
+                    spells.push(item); break;
+                case "feat":
+                    features.push(item); break;
+                case "consumable":
+                case "equipment":
+                case "loot":
+                case "container":
+                case "tool":
+                case "weapon":
+                    physicalItemsCarried.push(item);
+                    break;
+                default: break;
+            }
+        }
+
+        return {
+            discriminator: "userCharDto",
+            actor,
+            user,
+            currency: { 
+                pp: currency.pp ?? 0,
+                gp: currency.gp ?? 0,
+                sp: currency.sp ?? 0,
+                cp: currency.cp ?? 0,
+            },
+            spells,
+            features,
+            physicalItemsCarried,
+            physicalItemsStored: []
+        }
+    }
+
+
+    #withOwnedItems() {
+        const userUuidsToIds = new Map();
+        for(const dto of this.#userDtos.values()) userUuidsToIds.set(dto.user.uuid, dto.user.id);
+
+        for(const actor of game.actors) {
+            if(!ItemPiles.API.isValidItemPile(actor)) continue;
+
+            const flags = ItemPiles.API.getActorFlagData(actor);
+            if(!flags.enabled) continue;
+
+            let ownerId;
+            let ownerCount = 0;
+            let ownsCurrency = false;
+            let ownsItem = false;
+
+            if(flags.type === "vault" && flags.restrictVaultAccess === true) {
+                for(const va of flags.vaultAccess ?? []) {
+                    const userOwnerId = userUuidsToIds.get(va.uuid);
+                    if(!userOwnerId) continue;
+
+                    ownerId = userOwnerId;
+                    ownerCount++;
+                    ownsCurrency = va.currencies.withdraw;
+                    ownsItem = va.items.withdraw;
+                }
+            }
+            else if(flags.type === "container" && actor.ownership.default > 0) {
+                ownerCount = userUuidsToIds.size;
+                ownsCurrency = true;
+                ownsItem = true;
+            }
+            else if(flags.type === "container") {
+                const ownerIds = getUserOwnerIds(actor);
+                ownerCount = ownerIds.length;
+                if(ownerIds.length === 1) ownerId = ownerIds[0];
+                ownsCurrency = true;
+                ownsItem = true;
+            }
+
+            if(ownerCount && (ownsCurrency || ownsItem)) {
+                const ownerDto = ownerCount === 1
+                    ? this.#userDtos.get(ownerId)
+                    : this.#shared;
+
+                if(ownsCurrency) addCurrency(actor, ownerDto);
+                if(ownsItem) addItems(actor, ownerDto);
+            }
+        }
+
+        /**
+         * 
+         * @param {Actor} pile 
+         * @returns {string[]}
+         */
+        function getUserOwnerIds(pile) {
+            const ownerIds = [];
+            const defaultLevel = pile.ownership.default;
+
+            for(const userId of userUuidsToIds.values()) {
+                const level = pile.ownership[userId] ?? defaultLevel;
+                if(level >= 1) ownerIds.push(userId); 
+            }
+
+            return ownerIds;
+        }
+
+
+        /**
+         * @param {Actor} pile 
+         * @param {UserCharDTO | SharedDTO} ownerDto 
+         */
+        function addItems(pile, ownerDto) {
+            const isSharedDto = ownerDto?.discriminator === "sharedDto"
+
+            for(const item of pile.items.contents) {
+                switch(item.type) {
                     case "spell":
-                        acc.spells.push(curr); break;
+                        if(!isSharedDto) ownerDto.spells.push(item);
+                        break;
                     case "feat":
-                        acc.features.push(curr); break;
+                        if(!isSharedDto) ownerDto.features.push(item);
+                        break;
                     case "consumable":
                     case "equipment":
                     case "loot":
                     case "container":
                     case "tool":
                     case "weapon":
-                        acc.physical.push(curr);
+                        ownerDto.physicalItemsStored.push(item);
                         break;
                     default: break;
                 }
-
-                return acc;
-            }, { spells: [], features: [], physical: [] });
-
-        return {
-            name: user.character.name,
-            spells: await Promise.all(sorted.spells.map(i => this.#getSpellData(i))),
-            features: await Promise.all(sorted.features.map(i => this.#getFeatureData(i))),
-            physicalItems: await Promise.all(sorted.physical.map(i => this.#getPhysicalItemData(i, user))),
-        }
-    }
-
-    /** @returns {Promise<JsonSchema.SpellData>} */
-    async #getSpellData(item) {
-        return {
-            name: item.name,
-            description: await this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
-            spellLevel: item.labels.level,
-            range: item.labels.range,
-            spellSchool: item.labels.school,
-        }
-    }
-
-    /** @returns {Promise<JsonSchema.FeatureData>} */
-    async #getFeatureData(item) {
-        return {
-            name: item.name,
-            description: await this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
-            requirements: item.system.requirements
-        }
-    }
-
-    /** @returns {Promise<JsonSchema.ItemData>} */
-    async #getPhysicalItemData(item, user) {
-        const typeLabel = item.system.type?.label;
-        const subtypeLabel = item.system.type?.subtype;
-        const combinedLabel = typeLabel && subtypeLabel
-            ? `${typeLabel} (${subtypeLabel})` 
-            : typeLabel
-                ? typeLabel : "Container";
-
-        return {
-            name: item.name,
-            description: await this.#cleanPageHTML(await TextEditor.enrichHTML(item.system.description.value)),
-            quantity: item.system.quantity,
-            inStorage: user.character.id !== item.parent.id,
-            typeLabel: combinedLabel,
-            requiresAttunement: item.system.attunement === "required"
-        }
-    }
-
-    
-    /**
-     * Gets the items from item piles that are owned by the given user.
-     * Item piles are considered owned by the user if the item pile is enabled and
-     * a) the pile is a vault where the user is the only user with access
-     * b) the pile actor is owned by the user, has no default ownership, and has no other player owners
-     * @param {User} user 
-     * @returns {Item[]}
-     */
-    #getOwnedItemPileItems(user) {
-        return game.actors
-            .filter(a => {
-                if(!ItemPiles.API.isValidItemPile(a)) return false;
-                
-                const flags = ItemPiles.API.getActorFlagData(a);
-                if(!flags.enabled) return false;
-
-                const isOwnedVault = flags.type === "vault"
-                    && flags.vaultAccess?.length === 1
-                    && flags.vaultAccess[0].uuid === user.uuid;
-
-                if(!isOwnedVault) {
-                    const isSoleOwner = a.ownership[user.id] === 3
-                        && a.ownership.default === 0
-                        && !game.users.players
-                            .filter(u => u.id !== user.id)
-                            .some(u => a.ownership[u.id] > 0);
-
-                    if(!isSoleOwner) return false;
-                }
-
-                return true;
-            })
-            .flatMap(a => a.items.contents);
-    }
-
-    //#endregion
-
-    //#region Settlement
-
-    /**
-     * @returns {Promise<JsonSchema.SettlementData>}
-     */
-    async #getSettlementData() {
-        const settlement = Settlement.getName(this.#settlementName);
-        if(!settlement) return null;
-
-        settlement.prepareDerivedData();
-
-        /** @type {JsonSchema.SettlementData} */
-        return {
-            name: this.#settlementName,
-            attributes: settlement.attributes,
-            capacity: {
-                max: settlement.capacity.max,
-                available: settlement.capacity.available
-            },
-            currentEffects: Object.values(settlement.effects)
-                .filter(e => e.isActive)
-                .map(e => this.#getActiveEffectData(e)),
-            buildings: Object.values(settlement.buildings)
-                .map(b => this.#getBuildingData(b))
-        };
-    }
-
-    /**
-     * @param {Effect} effect 
-     * @returns {JsonSchema.SettlementEffectData}
-     */
-    #getActiveEffectData(effect) {
-        return {
-            name: effect.name,
-            flavorText: effect.flavorText,
-            remainingDays: effect.remainingDays,
-            effects: {
-                modifiers: {
-                    attributes: effect.modifiers.attributes,
-                    capacity: effect.modifiers.capacity
-                },
-                other: effect.effectText
             }
         }
+
+        /**
+         * @param {Actor} pile 
+         * @param {UserCharDTO | SharedDTO} ownerDto 
+         */
+        function addCurrency(pile, ownerDto) {
+            const curr = pile.system.currency;
+            ownerDto.currency.cp += curr.cp ?? 0;
+            ownerDto.currency.sp += curr.sp ?? 0;
+            ownerDto.currency.gp += curr.gp ?? 0;
+            ownerDto.currency.pp += curr.pp ?? 0;
+        }
+
+        return this;
     }
 
-    /** 
-     * @param {Building} building 
-     * @returns {JsonSchema.SettlementBuildingData}
+    /**
+     * @returns {Promise<{ actors: JsonSchema.ActorData[], sharedStorage: JsonSchema.SharedStorageData }>}
      */
-    #getBuildingData(building) {
+    async #process() {
         return {
-            name: building.name,
-            flavorText: building.flavorText,
-            scale: building.scale,
-            constructionDate: building.isBuilt ? building.constructionDate.displayString : undefined,
-            effects: {
-                modifiers: {
-                    attributes: building.modifiers.attributes,
-                    capacity: building.modifiers.capacity
-                },
-                other: building.effectText
-            },
-            requirements: {
-                attributes: building.requirements?.attributes ?? {},
-                buildings: [...building.requirements.buildings].map(id => Building.database.get(id).name) ?? [],
-                unlocks: [...building.requirements.unlocked]
-            }
+            actors: await Promise.all([...this.#userDtos.values()].map(ActorDataCollector.#processUserChar)),
+            sharedStorage: await ActorDataCollector.#processShared(this.#shared)
         }
     }
-
-    //#endregion
-    
-    //#region Journal
-
-    /** 
-     * @import {JournalEntryPage} from "../foundry/client/data/documents/journal-entry-page.js"
-     * @import {JournalEntry} from "../foundry/client/data/documents/journal-entry.js"
-     */
 
     /**
      * 
-     * @param {JournalEntry} entry 
-     * @returns {JsonSchema.JournalData}
+     * @param {UserCharDTO} dto
+     * @returns {Promise<JsonSchema.ActorData>} 
      */
-    async #getJournalData(entry) {
+    static async #processUserChar(dto) {
         return {
-            name: entry.name,
-            pages: await Promise.all(entry.pages
-                .filter(p => (p.ownership.default >= 2 || p.ownership.default === -1) && p.type === "text")
-                .sort((a, b) => a.sort !== b.sort ? a.sort - b.sort : a._stats.createdTime - b._stats.createdTime)
-                .map(async p => ({
-                    name: p.name,
-                    htmlContent: this.#cleanPageHTML(await TextEditor.enrichHTML(p.text.content)),
-                })))
-        };
+            name: dto.actor.name,
+            currency: dto.currency,
+            spells: await ActorDataCollector.#processSpells(dto.spells),
+            features: await ActorDataCollector.#processFeatures(dto.features),
+            items: await ActorDataCollector.#processPhysicalItems(dto.physicalItemsCarried, dto.physicalItemsStored)
+        }
     }
 
-    //#endregion
+    /**
+     * @param {SharedDTO} dto 
+     * @returns {Promise<JsonSchema.SharedStorageData>}
+     */
+    static async #processShared(dto) {
+        return {
+            currency: dto.currency,
+            items: await ActorDataCollector.#processPhysicalItems([], dto.physicalItemsStored),
+        }
+    }
 
-    //#region Utils
+    /**
+     * Process physical items of one actor or of shared storage.
+     * @param {Item[]} physicalItems  May be empty for storage items.
+     * @param {Item[]} storedItems
+     * @returns {Promise<JsonSchema.ItemData[]>}
+     */
+    static async #processPhysicalItems(physicalItems, storedItems) {
+        /** @type {Map<string, JsonSchema.ItemData} */
+        const stacked = new Map();
 
-    #cleanPageHTML(html) {
-        const tagsToRemove = ['IMG', 'LINK', 'SCRIPT', 'IFRAME',
-            'AUDIO', 'VIDEO', 'SOURCE', 'OBJECT', 'EMBED',
-        ];
+        /**
+         * @param {Item} item 
+         * @returns {Promise<JsonSchema.ItemData>}
+         */
+        const getOrAddItem = async (item) => {
+            let dto = stacked.get(item.name);
+            if(!dto) {
+                dto = {
+                    name: item.name,
+                    description: HtmlCleaner.clean(await TextEditor.enrichHTML(item.system.description.value)),
+                    carried: 0,
+                    stored: 0,
+                    typeLabel: _getTypeLabel(item),
+                    category: item.type,
+                    requiresAttunement: item.system.attunement === "required"
+                }
+                stacked.set(item.name, dto);
+            }
+            return dto;
+        }
 
-        const doc = this.#parser.parseFromString(html, 'text/html');
+        for(const item of physicalItems) {
+            const dto = await getOrAddItem(item);
+            dto.carried += item.system.quantity;
+        }
+
+        for(const item of storedItems) {
+            const dto = await getOrAddItem(item);
+            dto.stored += item.system.quantity;
+        }
+
+        return [...stacked.values()];
+
+        /**
+         * @param {Item} item 
+         * @returns {string}
+         */
+        function _getTypeLabel(item) {
+            const typeLabel = item.system.type?.label;
+            const subtypeLabel = item.system.type?.subtype;
+            return typeLabel && subtypeLabel
+                ? `${typeLabel} (${subtypeLabel})` 
+                : typeLabel
+                    ? typeLabel : "Container";
+        }
+    }
+
+    /**
+     * @param {Item[]} spells
+     * @returns {Promise<JsonSchema.SpellData[]>}
+     */
+    static async #processSpells(spells) {
+        const processSpell = async (spell) => ({
+            name: spell.name,
+            description: HtmlCleaner.clean(await TextEditor.enrichHTML(spell.system.description.value)),
+            spellLevel: spell.labels.level,
+            range: spell.labels.range,
+            spellSchool: spell.labels.school,
+        });
+
+        return Promise.all(spells.map(processSpell));
+    }
+
+    /**
+     * @param {Item[]} features
+     * @returns {Promise<JsonSchema.FeatureData[]>}
+     */
+    static async #processFeatures(features) {
+        const processFeature = async (feature) => ({
+            name: feature.name,
+            description: HtmlCleaner.clean(await TextEditor.enrichHTML(feature.system.description.value)),
+            requirements: feature.system.requirements
+        });
+
+        return Promise.all(features.map(processFeature));
+    }
+}
+
+
+class HtmlCleaner {
+    static #parser;
+
+    static #getParser() {
+        if(!HtmlCleaner.#parser) {
+            HtmlCleaner.#parser = new DOMParser();
+        }
+        return HtmlCleaner.#parser;
+    }
+
+    static TAGS_TO_REMOVE = new Set(['IMG', 'LINK', 'SCRIPT', 'IFRAME', 'AUDIO', 'VIDEO', 'SOURCE', 'OBJECT', 'EMBED']);
+
+    static clean(html) {
+        const parser = HtmlCleaner.#getParser();
+        const doc = parser.parseFromString(html, 'text/html');
 
         doc.querySelectorAll("*").forEach(e => {
-            if(tagsToRemove.includes(e.tagName)) e.remove();
+            if(HtmlCleaner.TAGS_TO_REMOVE.has(e.tagName)) e.remove();
             else if (e.tagName === 'A' && e.parentNode) e.replaceWith(e.textContent);
             else Array.from(e.attributes).forEach(attr => e.removeAttribute(attr.name));
         });
 
         return doc.body.innerHTML;
     }
-
-    //#endregion
 }
-
-
