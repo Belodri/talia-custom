@@ -2,15 +2,29 @@ declare namespace JsonSchema {
     type Schema = {
         ingameDate: string;
         actors: ActorData[];
+        sharedStorage: SharedStorageData;
         settlement?: SettlementData;
         journals: JournalData[];
     }
 
+    type Currency = {
+        pp: number;
+        gp: number;
+        sp: number;
+        cp: number;
+    }
+
+    type SharedStorageData = {
+        currency: Currency;
+        items: ItemData[];
+    }
+
     type ActorData = {
-        name: string,
-        spells: SpellData[],
-        features: FeatureData[],
-        physicalItems: ItemData[]
+        name: string;
+        currency: Currency;
+        spells: SpellData[];
+        features: FeatureData[];
+        items: ItemData[];
     }
 
     type SpellData = {
@@ -30,9 +44,10 @@ declare namespace JsonSchema {
     type ItemData = {
         name: string,
         description: string,
-        quantity: number,
-        inStorage: boolean,
+        carried: number,
+        stored: number,
         typeLabel: string,
+        category: "consumable" | "container" | "equipment" | "loot" | "tool" | "weapon",
         requiresAttunement: boolean
     }
 
@@ -55,11 +70,6 @@ declare namespace JsonSchema {
     type SettlementCapacity = {
         max: number;
         available: number;
-    }
-
-    type SettlementModifiers = {
-        attributes: SettlementAttributes;
-        capacity: number;
     }
 
     type SettlementBuildingData = {
@@ -85,7 +95,8 @@ declare namespace JsonSchema {
     }
 
     type SettlementMutator = {
-        modifiers: SettlementModifiers;
+        attributes: SettlementAttributes;
+        capacity: number;
         other: string;
     }
 
@@ -96,6 +107,7 @@ declare namespace JsonSchema {
 
     type JournalPage = {
         name: string;
+        index: number;
         htmlContent: string;
     }
 }
