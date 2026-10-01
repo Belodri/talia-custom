@@ -8,7 +8,8 @@
         ],
         "allowJs": true,
         "checkJs": true,
-        "moduleResolution": "nodenext"
+        "moduleResolution": "nodenext",
+        "moduleDetection": "auto"
     },
     "exclude": ["node_modules", "**/node_modules/*"],
     "include": [
